@@ -1,16 +1,95 @@
-# React + Vite
+# flyers-fan
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+`flyers-fan` is a Philadelphia Flyers dashboard built with React, Vite, and Tailwind CSS. It pulls live NHL data through a small Vercel edge proxy and presents it in a fan-focused interface currently centered on the 2025-2026 Flyers season.
 
-Currently, two official plugins are available:
+## What the app includes
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- A dashboard with the Flyers' record, recent form, live-game status, and Metro context
+- A schedule view for the season game log and recent results
+- A standings view focused on the Metropolitan Division and Eastern Conference
+- A "Game Tape" page for the current live game or most recent finished game
+- Adaptive polling that refreshes live games more often than season-long data
+- Keyboard shortcuts: `1` dashboard, `2` schedule, `3` standings, `4` game tape
 
-## React Compiler
+## How it works
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+The frontend does not call the NHL API directly. Browser requests go to `/api/nhl`, which is implemented in [api/nhl.js](api/nhl.js). That edge function:
 
-## Expanding the ESLint configuration
+- Proxies requests to `https://api-web.nhle.com`
+- Adds CORS headers so the browser can fetch NHL data
+- Applies short cache windows based on the endpoint type
+- Keeps live game data fresher than standings and season schedule data
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+The app is intentionally Flyers-specific right now. The main hard-coded values live in [src/App.jsx](src/App.jsx):
+
+- `TEAM_ABBR = 'PHI'`
+- `SEASON = '20252026'`
+
+## Tech stack
+
+- React 19
+- Vite 8
+- Tailwind CSS 3
+- Lucide React
+- Vercel Edge Functions
+
+## Local development
+
+This project does not require API keys or environment variables.
+
+1. Install dependencies:
+
+```bash
+npm install
+```
+
+2. Run the app with the Vercel API route available:
+
+```bash
+npx vercel dev
+```
+
+`npm run dev` starts the Vite frontend, but the app expects `/api/nhl` to exist. Since that route lives in [api/nhl.js](api/nhl.js), plain Vite dev mode is not enough unless you add your own local proxy setup.
+
+## Build
+
+To produce the frontend bundle:
+
+```bash
+npm run build
+```
+
+To preview the full app with the NHL proxy, use Vercel locally or deploy it to Vercel.
+
+## Data sources
+
+The current UI is built from these NHL endpoints:
+
+- `v1/club-schedule-season/PHI/20252026`
+- `v1/standings/now`
+- `v1/gamecenter/:id/boxscore`
+- `v1/gamecenter/:id/right-rail`
+- `v1/gamecenter/:id/landing`
+
+## Project structure
+
+```text
+.
+|-- api/
+|   `-- nhl.js
+|-- public/
+|   |-- favicon.svg
+|   `-- icons.svg
+|-- src/
+|   |-- App.jsx
+|   |-- index.css
+|   |-- main.jsx
+|   `-- assets/
+|       `-- hero.png
+|-- index.html
+`-- package.json
+```
+
+## Deployment
+
+Deploy the repo to Vercel so the static frontend and `/api/nhl` edge function are served together.

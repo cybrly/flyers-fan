@@ -29,19 +29,20 @@ const cacheFor = (path) => {
   return 30;
 };
 
-// Walk redirects manually so our headers (notably user-agent) are preserved on
-// every hop. Vercel's edge fetch silently strips them when auto-following, and
-// the upstream's Cloudflare WAF then returns 404 to "anonymous" requests —
-// /v1/standings/now (which 307s to a dated URL) is the one that bites.
+// Walk redirects manually and re-issue with the same headers. Vercel's edge
+// fetch silently strips the user-agent on auto-follow, and the upstream's
+// Cloudflare WAF then returns 404 — /v1/standings/now (which 307s to a dated
+// URL) is the one that bites.
 async function fetchFollowing(url, init, maxHops = 5) {
   let current = url;
+  let hops = 0;
   for (let i = 0; i < maxHops; i++) {
     const r = await fetch(current, { ...init, redirect: 'manual' });
     if (r.status >= 300 && r.status < 400) {
       const loc = r.headers.get('location');
-      if (loc) { current = new URL(loc, current).href; continue; }
+      if (loc) { current = new URL(loc, current).href; hops++; continue; }
     }
-    return r;
+    return { res: r, hops, finalUrl: current };
   }
   throw new Error('too many redirects');
 }
@@ -64,12 +65,17 @@ export default async function handler(req) {
   };
 
   try {
-    const r = await fetchFollowing(upstream, fetchInit);
+    const { res: r, hops, finalUrl } = await fetchFollowing(upstream, fetchInit);
+    const debug = {
+      'x-proxy-version': '3',
+      'x-proxy-hops': String(hops),
+      'x-proxy-final': finalUrl,
+    };
 
     if (!r.ok) {
-      return new Response(JSON.stringify({ error: 'upstream', status: r.status }), {
+      return new Response(JSON.stringify({ error: 'upstream', status: r.status, finalUrl, hops }), {
         status: r.status,
-        headers: { 'content-type': 'application/json' },
+        headers: { 'content-type': 'application/json', ...debug },
       });
     }
 
@@ -81,12 +87,13 @@ export default async function handler(req) {
         'content-type': 'application/json',
         'cache-control': `public, s-maxage=${ttl}, stale-while-revalidate=${ttl * 3}`,
         'access-control-allow-origin': '*',
+        ...debug,
       },
     });
   } catch (e) {
     return new Response(JSON.stringify({ error: String(e?.message || e) }), {
       status: 500,
-      headers: { 'content-type': 'application/json' },
+      headers: { 'content-type': 'application/json', 'x-proxy-version': '3' },
     });
   }
 }

@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import {
-  LayoutDashboard, Calendar, Trophy, Clipboard, Search,
+  LayoutDashboard, Calendar, Trophy, Clipboard,
   ArrowUp, ArrowDown, Minus, ChevronRight, Circle,
-  Activity, Wifi, WifiOff, Command, Home, Plane, Flame,
-  RefreshCw, MoreHorizontal, AlertCircle, Zap,
+  Wifi, WifiOff, Home, Plane, Flame,
+  RefreshCw, AlertCircle,
 } from 'lucide-react';
 
 /* ═══════════════════════════════════════════════════════════════
@@ -88,9 +88,14 @@ function useNHL(path, intervalFn) {
   const [data, setData] = useState(null);
   const [error, setError] = useState(null);
   const [lastFetch, setLastFetch] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(!!path);
   const dataRef = useRef(data);
   dataRef.current = data;
+
+  // Keep latest intervalFn in a ref so the polling loop always sees fresh
+  // outer state without re-subscribing on every render.
+  const intervalFnRef = useRef(intervalFn);
+  intervalFnRef.current = intervalFn;
 
   const fetchOnce = useCallback(async () => {
     if (!path) return;
@@ -109,8 +114,17 @@ function useNHL(path, intervalFn) {
   }, [path]);
 
   useEffect(() => {
+    if (!path) {
+      // Nothing to fetch — clear state so consumers don't hang on stale loading.
+      setLoading(false);
+      setData(null);
+      setError(null);
+      return;
+    }
+
     let cancelled = false;
     let timer;
+    setLoading(true);
 
     const tick = async () => {
       if (cancelled) return;
@@ -118,7 +132,8 @@ function useNHL(path, intervalFn) {
         await fetchOnce();
       }
       if (cancelled) return;
-      const interval = typeof intervalFn === 'function' ? intervalFn(dataRef.current) : intervalFn;
+      const fn = intervalFnRef.current;
+      const interval = typeof fn === 'function' ? fn(dataRef.current) : fn;
       if (interval && interval > 0) {
         timer = setTimeout(tick, interval);
       }
@@ -136,8 +151,7 @@ function useNHL(path, intervalFn) {
       clearTimeout(timer);
       document.removeEventListener('visibilitychange', onVis);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [path]);
+  }, [path, fetchOnce]);
 
   return { data, error, lastFetch, loading, refresh: fetchOnce };
 }
@@ -163,6 +177,8 @@ function adaptSchedule(raw) {
   let liveGame = null;
 
   for (const g of raw.games) {
+    // Skip preseason (gameType 1) — only regular season (2) and playoffs (3) count.
+    if (g.gameType === 1) continue;
     const isHome = g.homeTeam.abbrev === TEAM_ABBR;
     const us = isHome ? g.homeTeam : g.awayTeam;
     const them = isHome ? g.awayTeam : g.homeTeam;
@@ -424,7 +440,11 @@ const Skeleton = ({ className = '', height = 20 }) => (
    CHARTS
    ═══════════════════════════════════════════════════════════════ */
 
+let sparkSeq = 0;
 const Sparkline = ({ data, w = 120, h = 28, stroke = '#F74902' }) => {
+  // Stable id per instance — generated once. Must run before any early return
+  // to keep the hook order consistent across renders.
+  const id = useMemo(() => `sg${++sparkSeq}`, []);
   if (!data || data.length < 2) return <div style={{ height: h }} />;
   const min = Math.min(...data), max = Math.max(...data);
   const range = max - min || 1;
@@ -434,7 +454,6 @@ const Sparkline = ({ data, w = 120, h = 28, stroke = '#F74902' }) => {
   ]);
   const path = pts.map((p, i) => (i === 0 ? `M${p[0]},${p[1]}` : `L${p[0]},${p[1]}`)).join(' ');
   const area = `${path} L${w},${h} L0,${h} Z`;
-  const id = useMemo(() => `sg${Math.random().toString(36).slice(2, 8)}`, []);
   return (
     <svg width="100%" height={h} viewBox={`0 0 ${w} ${h}`} preserveAspectRatio="none" className="block">
       <defs>
@@ -537,7 +556,7 @@ const NAV_ITEMS = [
   { id: 'game',      label: 'Game Tape', icon: Clipboard,       kbd: '4' },
 ];
 
-const Sidebar = ({ page, setPage, team, liveGame, metro, lastFetch, error }) => {
+const Sidebar = ({ page, setPage, team, liveGame, metro, lastFetch, error, refresh }) => {
   const status = connStatus(lastFetch, error);
   const streak = team?.streak;
 
@@ -551,11 +570,17 @@ const Sidebar = ({ page, setPage, team, liveGame, metro, lastFetch, error }) => 
             <span className="text-[13px] text-[#F74902] font-semibold">.fan</span>
           </div>
         </div>
-        <button className="text-white/30 hover:text-white/70 transition-colors"><MoreHorizontal size={14} /></button>
+        <button
+          onClick={refresh}
+          title="Refresh data"
+          className="text-white/30 hover:text-white/70 transition-colors"
+        >
+          <RefreshCw size={13} />
+        </button>
       </div>
 
       <div className="px-3 py-3 border-b border-white/[0.05]">
-        <button className="w-full group flex items-center justify-between px-2 py-1.5 rounded-md hover:bg-white/[0.03] transition-colors">
+        <div className="w-full group flex items-center justify-between px-2 py-1.5 rounded-md">
           <div className="flex items-center gap-2 min-w-0">
             <div className="w-5 h-5 bg-gradient-to-br from-[#F74902] to-[#A82E00] rounded-sm flex items-center justify-center shrink-0">
               <span className="text-[9px] font-bold text-black font-mono">PHI</span>
@@ -567,8 +592,7 @@ const Sidebar = ({ page, setPage, team, liveGame, metro, lastFetch, error }) => 
               </div>
             </div>
           </div>
-          <ChevronRight size={12} className="text-white/30 shrink-0" />
-        </button>
+        </div>
       </div>
 
       <nav className="flex-1 overflow-y-auto px-2 py-3">
@@ -625,7 +649,7 @@ const Sidebar = ({ page, setPage, team, liveGame, metro, lastFetch, error }) => 
             <ChevronRight size={10} className="text-white/30" />
           </div>
           <div className="space-y-[2px]">
-            {metro ? metro.slice(0, 4).map((t, i) => (
+            {metro?.length ? metro.slice(0, 4).map((t, i) => (
               <div
                 key={t.abbr}
                 className={cx(
@@ -725,15 +749,6 @@ const Topbar = ({ page, setPage, liveGame, lastFetch, error }) => {
             ))}
           </div>
 
-          <button className="hidden md:flex items-center gap-2 h-7 pl-2 pr-1.5 border border-white/[0.08] hover:border-white/20 bg-white/[0.02] rounded-md transition-colors">
-            <Search size={12} strokeWidth={2} className="text-white/40" />
-            <span className="text-[11px] text-white/40 font-mono">Search or jump to</span>
-            <div className="flex items-center gap-0.5 ml-2">
-              <Kbd><Command size={9} strokeWidth={2.5} /></Kbd>
-              <Kbd>K</Kbd>
-            </div>
-          </button>
-
           <div className="h-4 w-px bg-white/[0.08] hidden md:block" />
 
           {liveGame ? (
@@ -769,9 +784,10 @@ const Statusbar = ({ lastFetch, error, refresh }) => {
           {error ? <WifiOff size={10} /> : <Wifi size={10} />}
           <span>api-web.nhle.com · {status.label}</span>
         </span>
-        <button onClick={refresh} className="hidden sm:flex items-center gap-1.5 hover:text-white/70 transition-colors">
+        <button onClick={refresh} className="flex items-center gap-1.5 hover:text-white/70 transition-colors">
           <RefreshCw size={10} />
-          <span>refresh {fmtRelative(lastFetch)}</span>
+          <span className="hidden sm:inline">refresh {fmtRelative(lastFetch)}</span>
+          <span className="sm:hidden">refresh</span>
         </button>
       </div>
       <div className="flex items-center gap-4">
@@ -1493,7 +1509,7 @@ const GameTape = ({ game, loading }) => {
   }
 
   const liveNow = isLive(game.state);
-  const periods = Object.keys(game.periods).map(Number).sort();
+  const periods = Object.keys(game.periods).map(Number).sort((a, b) => a - b);
 
   return (
     <div className="p-4 md:p-6 space-y-5">
@@ -1807,13 +1823,18 @@ export default function App() {
     boxscore.lastFetch || 0
   ) || null;
   const anyError = scheduleRaw.error || standingsRaw.error;
+  const scheduleRefresh = scheduleRaw.refresh;
+  const standingsRefresh = standingsRaw.refresh;
+  const boxscoreRefresh = boxscore.refresh;
+  const rightRailRefresh = rightRail.refresh;
+  const landingRefresh = landing.refresh;
   const refresh = useCallback(() => {
-    scheduleRaw.refresh();
-    standingsRaw.refresh();
-    boxscore.refresh();
-    rightRail.refresh();
-    landing.refresh();
-  }, [scheduleRaw, standingsRaw, boxscore, rightRail, landing]);
+    scheduleRefresh();
+    standingsRefresh();
+    boxscoreRefresh();
+    rightRailRefresh();
+    landingRefresh();
+  }, [scheduleRefresh, standingsRefresh, boxscoreRefresh, rightRailRefresh, landingRefresh]);
 
   return (
     <div className="min-h-screen bg-[#080808] text-white/90 relative">
@@ -1847,6 +1868,7 @@ export default function App() {
           metro={standings.metro}
           lastFetch={lastFetch}
           error={anyError}
+          refresh={refresh}
         />
 
         <div className="flex-1 min-w-0 flex flex-col min-h-screen">

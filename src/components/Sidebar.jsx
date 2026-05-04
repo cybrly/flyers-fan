@@ -1,0 +1,134 @@
+import { ChevronRight, Flame, RefreshCw } from 'lucide-react';
+import { cx, fmtRelative, connStatus } from '../config.js';
+import { Kbd, Chip, Label, Skeleton } from './primitives.jsx';
+import { FlyersMark, TeamLogo } from './Logo.jsx';
+import { NAV_ITEMS } from './nav.js';
+
+export const Sidebar = ({ page, setPage, team, liveGame, metro, lastFetch, error, refresh }) => {
+  const status = connStatus(lastFetch, error);
+  const streak = team?.streak;
+
+  return (
+    <aside className="hidden lg:flex flex-col w-[244px] shrink-0 h-screen sticky top-0 border-r border-white/[0.06] bg-[#0A0A0A]/80 backdrop-blur-md">
+      <div className="h-12 px-4 flex items-center justify-between border-b border-white/[0.05]">
+        <div className="flex items-center gap-2">
+          <FlyersMark size={20} />
+          <div className="flex items-baseline gap-1">
+            <span className="text-[13px] font-semibold tracking-tight">flyers</span>
+            <span className="text-[13px] text-[#F74902] font-semibold">.fan</span>
+          </div>
+        </div>
+        <button
+          onClick={refresh}
+          title="Refresh data"
+          className="text-white/30 hover:text-white/70 transition-colors"
+        >
+          <RefreshCw size={13} />
+        </button>
+      </div>
+
+      <div className="px-3 py-3 border-b border-white/[0.05]">
+        <div className="w-full group flex items-center justify-between px-2 py-1.5 rounded-md">
+          <div className="flex items-center gap-2 min-w-0">
+            <div className="w-5 h-5 bg-gradient-to-br from-[#F74902] to-[#A82E00] rounded-sm flex items-center justify-center shrink-0">
+              <span className="text-[9px] font-bold text-black font-mono">PHI</span>
+            </div>
+            <div className="min-w-0 text-left">
+              <div className="text-[11px] font-medium truncate">2025–26 Season</div>
+              <div className="text-[10px] text-white/40 font-mono">
+                {team ? `${team.w}–${team.l} · Metro #${team.divRank}` : <span className="text-white/30">loading…</span>}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <nav className="flex-1 overflow-y-auto px-2 py-3">
+        <div className="px-2 mb-2"><Label>Workspace</Label></div>
+        <div className="space-y-0.5">
+          {NAV_ITEMS.map(({ id, label, icon: Icon, kbd }) => {
+            const active = page === id;
+            const liveBadge = id === 'game' && liveGame;
+            return (
+              <button
+                key={id}
+                onClick={() => setPage(id)}
+                className={cx(
+                  'w-full group flex items-center justify-between px-2 h-7 rounded-md transition-all',
+                  active ? 'bg-white/[0.06] text-white' : 'text-white/55 hover:text-white hover:bg-white/[0.03]',
+                )}
+              >
+                <div className="flex items-center gap-2">
+                  <Icon size={13} strokeWidth={active ? 2 : 1.75} className={active ? 'text-[#F74902]' : ''} />
+                  <span className="text-[12px] font-medium tracking-tight">{label}</span>
+                  {liveBadge && <Chip tone="live" pulse>LIVE</Chip>}
+                </div>
+                {!liveBadge && <Kbd>{kbd}</Kbd>}
+              </button>
+            );
+          })}
+        </div>
+
+        <div className="mt-6 px-2">
+          <div className="flex items-center justify-between mb-2">
+            <Label>Metro · Top 4</Label>
+            <ChevronRight size={10} className="text-white/30" />
+          </div>
+          <div className="space-y-[2px]">
+            {metro?.length ? metro.slice(0, 4).map((t, i) => (
+              <div
+                key={t.abbr}
+                className={cx(
+                  'flex items-center gap-2 px-2 h-6 rounded-sm',
+                  t.us ? 'bg-[#F74902]/[0.08]' : 'hover:bg-white/[0.02]',
+                )}
+              >
+                <span className={cx('text-[10px] font-mono tabular-nums w-3',
+                  t.us ? 'text-[#F74902]' : i < 3 ? 'text-white/50' : 'text-white/25'
+                )}>{i + 1}</span>
+                <TeamLogo abbr={t.abbr} size={14} />
+                <span className={cx('text-[11px] font-mono font-medium',
+                  t.us ? 'text-white' : 'text-white/70'
+                )}>{t.abbr}</span>
+                <span className="flex-1 text-right text-[10px] font-mono tabular-nums text-white/40">
+                  {t.w}–{t.l}
+                </span>
+              </div>
+            )) : (
+              Array.from({ length: 4 }).map((_, i) => (
+                <div key={i} className="px-2 h-6 flex items-center"><Skeleton className="w-full" height={12} /></div>
+              ))
+            )}
+          </div>
+        </div>
+      </nav>
+
+      <div className="border-t border-white/[0.05] p-3 space-y-2">
+        <div className="flex items-center justify-between text-[10px] font-mono">
+          <div className={cx('flex items-center gap-1.5',
+            status.tone === 'green' ? 'text-emerald-400' :
+            status.tone === 'amber' ? 'text-amber-400' : 'text-red-400'
+          )}>
+            <span className="relative flex h-1.5 w-1.5">
+              {status.tone === 'green' && (
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-60" />
+              )}
+              <span className={cx('relative inline-flex rounded-full h-1.5 w-1.5',
+                status.tone === 'green' ? 'bg-emerald-400' :
+                status.tone === 'amber' ? 'bg-amber-400' : 'bg-red-400'
+              )} />
+            </span>
+            <span className="uppercase">{status.label}</span>
+          </div>
+          <span className="text-white/30">{fmtRelative(lastFetch)}</span>
+        </div>
+        {streak && (
+          <div className="flex items-center justify-between text-[10px] font-mono text-white/40">
+            <span className="flex items-center gap-1.5"><Flame size={9} className="text-[#F74902]" />Streak</span>
+            <span className="text-[#FF8A4C] font-medium">{streak}</span>
+          </div>
+        )}
+      </div>
+    </aside>
+  );
+};

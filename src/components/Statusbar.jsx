@@ -1,0 +1,28 @@
+import { Wifi, WifiOff, RefreshCw } from 'lucide-react';
+import { cx, fmtRelative, connStatus } from '../config.js';
+
+export const Statusbar = ({ lastFetch, error, refresh }) => {
+  const status = connStatus(lastFetch, error);
+  return (
+    <div className="h-7 border-t border-white/[0.06] bg-[#080808] flex items-center justify-between px-4 md:px-6 text-[10px] font-mono text-white/45">
+      <div className="flex items-center gap-4">
+        <span className={cx('flex items-center gap-1.5',
+          status.tone === 'red' && 'text-red-400',
+          status.tone === 'amber' && 'text-amber-400'
+        )}>
+          {error ? <WifiOff size={10} /> : <Wifi size={10} />}
+          <span>api-web.nhle.com · {status.label}</span>
+        </span>
+        <button onClick={refresh} className="flex items-center gap-1.5 hover:text-white/70 transition-colors">
+          <RefreshCw size={10} />
+          <span className="hidden sm:inline">refresh {fmtRelative(lastFetch)}</span>
+          <span className="sm:hidden">refresh</span>
+        </button>
+      </div>
+      <div className="flex items-center gap-4">
+        <span className="hidden md:inline">2025–26 Season</span>
+        <span>v0.2</span>
+      </div>
+    </div>
+  );
+};

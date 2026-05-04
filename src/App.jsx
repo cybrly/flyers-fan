@@ -253,7 +253,7 @@ export default function App() {
               <Suspense fallback={
                 <div className="p-6 text-[12px] font-mono text-white/35">loading…</div>
               }>
-                {page === 'dashboard' && <Dashboard schedule={schedule} standings={standings} scoreboard={scoreboard} loading={scheduleRaw.loading || standingsRaw.loading} onOpenGame={openGame} />}
+                {page === 'dashboard' && <Dashboard schedule={schedule} standings={standings} scoreboard={scoreboard} liveDetail={isLive(boxscore.data?.gameState) ? game : null} loading={scheduleRaw.loading || standingsRaw.loading} onOpenGame={openGame} />}
                 {page === 'schedule'  && <Schedule schedule={schedule} onOpenGame={openGame} />}
                 {page === 'standings' && <Standings standings={standings} />}
                 {page === 'game'      && <GameTape game={game} loading={boxscore.loading} pbp={pbp} pbpRaw={pbpRaw.data} customGameId={routeGameId} onClearCustom={clearSelectedGame} />}

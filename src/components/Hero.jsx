@@ -25,34 +25,92 @@ function useCountdown(startUTC) {
   };
 }
 
-const HeroLive = ({ liveGame, oppFull }) => (
-  <>
-    <div className="flex items-center gap-2">
-      <Chip tone="live" pulse>LIVE NOW</Chip>
-      <span className="text-[11px] font-mono text-white/55 uppercase tracking-wider">{liveGame.home ? 'Home' : 'Away'} · {liveGame.venue || 'TBD'}</span>
-    </div>
-    <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-4 sm:gap-8 mt-5">
-      <div className="flex items-center gap-3 min-w-0">
-        <FlyersMark size={48} />
-        <div className="min-w-0">
-          <div className="text-[10px] font-mono text-white/45 uppercase tracking-wider">Philadelphia</div>
-          <div className="text-[18px] font-semibold tracking-tight">Flyers</div>
+// Live game card with real-time period/clock from the boxscore. `liveDetail`
+// is the adapted boxscore object — when present we show period, clock, SOG,
+// power play, and intermission state. Without it we fall back to the schedule
+// snapshot (just scores).
+const HeroLive = ({ liveGame, liveDetail, oppFull }) => {
+  const period = liveDetail?.periodDescriptor;
+  const clock = liveDetail?.clock;
+  const inIntermission = clock?.inIntermission;
+  const periodLabel = period?.periodType === 'OT'
+    ? 'OT'
+    : period?.periodType === 'SO'
+      ? 'SO'
+      : period?.number ? `P${period.number}` : null;
+  const clockText = clock?.timeRemaining || '—:—';
+
+  const sog = liveDetail?.stats?.shots;
+  const pp = liveDetail?.stats?.powerPlay;
+
+  return (
+    <>
+      <div className="flex items-center gap-2 flex-wrap">
+        <Chip tone="live" pulse>LIVE</Chip>
+        {periodLabel && (
+          <div className="flex items-center gap-1.5 px-2 h-6 border border-[#F74902]/30 bg-[#F74902]/[0.08] rounded-md">
+            <span className="text-[10px] font-mono text-[#FF8A4C] uppercase tracking-wider">{periodLabel}</span>
+            <span className="text-[12px] font-mono tabular-nums text-white/85">
+              {inIntermission ? 'INT' : clockText}
+            </span>
+          </div>
+        )}
+        <span className="text-[11px] font-mono text-white/50 uppercase tracking-wider">
+          {liveGame.home ? 'Home' : 'Away'}{liveGame.venue ? ` · ${liveGame.venue}` : ''}
+        </span>
+      </div>
+      <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-4 sm:gap-8 mt-5">
+        <div className="flex items-center gap-3 min-w-0">
+          <FlyersMark size={48} />
+          <div className="min-w-0">
+            <div className="text-[10px] font-mono text-white/45 uppercase tracking-wider">Philadelphia</div>
+            <div className="text-[18px] font-semibold tracking-tight">Flyers</div>
+          </div>
+        </div>
+        <div className="flex items-baseline gap-3">
+          <span className="text-[64px] sm:text-[84px] font-semibold tabular-nums tracking-tight text-[#FF8A4C] leading-none">{liveGame.us}</span>
+          <span className="text-[36px] text-white/20">–</span>
+          <span className="text-[64px] sm:text-[84px] font-semibold tabular-nums tracking-tight text-white/80 leading-none">{liveGame.them}</span>
+        </div>
+        <div className="flex items-center gap-3 min-w-0 justify-end">
+          <div className="text-right min-w-0">
+            <div className="text-[10px] font-mono text-white/45 uppercase tracking-wider">{oppFull?.split(' ').slice(0, -1).join(' ') || liveGame.opp}</div>
+            <div className="text-[18px] font-semibold tracking-tight text-white/85">{oppFull?.split(' ').slice(-1) || ''}</div>
+          </div>
+          <TeamLogo abbr={liveGame.opp} size={48} />
         </div>
       </div>
-      <div className="flex items-baseline gap-3">
-        <span className="text-[64px] sm:text-[84px] font-semibold tabular-nums tracking-tight text-[#FF8A4C] leading-none">{liveGame.us}</span>
-        <span className="text-[36px] text-white/20">–</span>
-        <span className="text-[64px] sm:text-[84px] font-semibold tabular-nums tracking-tight text-white/80 leading-none">{liveGame.them}</span>
-      </div>
-      <div className="flex items-center gap-3 min-w-0 justify-end">
-        <div className="text-right min-w-0">
-          <div className="text-[10px] font-mono text-white/45 uppercase tracking-wider">{oppFull?.split(' ').slice(0, -1).join(' ') || liveGame.opp}</div>
-          <div className="text-[18px] font-semibold tracking-tight text-white/85">{oppFull?.split(' ').slice(-1) || ''}</div>
+
+      {/* Live stat strip — appears when boxscore data is loaded */}
+      {liveDetail && (sog?.us != null || pp?.us != null) && (
+        <div className="mt-4 pt-4 border-t border-white/[0.06] flex items-center justify-center gap-5 sm:gap-7 text-[11px] font-mono">
+          {sog?.us != null && (
+            <LiveStat label="SOG" us={sog.us} them={sog.them} />
+          )}
+          {pp?.us != null && (
+            <LiveStat label="Power Play" us={pp.us} them={pp.them} />
+          )}
+          {liveDetail.stats?.faceoffPct?.us != null && (
+            <LiveStat label="FO %" us={`${liveDetail.stats.faceoffPct.us}%`} them={`${liveDetail.stats.faceoffPct.them}%`} />
+          )}
+          {liveDetail.stats?.hits?.us != null && (
+            <LiveStat label="Hits" us={liveDetail.stats.hits.us} them={liveDetail.stats.hits.them} />
+          )}
         </div>
-        <TeamLogo abbr={liveGame.opp} size={48} />
-      </div>
+      )}
+    </>
+  );
+};
+
+const LiveStat = ({ label, us, them }) => (
+  <div className="text-center">
+    <div className="text-[9px] font-mono text-white/40 uppercase tracking-wider mb-1">{label}</div>
+    <div className="flex items-center gap-1.5 tabular-nums">
+      <span className="text-[#FF8A4C]">{us}</span>
+      <span className="text-white/25">·</span>
+      <span className="text-white/65">{them}</span>
     </div>
-  </>
+  </div>
 );
 
 const HeroNext = ({ nextGame, oppFull }) => {
@@ -138,22 +196,26 @@ const HeroLatest = ({ lastResult, oppFull }) => (
   </>
 );
 
-export const Hero = ({ liveGame, nextGame, lastResult, us }) => {
+export const Hero = ({ liveGame, liveDetail, nextGame, lastResult, us }) => {
   const opp = liveGame?.opp || nextGame?.opp || lastResult?.opp;
   const oppFull = opp ? OPP_FULL[opp] : null;
 
   return (
     <div
       className="relative overflow-hidden rounded-md border border-white/[0.06] bg-gradient-to-br from-[#141414] via-[#101010] to-[#0A0A0A] px-5 sm:px-8 py-6 sm:py-8"
-      style={{ backgroundImage: `url(${PHI_LOGO})`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right -40px center', backgroundSize: 'auto 200%' }}
+      // Watermark Flyers logo sits on the LEFT, behind the Flyers block in the
+      // hero content (which is also left-aligned). Putting it on the right
+      // would float it behind the opponent — visually wrong.
+      style={{ backgroundImage: `url(${PHI_LOGO})`, backgroundRepeat: 'no-repeat', backgroundPosition: 'left -40px center', backgroundSize: 'auto 200%' }}
     >
-      {/* Neutral veil so the watermark logo doesn't fight content */}
-      <div className="absolute inset-0 pointer-events-none bg-gradient-to-r from-[#0A0A0A] via-[#0A0A0A]/85 to-[#0A0A0A]/55" />
-      <div className="absolute -top-40 -right-40 w-[500px] h-[500px] rounded-full pointer-events-none"
+      {/* Neutral veil so the watermark logo doesn't fight content. Gradient
+          goes left → right (opaque on the right where the opponent lives). */}
+      <div className="absolute inset-0 pointer-events-none bg-gradient-to-l from-[#0A0A0A] via-[#0A0A0A]/85 to-[#0A0A0A]/55" />
+      <div className="absolute -top-40 -left-40 w-[500px] h-[500px] rounded-full pointer-events-none"
         style={{ background: 'radial-gradient(circle, rgba(247,73,2,0.18), transparent 60%)' }} />
 
       <div className="relative">
-        {liveGame ? <HeroLive liveGame={liveGame} oppFull={oppFull} /> :
+        {liveGame ? <HeroLive liveGame={liveGame} liveDetail={liveDetail} oppFull={oppFull} /> :
           nextGame ? <HeroNext nextGame={nextGame} oppFull={oppFull} /> :
           lastResult ? <HeroLatest lastResult={lastResult} oppFull={oppFull} /> :
           (

@@ -7,7 +7,7 @@ import { KPI } from '../components/KPI.jsx';
 import { Hero } from '../components/Hero.jsx';
 import { Scoreboard } from '../components/Scoreboard.jsx';
 
-export const Dashboard = ({ schedule, standings, scoreboard, loading, onOpenGame }) => {
+export const Dashboard = ({ schedule, standings, scoreboard, liveDetail, loading, onOpenGame }) => {
   const games = schedule?.games?.slice(0, 20) || [];
   const chronGames = [...games].reverse();
   const l10 = games.slice(0, 10);
@@ -47,7 +47,7 @@ export const Dashboard = ({ schedule, standings, scoreboard, loading, onOpenGame
 
   return (
     <div className="p-4 md:p-6 space-y-4">
-      <Hero liveGame={liveGame} nextGame={nextGame} lastResult={lastResult} us={us} />
+      <Hero liveGame={liveGame} liveDetail={liveDetail} nextGame={nextGame} lastResult={lastResult} us={us} />
 
       {scoreboard?.games?.length > 0 && <Scoreboard data={scoreboard} />}
 
@@ -183,6 +183,20 @@ export const Dashboard = ({ schedule, standings, scoreboard, loading, onOpenGame
           {liveGame ? (
             <Section title={<span className="flex items-center gap-2">Live Now <Chip tone="live" pulse>LIVE</Chip></span>}>
               <div className="p-4 space-y-3">
+                {/* Period + clock strip — pulled from the boxscore so it
+                    refreshes on the live polling interval. */}
+                {liveDetail?.periodDescriptor && (
+                  <div className="flex items-center justify-between px-2.5 h-9 border border-[#F74902]/25 bg-[#F74902]/[0.06] rounded-md">
+                    <span className="text-[10px] font-mono text-[#FF8A4C] uppercase tracking-wider">
+                      {liveDetail.periodDescriptor.periodType === 'OT' ? 'Overtime'
+                        : liveDetail.periodDescriptor.periodType === 'SO' ? 'Shootout'
+                        : `Period ${liveDetail.periodDescriptor.number}`}
+                    </span>
+                    <span className="text-[18px] font-semibold font-mono tabular-nums text-white">
+                      {liveDetail.clock?.inIntermission ? 'INT' : (liveDetail.clock?.timeRemaining || '—:—')}
+                    </span>
+                  </div>
+                )}
                 <div className="flex items-center justify-between py-1">
                   <div className="flex items-center gap-2">
                     <FlyersMark size={18} />
@@ -197,9 +211,47 @@ export const Dashboard = ({ schedule, standings, scoreboard, loading, onOpenGame
                   </div>
                   <span className="text-[28px] font-semibold tabular-nums text-white/70">{liveGame.them}</span>
                 </div>
-                <div className="pt-3 border-t border-white/[0.05] text-[10px] font-mono text-white/50 flex items-center justify-between">
+                {/* Live stat row */}
+                {liveDetail?.stats && (
+                  <div className="pt-3 border-t border-white/[0.05] grid grid-cols-3 gap-2 text-center">
+                    {liveDetail.stats.shots?.us != null && (
+                      <div>
+                        <div className="text-[9px] font-mono text-white/40 uppercase tracking-wider">SOG</div>
+                        <div className="text-[12px] font-mono tabular-nums mt-0.5">
+                          <span className="text-[#FF8A4C]">{liveDetail.stats.shots.us}</span>
+                          <span className="text-white/25 mx-1">·</span>
+                          <span className="text-white/70">{liveDetail.stats.shots.them}</span>
+                        </div>
+                      </div>
+                    )}
+                    {liveDetail.stats.powerPlay?.us != null && (
+                      <div>
+                        <div className="text-[9px] font-mono text-white/40 uppercase tracking-wider">PP</div>
+                        <div className="text-[12px] font-mono tabular-nums mt-0.5">
+                          <span className="text-[#FF8A4C]">{liveDetail.stats.powerPlay.us}</span>
+                          <span className="text-white/25 mx-1">·</span>
+                          <span className="text-white/70">{liveDetail.stats.powerPlay.them}</span>
+                        </div>
+                      </div>
+                    )}
+                    {liveDetail.stats.faceoffPct?.us != null && (
+                      <div>
+                        <div className="text-[9px] font-mono text-white/40 uppercase tracking-wider">FO%</div>
+                        <div className="text-[12px] font-mono tabular-nums mt-0.5 text-white/85">
+                          {liveDetail.stats.faceoffPct.us}%
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+                <div className="pt-2 border-t border-white/[0.05] text-[10px] font-mono text-white/50 flex items-center justify-between">
                   <span>{liveGame.home ? 'HOME' : 'AWAY'} · {liveGame.venue || 'TBD'}</span>
-                  <span className="text-red-400">● IN PROGRESS</span>
+                  <button
+                    onClick={() => onOpenGame?.(liveGame.id)}
+                    className="text-[#FF8A4C] hover:text-white transition-colors"
+                  >
+                    open game tape →
+                  </button>
                 </div>
               </div>
             </Section>

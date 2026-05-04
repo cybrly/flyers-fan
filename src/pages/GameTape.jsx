@@ -179,7 +179,12 @@ export const GameTape = ({ game, loading, pbp, pbpRaw, customGameId, onClearCust
       </div>
 
       <div className="border border-white/[0.06] bg-[#0C0C0C]/60 rounded-md p-5 relative overflow-hidden">
-        <div className="absolute -top-20 -right-20 w-60 h-60 rounded-full pointer-events-none opacity-60"
+        {/* Flyers-orange glow sits on the side where PHI actually is — left
+            when PHI is the away team, right when PHI is home. */}
+        <div className={cx(
+          'absolute -top-20 w-60 h-60 rounded-full pointer-events-none opacity-60',
+          game.home ? '-right-20' : '-left-20'
+        )}
           style={{ background: 'radial-gradient(circle, rgba(247,73,2,0.15), transparent 70%)' }} />
         {/* Standard hockey scoreboard layout: away team on the left, home team
             on the right. PHI may be either side depending on game.home. */}

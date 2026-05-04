@@ -4,8 +4,8 @@
   "description": "Live Philadelphia Flyers stats, schedule, standings, and game tape.",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#08090C",
-  "theme_color": "#08090C",
+  "background_color": "#0A0A0A",
+  "theme_color": "#0A0A0A",
   "orientation": "any",
   "icons": [
     {

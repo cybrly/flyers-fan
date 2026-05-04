@@ -144,11 +144,11 @@ export const Hero = ({ liveGame, nextGame, lastResult, us }) => {
 
   return (
     <div
-      className="relative overflow-hidden rounded-md border border-white/[0.06] bg-gradient-to-br from-[#13141A] via-[#0E0F14] to-[#0A0B10] px-5 sm:px-8 py-6 sm:py-8"
+      className="relative overflow-hidden rounded-md border border-white/[0.06] bg-gradient-to-br from-[#141414] via-[#101010] to-[#0A0A0A] px-5 sm:px-8 py-6 sm:py-8"
       style={{ backgroundImage: `url(${PHI_LOGO})`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right -40px center', backgroundSize: 'auto 200%' }}
     >
-      {/* Tinted veil so the watermark logo doesn't fight content */}
-      <div className="absolute inset-0 pointer-events-none bg-gradient-to-r from-[#08090C] via-[#08090C]/85 to-[#08090C]/55" />
+      {/* Neutral veil so the watermark logo doesn't fight content */}
+      <div className="absolute inset-0 pointer-events-none bg-gradient-to-r from-[#0A0A0A] via-[#0A0A0A]/85 to-[#0A0A0A]/55" />
       <div className="absolute -top-40 -right-40 w-[500px] h-[500px] rounded-full pointer-events-none"
         style={{ background: 'radial-gradient(circle, rgba(247,73,2,0.18), transparent 60%)' }} />
 

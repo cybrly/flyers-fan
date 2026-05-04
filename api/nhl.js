@@ -20,12 +20,18 @@ export const config = {
 const ALLOWED = /^v1\/[a-zA-Z0-9/_\-?=&.]+$/;
 
 // How long CDN edges may cache each endpoint. Shorter = fresher, higher upstream load.
-// These apply via the Cache-Control header below.
+// These apply via the Cache-Control header below. SWR window = 3× s-maxage so
+// stale responses get served instantly while a fresh fetch happens in background.
 const cacheFor = (path) => {
-  if (path.includes('/gamecenter/') && path.includes('/play-by-play')) return 5;   // during live play
-  if (path.includes('/gamecenter/'))                                   return 10;  // boxscore, landing, right-rail
-  if (path.startsWith('v1/standings'))                                 return 300; // 5 min
-  if (path.startsWith('v1/club-schedule-season'))                      return 60;  // 1 min
+  if (path.includes('/gamecenter/') && path.includes('/play-by-play')) return 5;    // live play
+  if (path.includes('/gamecenter/'))                                   return 10;   // boxscore, landing, right-rail
+  if (path.startsWith('v1/standings'))                                 return 300;  // 5 min
+  if (path.startsWith('v1/club-schedule-season'))                      return 60;   // 1 min
+  if (path.startsWith('v1/playoff-bracket'))                           return 120;  // 2 min
+  if (path.startsWith('v1/schedule/playoff-series'))                   return 120;
+  if (path.startsWith('v1/club-stats'))                                return 120;
+  if (path.startsWith('v1/roster/'))                                   return 3600; // hourly — roster doesn't churn
+  if (path.startsWith('v1/player/'))                                   return 600;  // 10 min — player landing
   return 30;
 };
 
@@ -84,7 +90,10 @@ export default async function handler(req) {
       status: 200,
       headers: {
         'content-type': 'application/json',
-        'cache-control': `public, s-maxage=${ttl}, stale-while-revalidate=${ttl * 3}`,
+        // CDN caches at the edge, serves stale during revalidate, and falls
+        // back to stale for ~10 min if upstream errors — site stays useful
+        // even if api-web.nhle.com is having a bad day.
+        'cache-control': `public, s-maxage=${ttl}, stale-while-revalidate=${ttl * 3}, stale-if-error=600`,
         'access-control-allow-origin': '*',
       },
     });

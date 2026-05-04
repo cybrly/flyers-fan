@@ -3,6 +3,7 @@ import { useState, useEffect, useMemo, useCallback, lazy, Suspense } from 'react
 import { TEAM_ABBR, SEASON, POLL, isLive, isFuture } from './config.js';
 import { useNHL, useClockTick } from './api.js';
 import { PlayerCtx } from './context.js';
+import { useRoute, navigate, setOverlay, pageHref, gameHref } from './router.js';
 import {
   adaptSchedule, adaptStandings, adaptGame,
   adaptPlayByPlay, adaptBracket, adaptRoster, adaptClubStats,
@@ -27,17 +28,31 @@ const Playoffs  = lazy(() => import('./pages/Playoffs.jsx').then((m) => ({ defau
 const Roster    = lazy(() => import('./pages/Roster.jsx').then((m) => ({ default: m.Roster })));
 
 export default function App() {
-  const [page, setPage] = useState('dashboard');
-  const [selectedGameId, setSelectedGameId] = useState(null);
+  // Route-derived state — URL is the source of truth. /game/123, ?player=8478,
+  // ?series=A all survive refresh and become shareable links.
+  const { page, gameId: routeGameId, playerId, seriesLetter } = useRoute();
   const [paletteOpen, setPaletteOpen] = useState(false);
-  const [activePlayerId, setActivePlayerId] = useState(null);
-  const [activeSeriesLetter, setActiveSeriesLetter] = useState(null);
+
+  const setPage = useCallback((p) => navigate(pageHref(p)), []);
   const playerCtx = useMemo(() => ({
-    open: (id) => setActivePlayerId(id),
-    close: () => setActivePlayerId(null),
+    open: (id) => setOverlay('player', id),
+    close: () => setOverlay('player', null),
   }), []);
 
   useClockTick(1000);
+
+  // Per-page document title — meaningful tabs and history entries.
+  useEffect(() => {
+    const titles = {
+      dashboard: 'flyers.fan',
+      schedule: 'Schedule · flyers.fan',
+      standings: 'Standings · flyers.fan',
+      game: 'Game Tape · flyers.fan',
+      playoffs: 'Playoffs · flyers.fan',
+      roster: 'Roster · flyers.fan',
+    };
+    document.title = titles[page] || 'flyers.fan';
+  }, [page]);
 
   useEffect(() => {
     const h = (e) => {
@@ -53,7 +68,7 @@ export default function App() {
         '1': 'dashboard', '2': 'schedule', '3': 'standings',
         '4': 'game', '5': 'playoffs', '6': 'roster',
       };
-      if (map[e.key]) setPage(map[e.key]);
+      if (map[e.key]) navigate(pageHref(map[e.key]));
     };
     window.addEventListener('keydown', h);
     return () => window.removeEventListener('keydown', h);
@@ -78,9 +93,9 @@ export default function App() {
   const standingsRaw = useNHL('v1/standings/now', POLL.standings);
   const standings = useMemo(() => adaptStandings(standingsRaw.data), [standingsRaw.data]);
 
-  // Pick game ID for Game Tape: explicit selection (clicked from a list) wins,
+  // Pick game ID for Game Tape: explicit selection (URL /game/:id) wins,
   // otherwise live game, otherwise most recent finished.
-  const gameId = selectedGameId || schedule.liveGame?.id || schedule.games[0]?.id || null;
+  const gameId = routeGameId || schedule.liveGame?.id || schedule.games[0]?.id || null;
 
   const boxscore = useNHL(gameId ? `v1/gamecenter/${gameId}/boxscore` : null,
     (d) => (d && isLive(d.gameState)) ? POLL.live : POLL.idle);
@@ -151,28 +166,25 @@ export default function App() {
     landingRefresh();
   }, [scheduleRefresh, standingsRefresh, boxscoreRefresh, rightRailRefresh, landingRefresh]);
 
-  const openGame = useCallback((id) => {
-    setSelectedGameId(id);
-    setPage('game');
-  }, []);
-  const clearSelectedGame = useCallback(() => setSelectedGameId(null), []);
+  const openGame = useCallback((id) => navigate(gameHref(id)), []);
+  const clearSelectedGame = useCallback(() => navigate(gameHref(null)), []);
+  const onOpenSeries = useCallback((letter) => setOverlay('series', letter), []);
+  const closeSeries = useCallback(() => setOverlay('series', null), []);
 
   return (
     <PlayerCtx.Provider value={playerCtx}>
-    <div className="min-h-screen bg-[#08090C] text-white/90 relative">
+    <div className="min-h-screen bg-[#0A0A0A] text-white/90 relative">
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&family=Geist+Mono:wght@400;500;600&display=swap');
-        html, body { background: #08090C; }
+        html, body { background: #0A0A0A; }
         * { font-family: 'Geist', system-ui, -apple-system, sans-serif; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
         .font-mono, code, kbd { font-family: 'Geist Mono', ui-monospace, SF Mono, monospace !important; }
         .tabular-nums { font-variant-numeric: tabular-nums; }
-        body {
-          background:
-            radial-gradient(ellipse 50% 30% at 100% 0%, rgba(120,140,180,0.04), transparent 65%),
-            radial-gradient(ellipse 40% 25% at 0% 100%, rgba(255,255,255,0.02), transparent 65%),
-            #08090C;
-          background-attachment: fixed;
-        }
+        /* Flat neutral charcoal — no color tints, no radial gradients. Matches
+           the sidebar/topbar surface so panels disappear into the background
+           without seams. Any colored overlay shifts perception (blue → navy,
+           orange → brown), so we keep it pure. */
+        body { background: #0A0A0A; background-attachment: fixed; }
         ::selection { background: #F74902; color: #000; }
         ::-webkit-scrollbar { width: 8px; height: 8px; }
         ::-webkit-scrollbar-track { background: transparent; }
@@ -233,8 +245,8 @@ export default function App() {
                 {page === 'dashboard' && <Dashboard schedule={schedule} standings={standings} loading={scheduleRaw.loading || standingsRaw.loading} onOpenGame={openGame} />}
                 {page === 'schedule'  && <Schedule schedule={schedule} onOpenGame={openGame} />}
                 {page === 'standings' && <Standings standings={standings} />}
-                {page === 'game'      && <GameTape game={game} loading={boxscore.loading} pbp={pbp} pbpRaw={pbpRaw.data} customGameId={selectedGameId} onClearCustom={clearSelectedGame} />}
-                {page === 'playoffs'  && <Playoffs bracket={bracket} onOpenSeries={setActiveSeriesLetter} />}
+                {page === 'game'      && <GameTape game={game} loading={boxscore.loading} pbp={pbp} pbpRaw={pbpRaw.data} customGameId={routeGameId} onClearCustom={clearSelectedGame} />}
+                {page === 'playoffs'  && <Playoffs bracket={bracket} onOpenSeries={onOpenSeries} />}
                 {page === 'roster'    && <Roster roster={roster} clubStats={clubStats} />}
               </Suspense>
             </ErrorBoundary>
@@ -244,8 +256,8 @@ export default function App() {
         </div>
       </div>
 
-      <PlayerModal playerId={activePlayerId} onClose={playerCtx.close} />
-      <SeriesModal letter={activeSeriesLetter} onClose={() => setActiveSeriesLetter(null)} />
+      <PlayerModal playerId={playerId} onClose={playerCtx.close} />
+      <SeriesModal letter={seriesLetter} onClose={closeSeries} />
       <CommandPalette
         open={paletteOpen}
         onClose={() => setPaletteOpen(false)}

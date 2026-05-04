@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import {
   LayoutDashboard, Calendar, Trophy, Clipboard,
-  ArrowUp, ArrowDown, Minus, ChevronRight, Circle,
+  ArrowUp, ArrowDown, Minus, ChevronRight,
   Wifi, WifiOff, Home, Plane, Flame,
   RefreshCw, AlertCircle,
 } from 'lucide-react';
@@ -619,28 +619,6 @@ const Sidebar = ({ page, setPage, team, liveGame, metro, lastFetch, error, refre
               </button>
             );
           })}
-        </div>
-
-        <div className="px-2 mt-6 mb-2"><Label>Analysis</Label></div>
-        <div className="space-y-0.5">
-          {[
-            { label: 'Roster',   kbd: '5' },
-            { label: 'Advanced', kbd: '6' },
-            { label: 'Playoffs', kbd: '7' },
-          ].map((item) => (
-            <button
-              key={item.label}
-              disabled
-              className="w-full flex items-center justify-between px-2 h-7 rounded-md text-white/35"
-            >
-              <div className="flex items-center gap-2">
-                <Circle size={5} fill="currentColor" className="text-white/20" />
-                <span className="text-[12px] font-medium tracking-tight">{item.label}</span>
-                <Chip tone="muted">Soon</Chip>
-              </div>
-              <Kbd>{item.kbd}</Kbd>
-            </button>
-          ))}
         </div>
 
         <div className="mt-6 px-2">

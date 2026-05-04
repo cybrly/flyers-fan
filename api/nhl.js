@@ -29,6 +29,23 @@ const cacheFor = (path) => {
   return 30;
 };
 
+// Walk redirects manually so our headers (notably user-agent) are preserved on
+// every hop. Vercel's edge fetch silently strips them when auto-following, and
+// the upstream's Cloudflare WAF then returns 404 to "anonymous" requests —
+// /v1/standings/now (which 307s to a dated URL) is the one that bites.
+async function fetchFollowing(url, init, maxHops = 5) {
+  let current = url;
+  for (let i = 0; i < maxHops; i++) {
+    const r = await fetch(current, { ...init, redirect: 'manual' });
+    if (r.status >= 300 && r.status < 400) {
+      const loc = r.headers.get('location');
+      if (loc) { current = new URL(loc, current).href; continue; }
+    }
+    return r;
+  }
+  throw new Error('too many redirects');
+}
+
 export default async function handler(req) {
   const { searchParams } = new URL(req.url);
   const path = searchParams.get('path');
@@ -42,11 +59,12 @@ export default async function handler(req) {
 
   const upstream = `https://api-web.nhle.com/${path}`;
   const ttl = cacheFor(path);
+  const fetchInit = {
+    headers: { 'accept': 'application/json', 'user-agent': 'flyers.fan/0.2' },
+  };
 
   try {
-    const r = await fetch(upstream, {
-      headers: { 'accept': 'application/json', 'user-agent': 'flyers.fan/0.2' },
-    });
+    const r = await fetchFollowing(upstream, fetchInit);
 
     if (!r.ok) {
       return new Response(JSON.stringify({ error: 'upstream', status: r.status }), {

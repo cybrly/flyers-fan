@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="80" fill="#08090C"/>
+  <g transform="translate(256 256) skewX(-8) translate(-96 -128)">
+    <rect x="0" y="0" width="192" height="256" rx="16" fill="#F74902"/>
+    <text x="96" y="192" text-anchor="middle" font-family="system-ui, -apple-system, sans-serif"
+          font-size="180" font-weight="900" fill="#000"
+          transform="skewX(8)">P</text>
+  </g>
+</svg>

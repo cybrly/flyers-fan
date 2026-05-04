@@ -1,0 +1,24 @@
+{
+  "name": "flyers.fan",
+  "short_name": "flyers.fan",
+  "description": "Live Philadelphia Flyers stats, schedule, standings, and game tape.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#08090C",
+  "theme_color": "#08090C",
+  "orientation": "any",
+  "icons": [
+    {
+      "src": "/icon-512.svg",
+      "type": "image/svg+xml",
+      "sizes": "any",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-512.svg",
+      "type": "image/svg+xml",
+      "sizes": "any",
+      "purpose": "maskable"
+    }
+  ]
+}

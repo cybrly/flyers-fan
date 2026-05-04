@@ -3,7 +3,7 @@ import {
   LayoutDashboard, Calendar, Trophy, Clipboard,
   ArrowUp, ArrowDown, Minus, ChevronRight,
   Wifi, WifiOff, Home, Plane, Flame,
-  RefreshCw, AlertCircle,
+  RefreshCw, AlertCircle, Users, Award,
 } from 'lucide-react';
 
 /* ═══════════════════════════════════════════════════════════════
@@ -310,16 +310,54 @@ function adaptGame(boxscore, rightRail, landing) {
   }
   skaters.sort((a, b) => (b.pts - a.pts) || (b.sog - a.sog));
 
-  // Scoring by period from landing
+  // Goalies for both teams (saves, save%, decision)
+  const goalies = { us: [], them: [] };
+  for (const sideKey of ['us', 'them']) {
+    const apiSide = sideKey === 'us' ? usSide : themSide;
+    const team = boxscore.playerByGameStats?.[`${apiSide}Team`];
+    (team?.goalies || []).forEach((g) => {
+      goalies[sideKey].push({
+        name: g.name?.default || '—',
+        num: g.sweaterNumber,
+        toi: g.toi || '—',
+        sa: g.shotsAgainst ?? null,
+        saves: g.saves ?? null,
+        ga: g.goalsAgainst ?? null,
+        savePct: g.savePctg != null ? +(g.savePctg * 100).toFixed(1) : null,
+        decision: g.decision || '',
+        starter: !!g.starter,
+      });
+    });
+  }
+
+  // Scoring by period (counts) + flat timeline of every goal with assists
   const periods = {};
+  const timeline = [];
   if (landing?.summary?.scoring) {
     landing.summary.scoring.forEach((p) => {
       const num = p.periodDescriptor?.number;
+      const ptype = p.periodDescriptor?.periodType;
       if (!num) return;
       let uGoals = 0, tGoals = 0;
       (p.goals || []).forEach((g) => {
-        if (g.teamAbbrev?.default === TEAM_ABBR) uGoals++;
-        else tGoals++;
+        const isUs = g.teamAbbrev?.default === TEAM_ABBR;
+        if (isUs) uGoals++; else tGoals++;
+        timeline.push({
+          period: num,
+          periodType: ptype,
+          time: g.timeInPeriod,
+          us: isUs,
+          team: g.teamAbbrev?.default,
+          scorer: g.name?.default || '—',
+          scorerTotal: g.goalsToDate,
+          shotType: g.shotType,
+          strength: g.strength, // 'ev', 'pp', 'sh'
+          modifier: g.goalModifier, // 'empty-net', etc
+          assists: (g.assists || []).map((a) => a.name?.default).filter(Boolean),
+          score: { us: isUs ? g.homeScore : g.awayScore, them: isUs ? g.awayScore : g.homeScore }, // best-effort
+          awayScore: g.awayScore,
+          homeScore: g.homeScore,
+        });
       });
       periods[num] = [uGoals, tGoals];
     });
@@ -363,8 +401,201 @@ function adaptGame(boxscore, rightRail, landing) {
       takeaways: stat('takeaways'),
     },
     skaters,
+    goalies,
+    timeline,
     stars,
   };
+}
+
+// play-by-play → recent events with player names resolved via rosterSpots
+function adaptPlayByPlay(raw) {
+  if (!raw?.plays) return null;
+
+  const players = {};
+  (raw.rosterSpots || []).forEach((p) => {
+    players[p.playerId] = {
+      name: p.name?.default || `${p.firstName?.default?.[0] || ''}. ${p.lastName?.default || ''}`.trim(),
+      teamId: p.teamId,
+    };
+  });
+  const teamAbbr = {
+    [raw.homeTeam?.id]: raw.homeTeam?.abbrev,
+    [raw.awayTeam?.id]: raw.awayTeam?.abbrev,
+  };
+  const usTeamId = raw.homeTeam?.abbrev === TEAM_ABBR ? raw.homeTeam.id : raw.awayTeam?.id;
+
+  // Filter to noteworthy events; drop face-offs and stoppages from the ticker.
+  const KEEP = new Set([
+    'goal', 'shot-on-goal', 'missed-shot', 'blocked-shot',
+    'penalty', 'hit', 'giveaway', 'takeaway',
+    'period-start', 'period-end', 'game-end',
+  ]);
+
+  const playerName = (id) => players[id]?.name || '—';
+
+  const events = [];
+  for (const p of raw.plays) {
+    if (!KEEP.has(p.typeDescKey)) continue;
+    const det = p.details || {};
+    const teamId = det.eventOwnerTeamId;
+    const team = teamAbbr[teamId] || '';
+    const us = teamId === usTeamId;
+
+    let summary = '';
+    switch (p.typeDescKey) {
+      case 'goal': {
+        const scorer = playerName(det.scoringPlayerId);
+        const a1 = det.assist1PlayerId ? playerName(det.assist1PlayerId) : '';
+        const a2 = det.assist2PlayerId ? playerName(det.assist2PlayerId) : '';
+        const assists = [a1, a2].filter(Boolean).join(', ');
+        summary = `${scorer} scores${assists ? ` (${assists})` : ' (unassisted)'}`;
+        break;
+      }
+      case 'shot-on-goal':
+        summary = `${playerName(det.shootingPlayerId)} · shot ${det.shotType || ''}`.trim();
+        break;
+      case 'missed-shot':
+        summary = `${playerName(det.shootingPlayerId)} · shot missed`;
+        break;
+      case 'blocked-shot':
+        summary = `${playerName(det.blockingPlayerId)} blocks ${playerName(det.shootingPlayerId)}`;
+        break;
+      case 'penalty':
+        summary = `${playerName(det.committedByPlayerId)} · ${(det.descKey || '').replace(/-/g, ' ')} (${det.duration || 2} min)`;
+        break;
+      case 'hit':
+        summary = `${playerName(det.hittingPlayerId)} hits ${playerName(det.hitteePlayerId)}`;
+        break;
+      case 'giveaway':
+        summary = `${playerName(det.playerId)} · giveaway`;
+        break;
+      case 'takeaway':
+        summary = `${playerName(det.playerId)} · takeaway`;
+        break;
+      case 'period-start':
+        summary = `Period ${p.periodDescriptor?.number} start`;
+        break;
+      case 'period-end':
+        summary = `Period ${p.periodDescriptor?.number} end`;
+        break;
+      case 'game-end':
+        summary = 'Game end';
+        break;
+      default:
+        summary = p.typeDescKey;
+    }
+
+    events.push({
+      id: p.eventId,
+      kind: p.typeDescKey,
+      period: p.periodDescriptor?.number,
+      time: p.timeInPeriod,
+      timeRemaining: p.timeRemaining,
+      team,
+      us,
+      summary,
+      sortOrder: p.sortOrder,
+    });
+  }
+  // Most recent first
+  events.sort((a, b) => (b.period - a.period) || (b.sortOrder - a.sortOrder));
+  return {
+    state: raw.gameState,
+    clock: raw.clock,
+    period: raw.periodDescriptor,
+    events,
+  };
+}
+
+// playoff bracket → array of series annotated with our team
+function adaptBracket(raw) {
+  if (!raw?.series) return null;
+  const series = raw.series.map((s) => {
+    const top = s.topSeedTeam || {};
+    const bot = s.bottomSeedTeam || {};
+    const usTeam = [top, bot].find((t) => t.abbrev === TEAM_ABBR) || null;
+    return {
+      letter: s.seriesLetter,
+      title: s.seriesTitle,
+      round: s.playoffRound,
+      top: {
+        abbr: top.abbrev,
+        name: top.commonName?.default || top.abbrev,
+        rank: s.topSeedRankAbbrev,
+        wins: s.topSeedWins ?? 0,
+      },
+      bottom: {
+        abbr: bot.abbrev,
+        name: bot.commonName?.default || bot.abbrev,
+        rank: s.bottomSeedRankAbbrev,
+        wins: s.bottomSeedWins ?? 0,
+      },
+      winningTeamId: s.winningTeamId,
+      losingTeamId: s.losingTeamId,
+      complete: s.winningTeamId != null,
+      hasUs: !!usTeam,
+    };
+  });
+  // Group by round: 1..4
+  const byRound = [1, 2, 3, 4].map((r) => series.filter((s) => s.round === r));
+  return { rounds: byRound, title: raw.bracketTitle, subtitle: raw.bracketSubTitle };
+}
+
+// roster → forwards / defensemen / goalies, normalized
+function adaptRoster(raw) {
+  if (!raw) return null;
+  const norm = (p) => ({
+    id: p.id,
+    name: `${p.firstName?.default || ''} ${p.lastName?.default || ''}`.trim(),
+    num: p.sweaterNumber,
+    pos: p.positionCode,
+    shoots: p.shootsCatches,
+    heightIn: p.heightInInches,
+    weightLb: p.weightInPounds,
+    age: p.birthDate ? Math.floor((Date.now() - new Date(p.birthDate).getTime()) / 31557600000) : null,
+    birthCity: p.birthCity?.default,
+    birthCountry: p.birthCountry,
+    headshot: p.headshot,
+  });
+  return {
+    forwards: (raw.forwards || []).map(norm).sort((a, b) => (a.num || 99) - (b.num || 99)),
+    defense:  (raw.defensemen || []).map(norm).sort((a, b) => (a.num || 99) - (b.num || 99)),
+    goalies:  (raw.goalies || []).map(norm).sort((a, b) => (a.num || 99) - (b.num || 99)),
+  };
+}
+
+// club-stats → leaderboards (top scorers / goalies)
+function adaptClubStats(raw) {
+  if (!raw) return null;
+  const skaters = (raw.skaters || []).map((p) => ({
+    id: p.playerId,
+    name: `${p.firstName?.default?.[0] || ''}. ${p.lastName?.default || ''}`.trim(),
+    pos: p.positionCode,
+    gp: p.gamesPlayed,
+    g: p.goals,
+    a: p.assists,
+    pts: p.points,
+    pm: p.plusMinus,
+    pim: p.penaltyMinutes,
+    sog: p.shots,
+    shootingPct: p.shootingPctg != null ? +(p.shootingPctg * 100).toFixed(1) : null,
+    headshot: p.headshot,
+  }));
+  const goalies = (raw.goalies || []).map((p) => ({
+    id: p.playerId,
+    name: `${p.firstName?.default?.[0] || ''}. ${p.lastName?.default || ''}`.trim(),
+    gp: p.gamesPlayed,
+    w: p.wins,
+    l: p.losses,
+    otl: p.overtimeLosses ?? p.otLosses ?? 0,
+    saves: p.saves,
+    sa: p.shotsAgainst,
+    savePct: p.savePercentage != null ? +(p.savePercentage * 100).toFixed(1) : null,
+    gaa: p.goalsAgainstAverage != null ? +p.goalsAgainstAverage.toFixed(2) : null,
+    so: p.shutouts,
+    headshot: p.headshot,
+  }));
+  return { skaters, goalies };
 }
 
 /* ═══════════════════════════════════════════════════════════════
@@ -554,6 +785,8 @@ const NAV_ITEMS = [
   { id: 'schedule',  label: 'Schedule',  icon: Calendar,        kbd: '2' },
   { id: 'standings', label: 'Standings', icon: Trophy,          kbd: '3' },
   { id: 'game',      label: 'Game Tape', icon: Clipboard,       kbd: '4' },
+  { id: 'playoffs',  label: 'Playoffs',  icon: Award,           kbd: '5' },
+  { id: 'roster',    label: 'Roster',    icon: Users,           kbd: '6' },
 ];
 
 const Sidebar = ({ page, setPage, team, liveGame, metro, lastFetch, error, refresh }) => {
@@ -1464,7 +1697,92 @@ const CompareRow = ({ label, us, them, higherBetter = true, suffix = '' }) => {
   );
 };
 
-const GameTape = ({ game, loading }) => {
+const KIND_ICON = {
+  goal: { label: 'GOAL', tone: 'orange' },
+  'shot-on-goal': { label: 'SOG', tone: 'default' },
+  'missed-shot': { label: 'MISS', tone: 'muted' },
+  'blocked-shot': { label: 'BLK', tone: 'muted' },
+  penalty: { label: 'PEN', tone: 'amber' },
+  hit: { label: 'HIT', tone: 'default' },
+  giveaway: { label: 'GA', tone: 'muted' },
+  takeaway: { label: 'TA', tone: 'muted' },
+  'period-start': { label: 'P-START', tone: 'default' },
+  'period-end': { label: 'P-END', tone: 'muted' },
+  'game-end': { label: 'END', tone: 'muted' },
+};
+
+const PBPRow = ({ ev, oppAbbr }) => {
+  // Brief flash on first mount — when the ticker re-renders with new events,
+  // newer rows are inserted at the top so React mounts them fresh.
+  const [fresh, setFresh] = useState(true);
+  useEffect(() => {
+    const t = setTimeout(() => setFresh(false), 1500);
+    return () => clearTimeout(t);
+  }, []);
+  const cfg = KIND_ICON[ev.kind] || { label: ev.kind, tone: 'default' };
+  const isGoal = ev.kind === 'goal';
+  return (
+    <div className={cx(
+      'grid grid-cols-[44px_46px_1fr] items-start gap-3 px-4 py-2 transition-colors',
+      ev.us && 'bg-[#F74902]/[0.04]',
+      isGoal && !ev.us && 'bg-white/[0.02]',
+      fresh && 'pulse-row',
+    )}>
+      <div className="text-[10px] font-mono text-white/40 tabular-nums">
+        P{ev.period}<br />
+        <span className="text-white/30">{ev.time}</span>
+      </div>
+      <div>
+        <Chip tone={cfg.tone}>{cfg.label}</Chip>
+      </div>
+      <div className="min-w-0">
+        <div className="flex items-center gap-1.5">
+          <span className={cx('text-[10px] font-mono shrink-0',
+            ev.us ? 'text-[#FF8A4C]' : 'text-white/40'
+          )}>{ev.team}</span>
+          <span className={cx('text-[12px] truncate',
+            isGoal ? 'font-medium text-white' : 'text-white/80'
+          )}>{ev.summary}</span>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const goalIcon = (s) => {
+  if (s.modifier === 'empty-net') return <Chip tone="muted">EN</Chip>;
+  if (s.strength === 'pp') return <Chip tone="orange">PP</Chip>;
+  if (s.strength === 'sh') return <Chip tone="amber">SH</Chip>;
+  return null;
+};
+
+const GoalieRow = ({ g, isUs }) => (
+  <tr className="hover:bg-white/[0.02]">
+    <td className="px-4 text-right text-[10px] font-mono tabular-nums text-white/30 h-9">{g.num}</td>
+    <td className="px-2 text-[12px] text-white/85 flex items-center gap-2 h-9">
+      {g.name}
+      {g.starter && <span className="text-[9px] font-mono text-white/35">START</span>}
+      {g.decision && (
+        <span className={cx('text-[10px] font-mono px-1 rounded',
+          g.decision === 'W' ? 'bg-[#F74902]/15 text-[#FF8A4C]' :
+          g.decision === 'L' ? 'bg-white/[0.04] text-white/45' :
+          'bg-white/[0.04] text-white/55'
+        )}>{g.decision}</span>
+      )}
+    </td>
+    <td className="px-2 text-right text-[11px] font-mono tabular-nums text-white/65">{g.saves ?? '—'}</td>
+    <td className="px-2 text-right text-[11px] font-mono tabular-nums text-white/65">{g.sa ?? '—'}</td>
+    <td className={cx('px-2 text-right text-[11px] font-mono tabular-nums',
+      g.ga === 0 ? 'text-emerald-400' : g.ga >= 4 ? 'text-red-400' : 'text-white/65'
+    )}>{g.ga ?? '—'}</td>
+    <td className={cx('px-2 text-right text-[11px] font-mono tabular-nums',
+      g.savePct >= 92 ? (isUs ? 'text-[#FF8A4C]' : 'text-emerald-400') : 'text-white/65'
+    )}>{g.savePct != null ? `${g.savePct}%` : '—'}</td>
+    <td className="px-4 text-right text-[11px] font-mono tabular-nums text-white/55">{g.toi}</td>
+  </tr>
+);
+
+const GameTape = ({ game, loading, pbp }) => {
   if (loading && !game) {
     return (
       <div className="p-4 md:p-6 space-y-5">
@@ -1644,9 +1962,96 @@ const GameTape = ({ game, loading }) => {
               </table>
             </div>
           </Section>
+
+          {(game.goalies.us.length > 0 || game.goalies.them.length > 0) && (
+            <Section title="Goalies">
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="text-[10px] font-mono text-white/35 uppercase tracking-wider border-b border-white/[0.05]">
+                      <th className="font-normal text-left px-4 h-8 w-[36px]">#</th>
+                      <th className="font-normal text-left px-2 h-8">Goalie</th>
+                      <th className="font-normal text-right px-2 h-8 w-[44px]">SV</th>
+                      <th className="font-normal text-right px-2 h-8 w-[44px]">SA</th>
+                      <th className="font-normal text-right px-2 h-8 w-[44px]">GA</th>
+                      <th className="font-normal text-right px-2 h-8 w-[60px]">SV%</th>
+                      <th className="font-normal text-right px-4 h-8 w-[60px]">TOI</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-white/[0.04]">
+                    {game.goalies.us.length > 0 && (
+                      <tr className="bg-[#F74902]/[0.04]">
+                        <td colSpan={7} className="px-4 h-7 text-[10px] font-mono text-[#FF8A4C]/80 uppercase tracking-wider">PHI</td>
+                      </tr>
+                    )}
+                    {game.goalies.us.map((g) => <GoalieRow key={`u-${g.num}`} g={g} isUs />)}
+                    {game.goalies.them.length > 0 && (
+                      <tr className="bg-white/[0.02]">
+                        <td colSpan={7} className="px-4 h-7 text-[10px] font-mono text-white/45 uppercase tracking-wider">{game.oppAbbr}</td>
+                      </tr>
+                    )}
+                    {game.goalies.them.map((g) => <GoalieRow key={`t-${g.num}`} g={g} isUs={false} />)}
+                  </tbody>
+                </table>
+              </div>
+            </Section>
+          )}
+
+          {game.timeline.length > 0 && (
+            <Section title="Goals" action={<span className="text-[10px] font-mono text-white/40">{game.timeline.length} total</span>}>
+              <div className="divide-y divide-white/[0.04]">
+                {game.timeline.map((g, i) => (
+                  <div key={i} className={cx(
+                    'grid grid-cols-[36px_56px_1fr_70px] items-center gap-3 px-4 h-12',
+                    g.us ? 'bg-[#F74902]/[0.04]' : 'hover:bg-white/[0.02]',
+                  )}>
+                    <span className="text-[10px] font-mono text-white/40 uppercase">
+                      P{g.period}{g.periodType === 'OT' ? ' OT' : g.periodType === 'SO' ? ' SO' : ''}
+                    </span>
+                    <span className="text-[11px] font-mono text-white/55 tabular-nums">{g.time}</span>
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-1.5">
+                        <span className={cx('text-[10px] font-mono w-7 shrink-0',
+                          g.us ? 'text-[#FF8A4C]' : 'text-white/45'
+                        )}>{g.team}</span>
+                        <span className={cx('text-[12px] font-medium truncate',
+                          g.us ? 'text-white' : 'text-white/85'
+                        )}>{g.scorer}</span>
+                        {g.scorerTotal && <span className="text-[10px] font-mono text-white/30">({g.scorerTotal})</span>}
+                        {goalIcon(g)}
+                      </div>
+                      {g.assists.length > 0 && (
+                        <div className="text-[10px] text-white/45 font-mono mt-0.5 truncate">
+                          assists: {g.assists.join(', ')}
+                        </div>
+                      )}
+                    </div>
+                    <div className="text-right">
+                      <span className="text-[11px] font-mono tabular-nums text-white/65">
+                        {g.awayScore}<span className="text-white/25 mx-0.5">–</span>{g.homeScore}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </Section>
+          )}
         </div>
 
         <div className="lg:col-span-5 space-y-4">
+          {pbp && pbp.events.length > 0 && (
+            <Section
+              title={<span className="flex items-center gap-2">Live Events {isLive(game.state) && <Chip tone="live" pulse>LIVE</Chip>}</span>}
+              action={<span className="text-[10px] font-mono text-white/40">{pbp.events.length} shown</span>}
+            >
+              <div className="divide-y divide-white/[0.04] max-h-[480px] overflow-y-auto">
+                {pbp.events.slice(0, 60).map((e) => (
+                  <PBPRow key={e.id} ev={e} oppAbbr={game.oppAbbr} />
+                ))}
+              </div>
+            </Section>
+          )}
+
           {game.stars.length > 0 && (
             <Section title="Three Stars">
               <div className="divide-y divide-white/[0.04]">
@@ -1689,6 +2094,238 @@ const GameTape = ({ game, loading }) => {
           </Section>
         </div>
       </div>
+    </div>
+  );
+};
+
+/* ═══════════════════════════════════════════════════════════════
+   PAGE: PLAYOFFS
+   ═══════════════════════════════════════════════════════════════ */
+
+const SeriesCard = ({ s }) => {
+  const topWon = s.complete && s.winningTeamId && s.top.abbr && s.bottom.abbr && s.top.wins > s.bottom.wins;
+  const botWon = s.complete && !topWon;
+  const teamRow = (t, won) => (
+    <div className={cx(
+      'flex items-center justify-between px-3 h-9',
+      t.abbr === TEAM_ABBR && 'bg-[#F74902]/[0.08]',
+    )}>
+      <div className="flex items-center gap-2 min-w-0">
+        <span className={cx('text-[10px] font-mono w-7 shrink-0',
+          t.abbr === TEAM_ABBR ? 'text-[#FF8A4C]' : 'text-white/35'
+        )}>{t.rank || ''}</span>
+        <span className={cx('text-[11px] font-mono w-9 shrink-0',
+          t.abbr === TEAM_ABBR ? 'text-white' : won ? 'text-white/85 font-medium' : 'text-white/65'
+        )}>{t.abbr || '—'}</span>
+        <span className={cx('text-[12px] truncate',
+          won ? 'text-white' : 'text-white/55'
+        )}>{t.name}</span>
+      </div>
+      <span className={cx('text-[14px] font-mono tabular-nums shrink-0',
+        won ? 'text-[#FF8A4C] font-semibold' : 'text-white/65'
+      )}>{t.wins}</span>
+    </div>
+  );
+  return (
+    <div className={cx(
+      'border rounded-md overflow-hidden',
+      s.hasUs ? 'border-[#F74902]/40 bg-[#F74902]/[0.04]' : 'border-white/[0.06] bg-[#0C0C0C]/60',
+    )}>
+      <div className="px-3 h-7 flex items-center justify-between border-b border-white/[0.05]">
+        <span className="text-[10px] font-mono text-white/40 uppercase tracking-wider">Series {s.letter}</span>
+        {s.complete
+          ? <Chip tone="muted">DONE</Chip>
+          : <Chip tone="green" pulse>ACTIVE</Chip>}
+      </div>
+      <div className="divide-y divide-white/[0.04]">
+        {teamRow(s.top, topWon)}
+        {teamRow(s.bottom, botWon)}
+      </div>
+    </div>
+  );
+};
+
+const Playoffs = ({ bracket }) => {
+  const data = bracket;
+  const ROUND_NAMES = ['', '1st Round', '2nd Round', 'Conference Finals', 'Stanley Cup Final'];
+
+  return (
+    <div className="p-4 md:p-6 space-y-5">
+      <div className="flex items-end justify-between flex-wrap gap-3">
+        <div>
+          <h1 className="text-[20px] font-semibold tracking-tight">Playoffs</h1>
+          <p className="text-[12px] text-white/45 mt-1 font-mono">
+            {data ? `${data.title || '2026 Stanley Cup Playoffs'} · live` : 'Loading bracket…'}
+          </p>
+        </div>
+      </div>
+
+      {!data && (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          {Array.from({ length: 8 }).map((_, i) => <Skeleton key={i} height={110} />)}
+        </div>
+      )}
+
+      {data && data.rounds.map((seriesArr, idx) => {
+        const r = idx + 1;
+        if (seriesArr.length === 0) return null;
+        return (
+          <Section key={r} title={ROUND_NAMES[r]} action={<span className="text-[10px] font-mono text-white/40">{seriesArr.length} {seriesArr.length === 1 ? 'series' : 'series'}</span>}>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 p-3">
+              {seriesArr.map((s) => <SeriesCard key={s.letter} s={s} />)}
+            </div>
+          </Section>
+        );
+      })}
+    </div>
+  );
+};
+
+/* ═══════════════════════════════════════════════════════════════
+   PAGE: ROSTER + LEADERBOARDS
+   ═══════════════════════════════════════════════════════════════ */
+
+const HEIGHT = (inches) => inches ? `${Math.floor(inches / 12)}'${inches % 12}"` : '—';
+
+const RosterTable = ({ players, showSaves = false }) => (
+  <table className="w-full">
+    <thead>
+      <tr className="text-[10px] font-mono text-white/35 uppercase tracking-wider border-b border-white/[0.05]">
+        <th className="font-normal text-left px-4 h-8 w-[36px]">#</th>
+        <th className="font-normal text-left px-2 h-8">Player</th>
+        <th className="font-normal text-center px-2 h-8 w-[40px]">Pos</th>
+        <th className="font-normal text-center px-2 h-8 w-[40px]">{showSaves ? 'C' : 'S'}</th>
+        <th className="font-normal text-right px-2 h-8 w-[44px]">HT</th>
+        <th className="font-normal text-right px-2 h-8 w-[44px]">WT</th>
+        <th className="font-normal text-right px-2 h-8 w-[44px]">Age</th>
+        <th className="font-normal text-right px-4 h-8 w-[60px]">Birth</th>
+      </tr>
+    </thead>
+    <tbody className="divide-y divide-white/[0.04]">
+      {players.map((p) => (
+        <tr key={p.id} className="hover:bg-white/[0.02]">
+          <td className="px-4 text-right text-[10px] font-mono tabular-nums text-white/30 h-9">{p.num || '—'}</td>
+          <td className="px-2 text-[12px] text-white/85">{p.name}</td>
+          <td className="px-2 text-center text-[10px] font-mono text-white/45">{p.pos}</td>
+          <td className="px-2 text-center text-[10px] font-mono text-white/45">{p.shoots || '—'}</td>
+          <td className="px-2 text-right text-[11px] font-mono text-white/65 tabular-nums">{HEIGHT(p.heightIn)}</td>
+          <td className="px-2 text-right text-[11px] font-mono text-white/65 tabular-nums">{p.weightLb || '—'}</td>
+          <td className="px-2 text-right text-[11px] font-mono tabular-nums text-white/65">{p.age ?? '—'}</td>
+          <td className="px-4 text-right text-[10px] font-mono text-white/40 truncate max-w-[100px]">{p.birthCountry || '—'}</td>
+        </tr>
+      ))}
+    </tbody>
+  </table>
+);
+
+const Leaderboard = ({ rows, columns, title }) => (
+  <Section title={title}>
+    <div className="overflow-x-auto">
+      <table className="w-full">
+        <thead>
+          <tr className="text-[10px] font-mono text-white/35 uppercase tracking-wider border-b border-white/[0.05]">
+            <th className="font-normal text-left px-4 h-8 w-[28px]">#</th>
+            <th className="font-normal text-left px-2 h-8">Player</th>
+            {columns.map((c) => (
+              <th key={c.k} className="font-normal text-right px-2 h-8 w-[44px]">{c.label}</th>
+            ))}
+          </tr>
+        </thead>
+        <tbody className="divide-y divide-white/[0.04]">
+          {rows.map((p, i) => (
+            <tr key={p.id} className="hover:bg-white/[0.02]">
+              <td className={cx('px-4 text-left text-[10px] font-mono tabular-nums h-9',
+                i < 3 ? 'text-[#FF8A4C]' : 'text-white/30'
+              )}>{i + 1}</td>
+              <td className="px-2 text-[12px] text-white/85">
+                <span className="flex items-center gap-1.5">
+                  {p.name}
+                  {p.pos && <span className="text-[10px] font-mono text-white/35">{p.pos}</span>}
+                </span>
+              </td>
+              {columns.map((c) => (
+                <td key={c.k} className={cx('px-2 text-right text-[11px] font-mono tabular-nums',
+                  c.highlight && p[c.k] != null && p[c.k] > 0 ? 'text-white font-medium' : 'text-white/65'
+                )}>{c.fmt ? c.fmt(p[c.k]) : (p[c.k] ?? '—')}</td>
+              ))}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  </Section>
+);
+
+const Roster = ({ roster, clubStats }) => {
+  const [view, setView] = useState('forwards');
+  if (!roster) {
+    return (
+      <div className="p-4 md:p-6 space-y-4">
+        <Skeleton height={24} className="w-48" />
+        <Skeleton height={400} />
+      </div>
+    );
+  }
+  const list = view === 'forwards' ? roster.forwards : view === 'defense' ? roster.defense : roster.goalies;
+  const pointLeaders = clubStats ? [...clubStats.skaters].sort((a, b) => b.pts - a.pts).slice(0, 10) : [];
+  const goalLeaders  = clubStats ? [...clubStats.skaters].sort((a, b) => b.g - a.g).slice(0, 5) : [];
+  const goalieLeaders = clubStats ? [...clubStats.goalies].sort((a, b) => (b.savePct ?? 0) - (a.savePct ?? 0)) : [];
+
+  return (
+    <div className="p-4 md:p-6 space-y-5">
+      <div className="flex items-end justify-between flex-wrap gap-3">
+        <div>
+          <h1 className="text-[20px] font-semibold tracking-tight">Roster</h1>
+          <p className="text-[12px] text-white/45 mt-1 font-mono">
+            Philadelphia Flyers · {roster.forwards.length}F · {roster.defense.length}D · {roster.goalies.length}G
+          </p>
+        </div>
+        <div className="flex items-center gap-0.5 p-0.5 border border-white/[0.08] rounded-md bg-white/[0.02]">
+          {[
+            { id: 'forwards', l: `Forwards (${roster.forwards.length})` },
+            { id: 'defense',  l: `Defense (${roster.defense.length})` },
+            { id: 'goalies',  l: `Goalies (${roster.goalies.length})` },
+          ].map((t) => (
+            <button key={t.id} onClick={() => setView(t.id)}
+              className={cx('px-2.5 h-6 text-[11px] font-medium rounded-[4px] transition-colors',
+                view === t.id ? 'bg-white/[0.08] text-white' : 'text-white/50 hover:text-white'
+              )}>{t.l}</button>
+          ))}
+        </div>
+      </div>
+
+      {clubStats && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <Leaderboard
+            title="Top Scorers"
+            rows={pointLeaders}
+            columns={[
+              { k: 'gp', label: 'GP' },
+              { k: 'g', label: 'G', highlight: true },
+              { k: 'a', label: 'A' },
+              { k: 'pts', label: 'P', highlight: true },
+              { k: 'pm', label: '+/–', fmt: (v) => v > 0 ? `+${v}` : v },
+            ]}
+          />
+          <Leaderboard
+            title="Goalie Stats"
+            rows={goalieLeaders}
+            columns={[
+              { k: 'gp', label: 'GP' },
+              { k: 'w', label: 'W', highlight: true },
+              { k: 'savePct', label: 'SV%', fmt: (v) => v != null ? `${v}%` : '—' },
+              { k: 'gaa', label: 'GAA', fmt: (v) => v != null ? v.toFixed(2) : '—' },
+              { k: 'so', label: 'SO' },
+            ]}
+          />
+        </div>
+      )}
+
+      <Section title={view === 'forwards' ? 'Forwards' : view === 'defense' ? 'Defense' : 'Goalies'}>
+        <div className="overflow-x-auto">
+          <RosterTable players={list} showSaves={view === 'goalies'} />
+        </div>
+      </Section>
     </div>
   );
 };
@@ -1739,7 +2376,10 @@ export default function App() {
     const h = (e) => {
       if (e.metaKey || e.ctrlKey) return;
       if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
-      const map = { '1': 'dashboard', '2': 'schedule', '3': 'standings', '4': 'game' };
+      const map = {
+        '1': 'dashboard', '2': 'schedule', '3': 'standings',
+        '4': 'game', '5': 'playoffs', '6': 'roster',
+      };
       if (map[e.key]) setPage(map[e.key]);
     };
     window.addEventListener('keydown', h);
@@ -1782,6 +2422,25 @@ export default function App() {
     [boxscore.data, rightRail.data, landing.data]
   );
 
+  // Live play-by-play — only fetched when on the Game Tape page (saves quota)
+  // Fast cadence (5s) when live, slower otherwise.
+  const pbpPath = (page === 'game' && gameId) ? `v1/gamecenter/${gameId}/play-by-play` : null;
+  const pbpRaw = useNHL(pbpPath, (d) => isLive(d?.gameState) ? POLL.live / 2 : POLL.idle);
+  const pbp = useMemo(() => adaptPlayByPlay(pbpRaw.data), [pbpRaw.data]);
+
+  // Playoff bracket — only fetched when on Playoffs page
+  const bracketPath = page === 'playoffs' ? 'v1/playoff-bracket/2026' : null;
+  const bracketRaw = useNHL(bracketPath, POLL.standings);
+  const bracket = useMemo(() => adaptBracket(bracketRaw.data), [bracketRaw.data]);
+
+  // Roster + club stats — only fetched when on Roster page
+  const rosterPath = page === 'roster' ? `v1/roster/${TEAM_ABBR}/current` : null;
+  const rosterRaw = useNHL(rosterPath, POLL.standings);
+  const roster = useMemo(() => adaptRoster(rosterRaw.data), [rosterRaw.data]);
+  const clubStatsPath = page === 'roster' ? `v1/club-stats/${TEAM_ABBR}/now` : null;
+  const clubStatsRaw = useNHL(clubStatsPath, POLL.standings);
+  const clubStats = useMemo(() => adaptClubStats(clubStatsRaw.data), [clubStatsRaw.data]);
+
   // Merge team data from standings into schedule.team for sidebar display
   const teamCombined = useMemo(() => {
     if (!standings.us) return null;
@@ -1815,18 +2474,18 @@ export default function App() {
   }, [scheduleRefresh, standingsRefresh, boxscoreRefresh, rightRailRefresh, landingRefresh]);
 
   return (
-    <div className="min-h-screen bg-[#080808] text-white/90 relative">
+    <div className="min-h-screen bg-[#08090C] text-white/90 relative">
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&family=Geist+Mono:wght@400;500;600&display=swap');
-        html, body { background: #080808; }
+        html, body { background: #08090C; }
         * { font-family: 'Geist', system-ui, -apple-system, sans-serif; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
         .font-mono, code, kbd { font-family: 'Geist Mono', ui-monospace, SF Mono, monospace !important; }
         .tabular-nums { font-variant-numeric: tabular-nums; }
         body {
           background:
-            radial-gradient(ellipse 60% 40% at 100% 0%, rgba(247,73,2,0.04), transparent 60%),
-            radial-gradient(ellipse 40% 30% at 0% 100%, rgba(247,73,2,0.03), transparent 60%),
-            #080808;
+            radial-gradient(ellipse 50% 30% at 100% 0%, rgba(120,140,180,0.04), transparent 65%),
+            radial-gradient(ellipse 40% 25% at 0% 100%, rgba(255,255,255,0.02), transparent 65%),
+            #08090C;
           background-attachment: fixed;
         }
         ::selection { background: #F74902; color: #000; }
@@ -1835,6 +2494,8 @@ export default function App() {
         ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.06); border-radius: 4px; }
         ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.12); }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes pulseRow { 0% { background-color: rgba(247,73,2,0.18); } 100% { background-color: transparent; } }
+        .pulse-row { animation: pulseRow 1.4s ease-out; }
       `}</style>
 
       <div className="flex">
@@ -1867,7 +2528,9 @@ export default function App() {
               {page === 'dashboard' && <Dashboard schedule={schedule} standings={standings} loading={scheduleRaw.loading || standingsRaw.loading} />}
               {page === 'schedule'  && <Schedule schedule={schedule} />}
               {page === 'standings' && <Standings standings={standings} />}
-              {page === 'game'      && <GameTape game={game} loading={boxscore.loading} />}
+              {page === 'game'      && <GameTape game={game} loading={boxscore.loading} pbp={pbp} />}
+              {page === 'playoffs'  && <Playoffs bracket={bracket} />}
+              {page === 'roster'    && <Roster roster={roster} clubStats={clubStats} />}
             </ErrorBoundary>
           </main>
 

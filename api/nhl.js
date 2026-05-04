@@ -29,28 +29,29 @@ const cacheFor = (path) => {
   return 30;
 };
 
-// NHL endpoints ending in /now (e.g. /v1/standings/now) return a 307 redirect
-// to a dated URL. Vercel's edge runtime mangles the Location header during
-// fetch (rewrites the host to the Vercel domain), so following the redirect
-// fails. Resolve /now ourselves before calling upstream.
-//
-// Using "today's UTC date" doesn't work in the offseason / playoffs because
-// NHL's redirect target is the canonical "standings as of" date, which during
-// playoffs is the regular-season-end date — not today. /v1/standings-season
-// exposes that date as `currentDate`, so we ask it first when the path is
-// standings/now.
+// NHL endpoints ending in /now (e.g. /v1/standings/now, /v1/club-stats/X/now)
+// return a 307 redirect to a dated URL. Vercel's edge runtime rewrites the
+// host in the Location header to our own Vercel domain — but the path part is
+// correct, so we salvage just the path and re-issue against the upstream host
+// with our headers preserved.
 const upstreamHeaders = { 'accept': 'application/json', 'user-agent': 'flyers.fan/0.2' };
 const NHL = 'https://api-web.nhle.com';
 
-async function resolvePath(path) {
-  if (path === 'v1/standings/now') {
-    const r = await fetch(`${NHL}/v1/standings-season`, { headers: upstreamHeaders });
-    if (r.ok) {
-      const j = await r.json();
-      if (j?.currentDate) return `v1/standings/${j.currentDate}`;
+async function fetchFollowing(url, maxHops = 5) {
+  let current = url;
+  for (let i = 0; i < maxHops; i++) {
+    const r = await fetch(current, { headers: upstreamHeaders, redirect: 'manual' });
+    if (r.status >= 300 && r.status < 400) {
+      const loc = r.headers.get('location');
+      if (loc) {
+        const u = new URL(loc, current);
+        current = `${NHL}${u.pathname}${u.search}`;
+        continue;
+      }
     }
+    return r;
   }
-  return path;
+  throw new Error('too many redirects');
 }
 
 export default async function handler(req) {
@@ -64,12 +65,11 @@ export default async function handler(req) {
     });
   }
 
-  const resolved = await resolvePath(path);
-  const upstream = `${NHL}/${resolved}`;
+  const upstream = `${NHL}/${path}`;
   const ttl = cacheFor(path);
 
   try {
-    const r = await fetch(upstream, { headers: upstreamHeaders });
+    const r = await fetchFollowing(upstream);
 
     if (!r.ok) {
       return new Response(JSON.stringify({ error: 'upstream', status: r.status }), {

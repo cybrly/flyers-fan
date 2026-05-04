@@ -1,5 +1,6 @@
 import { Wifi, WifiOff, RefreshCw } from 'lucide-react';
 import { cx, fmtRelative, connStatus } from '../config.js';
+import { GoalHornToggle } from './GoalHorn.jsx';
 
 export const Statusbar = ({ lastFetch, error, refresh }) => {
   const status = connStatus(lastFetch, error);
@@ -13,11 +14,16 @@ export const Statusbar = ({ lastFetch, error, refresh }) => {
           {error ? <WifiOff size={10} /> : <Wifi size={10} />}
           <span>api-web.nhle.com · {status.label}</span>
         </span>
-        <button onClick={refresh} className="flex items-center gap-1.5 hover:text-white/70 transition-colors">
+        <button
+          onClick={refresh}
+          aria-label="Refresh data"
+          className="flex items-center gap-1.5 hover:text-white/70 transition-colors"
+        >
           <RefreshCw size={10} />
           <span className="hidden sm:inline">refresh {fmtRelative(lastFetch)}</span>
           <span className="sm:hidden">refresh</span>
         </button>
+        <GoalHornToggle />
       </div>
       <div className="flex items-center gap-4">
         <span className="hidden md:inline">2025–26 Season</span>

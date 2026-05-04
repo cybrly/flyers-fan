@@ -234,7 +234,13 @@ export function adaptGame(boxscore, rightRail, landing) {
       pim: stat('pim'),
       giveaways: stat('giveaways'),
       takeaways: stat('takeaways'),
+      powerPlay: stat('powerPlay'),                    // e.g. "1/4"
+      powerPlayPctg: (() => {
+        const s = stat('powerPlayPctg');
+        return { us: s.us != null ? +(s.us * 100).toFixed(1) : null, them: s.them != null ? +(s.them * 100).toFixed(1) : null };
+      })(),
     },
+    shotsByPeriod: rightRail?.shotsByPeriod || [],
     skaters,
     goalies,
     timeline,
@@ -371,6 +377,46 @@ export function adaptBracket(raw) {
   });
   const byRound = [1, 2, 3, 4].map((r) => series.filter((s) => s.round === r));
   return { rounds: byRound, title: raw.bracketTitle, subtitle: raw.bracketSubTitle };
+}
+
+// playoff series detail (single series) → game-by-game with adapted Flyers
+// perspective fields when relevant.
+export function adaptSeries(raw) {
+  if (!raw) return null;
+  const games = (raw.games || []).map((g) => {
+    const a = g.awayTeam, h = g.homeTeam;
+    const final = ['OFF', 'FINAL'].includes(g.gameState);
+    return {
+      id: g.id,
+      number: g.gameNumber,
+      date: g.startTimeUTC,
+      venue: g.venue?.default,
+      state: g.gameState,
+      final,
+      home: { abbr: h?.abbrev, score: h?.score, name: h?.commonName?.default },
+      away: { abbr: a?.abbrev, score: a?.score, name: a?.commonName?.default },
+      lastPeriodType: g.gameOutcome?.lastPeriodType,
+      ifNecessary: g.ifNecessary,
+    };
+  });
+  return {
+    round: raw.round,
+    label: raw.roundLabel,
+    letter: raw.seriesLetter,
+    neededToWin: raw.neededToWin,
+    length: raw.length,
+    top: {
+      abbr: raw.topSeedTeam?.abbrev,
+      name: raw.topSeedTeam?.commonName?.default,
+      wins: raw.topSeedWins ?? 0,
+    },
+    bottom: {
+      abbr: raw.bottomSeedTeam?.abbrev,
+      name: raw.bottomSeedTeam?.commonName?.default,
+      wins: raw.bottomSeedWins ?? 0,
+    },
+    games,
+  };
 }
 
 // roster → forwards / defensemen / goalies, normalized

@@ -4,6 +4,7 @@ import { Chip, Section, Skeleton } from '../components/primitives.jsx';
 import { GoalDiffBars, FormDots, MiniBar } from '../components/charts.jsx';
 import { FlyersMark, TeamLogo } from '../components/Logo.jsx';
 import { KPI } from '../components/KPI.jsx';
+import { Hero } from '../components/Hero.jsx';
 
 export const Dashboard = ({ schedule, standings, loading, onOpenGame }) => {
   const games = schedule?.games?.slice(0, 20) || [];
@@ -45,19 +46,16 @@ export const Dashboard = ({ schedule, standings, loading, onOpenGame }) => {
 
   return (
     <div className="p-4 md:p-6 space-y-5">
-      <div className="flex items-end justify-between flex-wrap gap-3">
-        <div>
-          <div className="flex items-center gap-2 flex-wrap">
-            <h1 className="text-[20px] font-semibold tracking-tight">Dashboard</h1>
-            {us?.clinched === 'x' && <Chip tone="orange">● Clinched Playoff Spot</Chip>}
-            {us?.clinched === 'y' && <Chip tone="amber">● Clinched Division</Chip>}
-            {us?.clinched === 'z' && <Chip tone="amber">● Clinched Conference</Chip>}
-            {us?.clinched === 'p' && <Chip tone="orange">● Playoff Bound</Chip>}
-            {us?.clinched === 'e' && <Chip tone="red">● Eliminated</Chip>}
-          </div>
-          <p className="text-[12px] text-white/45 mt-1 font-mono">
-            {us ? `Season snapshot · Philadelphia Flyers · ${us.gp} games played of 82` : 'Loading season data…'}
-          </p>
+      <Hero liveGame={liveGame} nextGame={nextGame} lastResult={lastResult} us={us} />
+
+      <div className="flex items-center justify-between flex-wrap gap-3">
+        <div className="flex items-center gap-2 flex-wrap">
+          {us?.clinched === 'x' && <Chip tone="orange">● Clinched Playoff Spot</Chip>}
+          {us?.clinched === 'y' && <Chip tone="amber">● Clinched Division</Chip>}
+          {us?.clinched === 'z' && <Chip tone="amber">● Clinched Conference</Chip>}
+          {us?.clinched === 'p' && <Chip tone="orange">● Playoff Bound</Chip>}
+          {us?.clinched === 'e' && <Chip tone="red">● Eliminated</Chip>}
+          {us && <span className="text-[12px] text-white/45 font-mono">{us.gp} of 82 games · 2025–26</span>}
         </div>
         <div className="flex items-center gap-2 text-[11px] font-mono text-white/40">
           <span>Showing</span><span className="text-white/70">Last 20 games</span>

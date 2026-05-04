@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useEffect, useMemo, useCallback, lazy, Suspense } from 'react';
 
 import { TEAM_ABBR, SEASON, POLL, isLive, isFuture } from './config.js';
 import { useNHL, useClockTick } from './api.js';
@@ -14,19 +14,24 @@ import { Statusbar } from './components/Statusbar.jsx';
 import { ErrorBoundary } from './components/ErrorBoundary.jsx';
 import { PlayerModal } from './components/PlayerModal.jsx';
 import { CommandPalette } from './components/CommandPalette.jsx';
+import { SeriesModal } from './components/SeriesModal.jsx';
+import { useGoalHorn, useGoalHornEnabled } from './components/GoalHorn.jsx';
 
-import { Dashboard } from './pages/Dashboard.jsx';
-import { Schedule } from './pages/Schedule.jsx';
-import { Standings } from './pages/Standings.jsx';
-import { GameTape } from './pages/GameTape.jsx';
-import { Playoffs } from './pages/Playoffs.jsx';
-import { Roster } from './pages/Roster.jsx';
+// Page-level code splitting — each route ships in its own chunk so the first
+// paint only includes the Dashboard. Named exports get unwrapped via .then.
+const Dashboard = lazy(() => import('./pages/Dashboard.jsx').then((m) => ({ default: m.Dashboard })));
+const Schedule  = lazy(() => import('./pages/Schedule.jsx').then((m) => ({ default: m.Schedule })));
+const Standings = lazy(() => import('./pages/Standings.jsx').then((m) => ({ default: m.Standings })));
+const GameTape  = lazy(() => import('./pages/GameTape.jsx').then((m) => ({ default: m.GameTape })));
+const Playoffs  = lazy(() => import('./pages/Playoffs.jsx').then((m) => ({ default: m.Playoffs })));
+const Roster    = lazy(() => import('./pages/Roster.jsx').then((m) => ({ default: m.Roster })));
 
 export default function App() {
   const [page, setPage] = useState('dashboard');
   const [selectedGameId, setSelectedGameId] = useState(null);
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [activePlayerId, setActivePlayerId] = useState(null);
+  const [activeSeriesLetter, setActiveSeriesLetter] = useState(null);
   const playerCtx = useMemo(() => ({
     open: (id) => setActivePlayerId(id),
     close: () => setActivePlayerId(null),
@@ -88,6 +93,10 @@ export default function App() {
     () => adaptGame(boxscore.data, rightRail.data, landing.data),
     [boxscore.data, rightRail.data, landing.data]
   );
+
+  // Goal horn — fires when the live game's goal timeline grows.
+  const hornOn = useGoalHornEnabled();
+  useGoalHorn(game?.timeline, hornOn);
 
   // Live play-by-play — only fetched when on the Game Tape page (saves quota).
   const pbpPath = (page === 'game' && gameId) ? `v1/gamecenter/${gameId}/play-by-play` : null;
@@ -180,6 +189,14 @@ export default function App() {
         .score-flash { animation: scoreFlash 0.7s ease-out; }
         /* Sticky table headers sit just below the 48px Topbar. */
         thead.sticky th { position: sticky; top: 48px; background: rgba(10,10,12,0.92); z-index: 1; backdrop-filter: blur(6px); }
+        /* A11y — visible focus ring for keyboard nav, mouse clicks stay clean. */
+        :focus { outline: none; }
+        :focus-visible { outline: 2px solid #FF8A4C; outline-offset: 2px; border-radius: 3px; }
+        button:focus-visible, a:focus-visible, [role="button"]:focus-visible { outline: 2px solid #FF8A4C; outline-offset: 2px; }
+        /* Respect users who opt out of motion. */
+        @media (prefers-reduced-motion: reduce) {
+          *, *::before, *::after { animation-duration: 0.001ms !important; animation-iteration-count: 1 !important; transition-duration: 0.001ms !important; scroll-behavior: auto !important; }
+        }
       `}</style>
 
       <div className="flex">
@@ -210,12 +227,16 @@ export default function App() {
             style={{ animation: 'fadeIn 0.25s ease-out' }}
           >
             <ErrorBoundary resetKey={page}>
-              {page === 'dashboard' && <Dashboard schedule={schedule} standings={standings} loading={scheduleRaw.loading || standingsRaw.loading} onOpenGame={openGame} />}
-              {page === 'schedule'  && <Schedule schedule={schedule} onOpenGame={openGame} />}
-              {page === 'standings' && <Standings standings={standings} />}
-              {page === 'game'      && <GameTape game={game} loading={boxscore.loading} pbp={pbp} customGameId={selectedGameId} onClearCustom={clearSelectedGame} />}
-              {page === 'playoffs'  && <Playoffs bracket={bracket} />}
-              {page === 'roster'    && <Roster roster={roster} clubStats={clubStats} />}
+              <Suspense fallback={
+                <div className="p-6 text-[12px] font-mono text-white/35">loading…</div>
+              }>
+                {page === 'dashboard' && <Dashboard schedule={schedule} standings={standings} loading={scheduleRaw.loading || standingsRaw.loading} onOpenGame={openGame} />}
+                {page === 'schedule'  && <Schedule schedule={schedule} onOpenGame={openGame} />}
+                {page === 'standings' && <Standings standings={standings} />}
+                {page === 'game'      && <GameTape game={game} loading={boxscore.loading} pbp={pbp} pbpRaw={pbpRaw.data} customGameId={selectedGameId} onClearCustom={clearSelectedGame} />}
+                {page === 'playoffs'  && <Playoffs bracket={bracket} onOpenSeries={setActiveSeriesLetter} />}
+                {page === 'roster'    && <Roster roster={roster} clubStats={clubStats} />}
+              </Suspense>
             </ErrorBoundary>
           </main>
 
@@ -224,6 +245,7 @@ export default function App() {
       </div>
 
       <PlayerModal playerId={activePlayerId} onClose={playerCtx.close} />
+      <SeriesModal letter={activeSeriesLetter} onClose={() => setActiveSeriesLetter(null)} />
       <CommandPalette
         open={paletteOpen}
         onClose={() => setPaletteOpen(false)}

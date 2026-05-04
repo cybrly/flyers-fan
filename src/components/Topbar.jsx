@@ -25,11 +25,13 @@ export const Topbar = ({ page, setPage, liveGame, lastFetch, error, onOpenPalett
         </div>
 
         <div className="flex items-center gap-2">
-          <div className="lg:hidden flex items-center gap-0.5">
-            {NAV_ITEMS.map(({ id, icon: I }) => (
+          <nav aria-label="Primary navigation" className="lg:hidden flex items-center gap-0.5">
+            {NAV_ITEMS.map(({ id, icon: I, label }) => (
               <button
                 key={id}
                 onClick={() => setPage(id)}
+                aria-label={label}
+                aria-current={page === id ? 'page' : undefined}
                 className={cx(
                   'w-8 h-8 flex items-center justify-center rounded-md transition-colors relative',
                   page === id ? 'bg-white/[0.06] text-[#F74902]' : 'text-white/50 hover:text-white'
@@ -41,10 +43,11 @@ export const Topbar = ({ page, setPage, liveGame, lastFetch, error, onOpenPalett
                 )}
               </button>
             ))}
-          </div>
+          </nav>
 
           <button
             onClick={onOpenPalette}
+            aria-label="Open command palette"
             className="hidden md:flex items-center gap-2 h-7 pl-2 pr-1.5 border border-white/[0.08] hover:border-white/20 bg-white/[0.02] rounded-md transition-colors"
           >
             <Search size={12} strokeWidth={2} className="text-white/40" />

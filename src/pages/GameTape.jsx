@@ -4,6 +4,8 @@ import { cx, isLive } from '../config.js';
 import { Chip, Section, Skeleton, ScoreReadout } from '../components/primitives.jsx';
 import { FlyersMark, TeamLogo } from '../components/Logo.jsx';
 import { PlayerLink } from '../components/PlayerLink.jsx';
+import { Headshot } from '../components/Headshot.jsx';
+import { ShotMap } from '../components/ShotMap.jsx';
 
 const CompareRow = ({ label, us, them, higherBetter = true, suffix = '' }) => {
   if (us == null || them == null) return null;
@@ -88,11 +90,12 @@ const goalIcon = (s) => {
   return null;
 };
 
-const GoalieRow = ({ g, isUs }) => (
+const GoalieRow = ({ g, isUs, teamAbbr }) => (
   <tr className="hover:bg-white/[0.02]">
-    <td className="px-4 text-right text-[10px] font-mono tabular-nums text-white/30 h-9">{g.num}</td>
-    <td className="px-2 text-[12px] text-white/85 h-9">
+    <td className="px-4 text-right text-[10px] font-mono tabular-nums text-white/30 h-10">{g.num}</td>
+    <td className="px-2 text-[12px] text-white/85 h-10">
       <span className="inline-flex items-center gap-2">
+        <Headshot playerId={g.id} teamAbbrev={teamAbbr} num={g.num} size={22} />
         <PlayerLink playerId={g.id}>{g.name}</PlayerLink>
         {g.starter && <span className="text-[9px] font-mono text-white/35">START</span>}
         {g.decision && (
@@ -116,7 +119,7 @@ const GoalieRow = ({ g, isUs }) => (
   </tr>
 );
 
-export const GameTape = ({ game, loading, pbp, customGameId, onClearCustom }) => {
+export const GameTape = ({ game, loading, pbp, pbpRaw, customGameId, onClearCustom }) => {
   if (loading && !game) {
     return (
       <div className="p-4 md:p-6 space-y-5">
@@ -129,10 +132,12 @@ export const GameTape = ({ game, loading, pbp, customGameId, onClearCustom }) =>
   if (!game) {
     return (
       <div className="p-4 md:p-6">
-        <div className="border border-white/[0.06] bg-[#0C0C0C]/60 rounded-md p-8 text-center">
-          <AlertCircle size={20} className="text-white/30 mx-auto mb-2" />
-          <div className="text-[13px] text-white/70">No recent game data available.</div>
-          <div className="text-[11px] font-mono text-white/40 mt-1">Check back after the next game.</div>
+        <div className="border border-white/[0.06] bg-[#0C0C0C]/60 rounded-md p-10 text-center relative overflow-hidden">
+          <div className="absolute -top-20 -right-20 w-60 h-60 rounded-full pointer-events-none opacity-50"
+            style={{ background: 'radial-gradient(circle, rgba(247,73,2,0.15), transparent 60%)' }} />
+          <div className="flex justify-center"><FlyersMark size={28} /></div>
+          <div className="text-[14px] text-white/85 mt-4">Between periods.</div>
+          <div className="text-[11px] font-mono text-white/40 mt-1">No game in progress. Tape will populate after the next puck drop.</div>
         </div>
       </div>
     );
@@ -246,6 +251,12 @@ export const GameTape = ({ game, loading, pbp, customGameId, onClearCustom }) =>
             </div>
           </Section>
 
+          {pbpRaw && (
+            <Section title="Shot Map" action={<span className="text-[10px] font-mono text-white/40">offensive zone · all periods</span>}>
+              <ShotMap pbpData={pbpRaw} oppAbbr={game.oppAbbr} />
+            </Section>
+          )}
+
           <Section title="Skater Box Score · PHI">
             <div className="overflow-x-auto">
               <table className="w-full">
@@ -269,9 +280,12 @@ export const GameTape = ({ game, loading, pbp, customGameId, onClearCustom }) =>
                     const displayName = typeof s.name === 'string' ? s.name : (s.name?.default || '—');
                     return (
                     <tr key={s.id || `${displayName}-${s.num}`} className="hover:bg-white/[0.02]">
-                      <td className="px-4 text-right text-[10px] font-mono tabular-nums text-white/30 h-9">{s.num}</td>
+                      <td className="px-4 text-right text-[10px] font-mono tabular-nums text-white/30 h-10">{s.num}</td>
                       <td className="px-2 text-[12px] text-white/85">
-                        <PlayerLink playerId={s.id}>{displayName}</PlayerLink>
+                        <span className="flex items-center gap-2">
+                          <Headshot playerId={s.id} teamAbbrev="PHI" num={s.num} size={22} />
+                          <PlayerLink playerId={s.id}>{displayName}</PlayerLink>
+                        </span>
                       </td>
                       <td className="px-2 text-center text-[10px] font-mono text-white/45">{s.pos}</td>
                       <td className={cx('px-2 text-right text-[12px] font-mono tabular-nums',
@@ -321,13 +335,13 @@ export const GameTape = ({ game, loading, pbp, customGameId, onClearCustom }) =>
                         <td colSpan={7} className="px-4 h-7 text-[10px] font-mono text-[#FF8A4C]/80 uppercase tracking-wider">PHI</td>
                       </tr>
                     )}
-                    {game.goalies.us.map((g) => <GoalieRow key={`u-${g.num}`} g={g} isUs />)}
+                    {game.goalies.us.map((g) => <GoalieRow key={`u-${g.num}`} g={g} isUs teamAbbr="PHI" />)}
                     {game.goalies.them.length > 0 && (
                       <tr className="bg-white/[0.02]">
                         <td colSpan={7} className="px-4 h-7 text-[10px] font-mono text-white/45 uppercase tracking-wider">{game.oppAbbr}</td>
                       </tr>
                     )}
-                    {game.goalies.them.map((g) => <GoalieRow key={`t-${g.num}`} g={g} isUs={false} />)}
+                    {game.goalies.them.map((g) => <GoalieRow key={`t-${g.num}`} g={g} isUs={false} teamAbbr={game.oppAbbr} />)}
                   </tbody>
                 </table>
               </div>
@@ -346,27 +360,30 @@ export const GameTape = ({ game, loading, pbp, customGameId, onClearCustom }) =>
                       P{g.period}{g.periodType === 'OT' ? ' OT' : g.periodType === 'SO' ? ' SO' : ''}
                     </span>
                     <span className="text-[11px] font-mono text-white/55 tabular-nums">{g.time}</span>
-                    <div className="min-w-0">
-                      <div className="flex items-center gap-1.5">
-                        <TeamLogo abbr={g.team} size={14} />
-                        <span className={cx('text-[12px] font-medium truncate',
-                          g.us ? 'text-white' : 'text-white/85'
-                        )}>
-                          <PlayerLink playerId={g.scorerId}>{g.scorer}</PlayerLink>
-                        </span>
-                        {g.scorerTotal && <span className="text-[10px] font-mono text-white/30">({g.scorerTotal})</span>}
-                        {goalIcon(g)}
-                      </div>
-                      {g.assists.length > 0 && (
-                        <div className="text-[10px] text-white/45 font-mono mt-0.5 truncate">
-                          assists: {g.assists.map((a, i) => (
-                            <React.Fragment key={a.id || i}>
-                              {i > 0 && ', '}
-                              <PlayerLink playerId={a.id} className="text-white/55 hover:text-[#FF8A4C]">{a.name}</PlayerLink>
-                            </React.Fragment>
-                          ))}
+                    <div className="flex items-center gap-2 min-w-0">
+                      <Headshot playerId={g.scorerId} teamAbbrev={g.team} size={26} />
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-1.5">
+                          <TeamLogo abbr={g.team} size={14} />
+                          <span className={cx('text-[12px] font-medium truncate',
+                            g.us ? 'text-white' : 'text-white/85'
+                          )}>
+                            <PlayerLink playerId={g.scorerId}>{g.scorer}</PlayerLink>
+                          </span>
+                          {g.scorerTotal && <span className="text-[10px] font-mono text-white/30">({g.scorerTotal})</span>}
+                          {goalIcon(g)}
                         </div>
-                      )}
+                        {g.assists.length > 0 && (
+                          <div className="text-[10px] text-white/45 font-mono mt-0.5 truncate">
+                            assists: {g.assists.map((a, i) => (
+                              <React.Fragment key={a.id || i}>
+                                {i > 0 && ', '}
+                                <PlayerLink playerId={a.id} className="text-white/55 hover:text-[#FF8A4C]">{a.name}</PlayerLink>
+                              </React.Fragment>
+                            ))}
+                          </div>
+                        )}
+                      </div>
                     </div>
                     <div className="text-right">
                       <span className="text-[11px] font-mono tabular-nums text-white/65">
@@ -400,6 +417,7 @@ export const GameTape = ({ game, loading, pbp, customGameId, onClearCustom }) =>
                 {game.stars.map((s) => (
                   <div key={s.star} className="flex items-center gap-3 px-4 py-3">
                     <span className="text-[22px] font-semibold tabular-nums text-[#F74902]/60 w-8">★{s.star}</span>
+                    <Headshot playerId={s.id} teamAbbrev={s.teamAbbrev} size={32} />
                     <div className="flex-1 min-w-0">
                       <div className="flex items-baseline justify-between gap-2">
                         <span className="text-[12px] font-medium truncate">
@@ -426,6 +444,8 @@ export const GameTape = ({ game, loading, pbp, customGameId, onClearCustom }) =>
             <div className="divide-y divide-white/[0.04]">
               {[
                 { l: 'Shots on Goal',        v: game.stats.shots.us != null ? `${game.stats.shots.us} / ${game.stats.shots.them}` : '—' },
+                { l: 'Power Play',           v: game.stats.powerPlay.us != null ? `${game.stats.powerPlay.us}${game.stats.powerPlayPctg.us != null ? ` · ${game.stats.powerPlayPctg.us}%` : ''}` : '—' },
+                { l: 'PK Faced',             v: game.stats.powerPlay.them != null ? `${game.stats.powerPlay.them}` : '—' },
                 { l: 'Faceoff %',            v: game.stats.faceoffPct.us != null ? `${game.stats.faceoffPct.us}%` : '—' },
                 { l: 'Blocks vs Opp',        v: game.stats.blocks.us != null ? `${game.stats.blocks.us} / ${game.stats.blocks.them}` : '—' },
                 { l: 'Hits Differential',    v: game.stats.hits.us != null ? (game.stats.hits.us - game.stats.hits.them) : '—' },

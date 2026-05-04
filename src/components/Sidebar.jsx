@@ -21,6 +21,7 @@ export const Sidebar = ({ page, setPage, team, liveGame, metro, lastFetch, error
         <button
           onClick={refresh}
           title="Refresh data"
+          aria-label="Refresh data"
           className="text-white/30 hover:text-white/70 transition-colors"
         >
           <RefreshCw size={13} />
@@ -43,7 +44,7 @@ export const Sidebar = ({ page, setPage, team, liveGame, metro, lastFetch, error
         </div>
       </div>
 
-      <nav className="flex-1 overflow-y-auto px-2 py-3">
+      <nav aria-label="Primary navigation" className="flex-1 overflow-y-auto px-2 py-3">
         <div className="px-2 mb-2"><Label>Workspace</Label></div>
         <div className="space-y-0.5">
           {NAV_ITEMS.map(({ id, label, icon: Icon, kbd }) => {
@@ -53,6 +54,7 @@ export const Sidebar = ({ page, setPage, team, liveGame, metro, lastFetch, error
               <button
                 key={id}
                 onClick={() => setPage(id)}
+                aria-current={active ? 'page' : undefined}
                 className={cx(
                   'w-full group flex items-center justify-between px-2 h-7 rounded-md transition-all',
                   active ? 'bg-white/[0.06] text-white' : 'text-white/55 hover:text-white hover:bg-white/[0.03]',

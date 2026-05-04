@@ -1,0 +1,100 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#0A0A0F"/>
+      <stop offset="100%" stop-color="#08090C"/>
+    </linearGradient>
+    <radialGradient id="glowO" cx="0.85" cy="0.15" r="0.6">
+      <stop offset="0%" stop-color="#F74902" stop-opacity="0.18"/>
+      <stop offset="100%" stop-color="#F74902" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="glowB" cx="0.1" cy="0.95" r="0.6">
+      <stop offset="0%" stop-color="#7A8AA8" stop-opacity="0.10"/>
+      <stop offset="100%" stop-color="#7A8AA8" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="markGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#FF8A4C"/>
+      <stop offset="100%" stop-color="#F74902"/>
+    </linearGradient>
+    <pattern id="grid" x="0" y="0" width="48" height="48" patternUnits="userSpaceOnUse">
+      <path d="M 48 0 L 0 0 0 48" fill="none" stroke="rgba(255,255,255,0.025)" stroke-width="1"/>
+    </pattern>
+  </defs>
+
+  <rect width="1200" height="630" fill="url(#bg)"/>
+  <rect width="1200" height="630" fill="url(#grid)"/>
+  <rect width="1200" height="630" fill="url(#glowO)"/>
+  <rect width="1200" height="630" fill="url(#glowB)"/>
+
+  <!-- Top status strip -->
+  <g font-family="ui-monospace, 'SF Mono', monospace" font-size="14" fill="rgba(255,255,255,0.35)">
+    <circle cx="80" cy="80" r="4" fill="#10B981"/>
+    <circle cx="80" cy="80" r="4" fill="#10B981" opacity="0.4">
+      <animate attributeName="r" values="4;9;4" dur="2s" repeatCount="indefinite"/>
+    </circle>
+    <text x="100" y="85" letter-spacing="2">SEASON LIVE · 2025–26</text>
+    <text x="1120" y="85" text-anchor="end" letter-spacing="2">api-web.nhle.com</text>
+  </g>
+
+  <!-- Skewed P mark -->
+  <g transform="translate(80, 200)">
+    <g transform="skewX(-12)">
+      <rect x="0" y="0" width="120" height="200" rx="8" fill="url(#markGrad)"/>
+      <rect x="32" y="40" width="56" height="80" rx="4" fill="#08090C"/>
+    </g>
+  </g>
+
+  <!-- Wordmark -->
+  <g transform="translate(280, 250)">
+    <text x="0" y="0" font-family="Geist, system-ui, sans-serif" font-weight="700" font-size="120" letter-spacing="-4" fill="#FFFFFF">flyers</text>
+    <text x="370" y="0" font-family="Geist, system-ui, sans-serif" font-weight="700" font-size="120" letter-spacing="-4" fill="#F74902">.fan</text>
+  </g>
+
+  <!-- Tagline -->
+  <text x="280" y="320" font-family="Geist, system-ui, sans-serif" font-weight="500" font-size="32" fill="rgba(255,255,255,0.78)" letter-spacing="-0.5">
+    Live stats, schedule, standings, and game tape.
+  </text>
+  <text x="280" y="358" font-family="Geist, system-ui, sans-serif" font-weight="400" font-size="22" fill="rgba(255,255,255,0.42)">
+    A real-time terminal for Philadelphia Flyers fans.
+  </text>
+
+  <!-- Stat tiles -->
+  <g transform="translate(80, 450)" font-family="ui-monospace, 'SF Mono', monospace">
+    <g>
+      <rect x="0" y="0" width="240" height="100" rx="8" fill="rgba(255,255,255,0.03)" stroke="rgba(255,255,255,0.08)"/>
+      <text x="20" y="32" font-size="11" fill="rgba(255,255,255,0.4)" letter-spacing="2">RECORD</text>
+      <text x="20" y="78" font-size="40" font-weight="600" fill="#FFFFFF" font-family="Geist, system-ui, sans-serif">28–18–6</text>
+    </g>
+    <g transform="translate(260, 0)">
+      <rect x="0" y="0" width="240" height="100" rx="8" fill="rgba(255,255,255,0.03)" stroke="rgba(255,255,255,0.08)"/>
+      <text x="20" y="32" font-size="11" fill="rgba(255,255,255,0.4)" letter-spacing="2">METRO</text>
+      <text x="20" y="78" font-size="40" font-weight="600" fill="#F74902" font-family="Geist, system-ui, sans-serif">#3</text>
+    </g>
+    <g transform="translate(520, 0)">
+      <rect x="0" y="0" width="240" height="100" rx="8" fill="rgba(255,255,255,0.03)" stroke="rgba(255,255,255,0.08)"/>
+      <text x="20" y="32" font-size="11" fill="rgba(255,255,255,0.4)" letter-spacing="2">POINTS</text>
+      <text x="20" y="78" font-size="40" font-weight="600" fill="#FFFFFF" font-family="Geist, system-ui, sans-serif">62</text>
+    </g>
+    <g transform="translate(780, 0)">
+      <rect x="0" y="0" width="340" height="100" rx="8" fill="rgba(255,255,255,0.03)" stroke="rgba(255,255,255,0.08)"/>
+      <text x="20" y="32" font-size="11" fill="rgba(255,255,255,0.4)" letter-spacing="2">FORM · LAST 10</text>
+      <g transform="translate(20, 55)">
+        <rect x="0"   y="0" width="22" height="28" rx="2" fill="#10B981"/>
+        <rect x="32"  y="0" width="22" height="28" rx="2" fill="#10B981"/>
+        <rect x="64"  y="0" width="22" height="28" rx="2" fill="rgba(255,255,255,0.18)"/>
+        <rect x="96"  y="0" width="22" height="28" rx="2" fill="#10B981"/>
+        <rect x="128" y="0" width="22" height="28" rx="2" fill="#F74902"/>
+        <rect x="160" y="0" width="22" height="28" rx="2" fill="#10B981"/>
+        <rect x="192" y="0" width="22" height="28" rx="2" fill="#10B981"/>
+        <rect x="224" y="0" width="22" height="28" rx="2" fill="rgba(255,255,255,0.18)"/>
+        <rect x="256" y="0" width="22" height="28" rx="2" fill="#10B981"/>
+        <rect x="288" y="0" width="22" height="28" rx="2" fill="#10B981"/>
+      </g>
+    </g>
+  </g>
+
+  <!-- Footer -->
+  <text x="80" y="600" font-family="ui-monospace, 'SF Mono', monospace" font-size="13" fill="rgba(255,255,255,0.3)" letter-spacing="2">
+    FLYERS.FAN · PRESS ⌘K TO JUMP
+  </text>
+</svg>

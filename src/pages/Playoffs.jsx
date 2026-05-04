@@ -2,7 +2,7 @@ import { cx, TEAM_ABBR } from '../config.js';
 import { Chip, Section, Skeleton } from '../components/primitives.jsx';
 import { TeamLogo } from '../components/Logo.jsx';
 
-const SeriesCard = ({ s }) => {
+const SeriesCard = ({ s, onOpen }) => {
   const topWon = s.complete && s.winningTeamId && s.top.abbr && s.bottom.abbr && s.top.wins > s.bottom.wins;
   const botWon = s.complete && !topWon;
   const teamRow = (t, won) => (
@@ -25,10 +25,14 @@ const SeriesCard = ({ s }) => {
     </div>
   );
   return (
-    <div className={cx(
-      'border rounded-md overflow-hidden',
-      s.hasUs ? 'border-[#F74902]/40 bg-[#F74902]/[0.04]' : 'border-white/[0.06] bg-[#0C0C0C]/60',
-    )}>
+    <button
+      type="button"
+      onClick={() => onOpen?.(s.letter)}
+      className={cx(
+        'group block w-full text-left border rounded-md overflow-hidden transition-colors hover:border-white/20',
+        s.hasUs ? 'border-[#F74902]/40 bg-[#F74902]/[0.04] hover:bg-[#F74902]/[0.08]' : 'border-white/[0.06] bg-[#0C0C0C]/60 hover:bg-[#0C0C0C]/90',
+      )}
+    >
       <div className="px-3 h-7 flex items-center justify-between border-b border-white/[0.05]">
         <span className="text-[10px] font-mono text-white/40 uppercase tracking-wider">Series {s.letter}</span>
         {s.complete
@@ -39,11 +43,11 @@ const SeriesCard = ({ s }) => {
         {teamRow(s.top, topWon)}
         {teamRow(s.bottom, botWon)}
       </div>
-    </div>
+    </button>
   );
 };
 
-export const Playoffs = ({ bracket }) => {
+export const Playoffs = ({ bracket, onOpenSeries }) => {
   const data = bracket;
   const ROUND_NAMES = ['', '1st Round', '2nd Round', 'Conference Finals', 'Stanley Cup Final'];
 
@@ -70,7 +74,7 @@ export const Playoffs = ({ bracket }) => {
         return (
           <Section key={r} title={ROUND_NAMES[r]} action={<span className="text-[10px] font-mono text-white/40">{seriesArr.length} {seriesArr.length === 1 ? 'series' : 'series'}</span>}>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 p-3">
-              {seriesArr.map((s) => <SeriesCard key={s.letter} s={s} />)}
+              {seriesArr.map((s) => <SeriesCard key={s.letter} s={s} onOpen={onOpenSeries} />)}
             </div>
           </Section>
         );

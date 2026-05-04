@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { cx } from '../config.js';
 import { Section, Skeleton } from '../components/primitives.jsx';
 import { PlayerLink } from '../components/PlayerLink.jsx';
+import { Headshot } from '../components/Headshot.jsx';
 
 const HEIGHT = (inches) => inches ? `${Math.floor(inches / 12)}'${inches % 12}"` : '—';
 
@@ -22,9 +23,12 @@ const RosterTable = ({ players, showSaves = false }) => (
     <tbody className="divide-y divide-white/[0.04]">
       {players.map((p) => (
         <tr key={p.id} className="hover:bg-white/[0.02]">
-          <td className="px-4 text-right text-[10px] font-mono tabular-nums text-white/30 h-9">{p.num || '—'}</td>
+          <td className="px-4 text-right text-[10px] font-mono tabular-nums text-white/30 h-11">{p.num || '—'}</td>
           <td className="px-2 text-[12px] text-white/85">
-            <PlayerLink playerId={p.id}>{p.name}</PlayerLink>
+            <span className="flex items-center gap-2">
+              <Headshot src={p.headshot} num={p.num} size={26} />
+              <PlayerLink playerId={p.id}>{p.name}</PlayerLink>
+            </span>
           </td>
           <td className="px-2 text-center text-[10px] font-mono text-white/45">{p.pos}</td>
           <td className="px-2 text-center text-[10px] font-mono text-white/45">{p.shoots || '—'}</td>
@@ -38,7 +42,27 @@ const RosterTable = ({ players, showSaves = false }) => (
   </table>
 );
 
-const Leaderboard = ({ rows, columns, title }) => (
+// Tiny G/A split bar — visualizes a scorer's points composition relative to
+// the leader's total. Cheap to render and adds visual depth to the row
+// without a per-player fetch.
+const PtsBar = ({ goals, assists, max }) => {
+  if (!max) return null;
+  const w = 60;
+  const total = goals + assists;
+  const tw = (total / max) * w;
+  const gw = total > 0 ? (goals / total) * tw : 0;
+  return (
+    <svg width={w} height={6} viewBox={`0 0 ${w} 6`} className="block">
+      <rect x={0} y={2} width={w} height={2} fill="rgba(255,255,255,0.04)" />
+      <rect x={0} y={1} width={gw} height={4} fill="#F74902" />
+      <rect x={gw} y={1} width={tw - gw} height={4} fill="rgba(255,255,255,0.45)" />
+    </svg>
+  );
+};
+
+const Leaderboard = ({ rows, columns, title, withPtsBar = false }) => {
+  const maxPts = withPtsBar ? Math.max(1, ...rows.map((r) => r.pts || 0)) : 0;
+  return (
   <Section title={title}>
     <div className="overflow-x-auto">
       <table className="w-full">
@@ -46,6 +70,7 @@ const Leaderboard = ({ rows, columns, title }) => (
           <tr className="text-[10px] font-mono text-white/35 uppercase tracking-wider border-b border-white/[0.05]">
             <th className="font-normal text-left px-4 h-8 w-[28px]">#</th>
             <th className="font-normal text-left px-2 h-8">Player</th>
+            {withPtsBar && <th className="font-normal text-left px-2 h-8 w-[68px]">G/A</th>}
             {columns.map((c) => (
               <th key={c.k} className="font-normal text-right px-2 h-8 w-[44px]">{c.label}</th>
             ))}
@@ -58,11 +83,17 @@ const Leaderboard = ({ rows, columns, title }) => (
                 i < 3 ? 'text-[#FF8A4C]' : 'text-white/30'
               )}>{i + 1}</td>
               <td className="px-2 text-[12px] text-white/85">
-                <span className="flex items-center gap-1.5">
+                <span className="flex items-center gap-2">
+                  <Headshot src={p.headshot} num={p.num} size={22} />
                   <PlayerLink playerId={p.id}>{p.name}</PlayerLink>
                   {p.pos && <span className="text-[10px] font-mono text-white/35">{p.pos}</span>}
                 </span>
               </td>
+              {withPtsBar && (
+                <td className="px-2 align-middle">
+                  <PtsBar goals={p.g || 0} assists={p.a || 0} max={maxPts} />
+                </td>
+              )}
               {columns.map((c) => (
                 <td key={c.k} className={cx('px-2 text-right text-[11px] font-mono tabular-nums',
                   c.highlight && p[c.k] != null && p[c.k] > 0 ? 'text-white font-medium' : 'text-white/65'
@@ -74,7 +105,8 @@ const Leaderboard = ({ rows, columns, title }) => (
       </table>
     </div>
   </Section>
-);
+  );
+};
 
 export const Roster = ({ roster, clubStats }) => {
   const [view, setView] = useState('forwards');
@@ -117,6 +149,7 @@ export const Roster = ({ roster, clubStats }) => {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           <Leaderboard
             title="Top Scorers"
+            withPtsBar
             rows={pointLeaders}
             columns={[
               { k: 'gp', label: 'GP' },

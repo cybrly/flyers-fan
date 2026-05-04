@@ -45,7 +45,7 @@ export const Dashboard = ({ schedule, standings, loading, onOpenGame }) => {
   const lastResult = games[0];
 
   return (
-    <div className="p-4 md:p-6 space-y-5">
+    <div className="p-4 md:p-6 space-y-4">
       <Hero liveGame={liveGame} nextGame={nextGame} lastResult={lastResult} us={us} />
 
       <div className="flex items-center justify-between flex-wrap gap-3">
@@ -63,7 +63,7 @@ export const Dashboard = ({ schedule, standings, loading, onOpenGame }) => {
         </div>
       </div>
 
-      <div className="flex flex-wrap gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
         <KPI label="Record" value={us ? `${us.w}–${us.l}${us.ot ? `–${us.ot}` : ''}` : '—'} sub={us ? `${us.gp} GP` : ''} sparkData={running.winPctArr} loading={loading && !us} />
         <KPI label="Points %" value={us ? (us.pct * 100).toFixed(1) : '—'} sub="%" sparkData={running.winPctArr} loading={loading && !us} />
         <KPI label="Goal Diff" value={us ? `${us.diff >= 0 ? '+' : ''}${us.diff}` : '—'} sub="season" sparkData={running.diffArr} trendColor={(us?.diff ?? 0) >= 0 ? '#F74902' : '#EF4444'} loading={loading && !us} />
@@ -73,7 +73,7 @@ export const Dashboard = ({ schedule, standings, loading, onOpenGame }) => {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
-        <div className="lg:col-span-8 space-y-4">
+        <div className="lg:col-span-8 2xl:col-span-9 space-y-4">
           <Section
             title="Recent Games"
             action={<span className="text-[10px] font-mono text-white/40">Last 10 · live</span>}
@@ -176,7 +176,7 @@ export const Dashboard = ({ schedule, standings, loading, onOpenGame }) => {
           </div>
         </div>
 
-        <div className="lg:col-span-4 space-y-4">
+        <div className="lg:col-span-4 2xl:col-span-3 space-y-4">
           {liveGame ? (
             <Section title={<span className="flex items-center gap-2">Live Now <Chip tone="live" pulse>LIVE</Chip></span>}>
               <div className="p-4 space-y-3">

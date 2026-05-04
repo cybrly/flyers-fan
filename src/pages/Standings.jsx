@@ -25,7 +25,7 @@ export const Standings = ({ standings }) => {
   const data = rows || [];
 
   return (
-    <div className="p-4 md:p-6 space-y-5">
+    <div className="p-4 md:p-6 space-y-4">
       <div className="flex items-end justify-between flex-wrap gap-3">
         <div>
           <h1 className="text-[20px] font-semibold tracking-tight">Standings</h1>

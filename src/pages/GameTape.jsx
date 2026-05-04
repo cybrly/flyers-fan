@@ -147,7 +147,7 @@ export const GameTape = ({ game, loading, pbp, pbpRaw, customGameId, onClearCust
   const periods = Object.keys(game.periods).map(Number).sort((a, b) => a - b);
 
   return (
-    <div className="p-4 md:p-6 space-y-5">
+    <div className="p-4 md:p-6 space-y-4">
       <div className="flex items-end justify-between flex-wrap gap-3">
         <div>
           <div className="flex items-center gap-2">
@@ -181,17 +181,22 @@ export const GameTape = ({ game, loading, pbp, pbpRaw, customGameId, onClearCust
       <div className="border border-white/[0.06] bg-[#0C0C0C]/60 rounded-md p-5 relative overflow-hidden">
         <div className="absolute -top-20 -right-20 w-60 h-60 rounded-full pointer-events-none opacity-60"
           style={{ background: 'radial-gradient(circle, rgba(247,73,2,0.15), transparent 70%)' }} />
+        {/* Standard hockey scoreboard layout: away team on the left, home team
+            on the right. PHI may be either side depending on game.home. */}
         <div className="relative grid grid-cols-[1fr_auto_1fr] items-center gap-6">
           <div className="flex items-center gap-3">
-            <FlyersMark size={32} />
+            {game.home
+              ? <TeamLogo abbr={game.oppAbbr} size={36} />
+              : <FlyersMark size={36} />}
             <div>
-              <div className="text-[10px] font-mono text-white/40 uppercase tracking-wider">{game.home ? 'Home' : 'Away'}</div>
-              <div className="text-[14px] font-medium">Philadelphia Flyers</div>
+              <div className="text-[10px] font-mono text-white/40 uppercase tracking-wider">Away</div>
+              <div className={cx('text-[14px] font-medium', game.home && 'text-white/75')}>
+                {game.home ? game.oppName : 'Philadelphia Flyers'}
+              </div>
             </div>
           </div>
           <div className="text-center">
-            <ScoreReadout us={game.score.us} them={game.score.them} />
-
+            <ScoreReadout us={game.score.us} them={game.score.them} reverse={game.home} />
             <div className="text-[10px] font-mono text-white/40 uppercase tracking-wider mt-1">
               {liveNow
                 ? `P${game.periodDescriptor?.number || '?'} · ${game.clock?.timeRemaining || 'live'}`
@@ -200,10 +205,14 @@ export const GameTape = ({ game, loading, pbp, pbpRaw, customGameId, onClearCust
           </div>
           <div className="flex items-center gap-3 justify-end">
             <div className="text-right">
-              <div className="text-[10px] font-mono text-white/40 uppercase tracking-wider">{game.home ? 'Away' : 'Home'}</div>
-              <div className="text-[14px] font-medium text-white/75">{game.oppName}</div>
+              <div className="text-[10px] font-mono text-white/40 uppercase tracking-wider">Home</div>
+              <div className={cx('text-[14px] font-medium', !game.home && 'text-white/75')}>
+                {game.home ? 'Philadelphia Flyers' : game.oppName}
+              </div>
             </div>
-            <TeamLogo abbr={game.oppAbbr} size={32} />
+            {game.home
+              ? <FlyersMark size={36} />
+              : <TeamLogo abbr={game.oppAbbr} size={36} />}
           </div>
         </div>
 
@@ -233,7 +242,7 @@ export const GameTape = ({ game, loading, pbp, pbpRaw, customGameId, onClearCust
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
-        <div className="lg:col-span-7 space-y-4">
+        <div className="lg:col-span-7 2xl:col-span-8 space-y-4">
           <Section title="Team Comparison">
             <div className="py-2">
               <div className="grid grid-cols-[60px_1fr_90px_1fr_60px] items-center gap-3 px-4 h-8 text-[10px] font-mono text-white/35 uppercase tracking-wider">
@@ -397,7 +406,7 @@ export const GameTape = ({ game, loading, pbp, pbpRaw, customGameId, onClearCust
           )}
         </div>
 
-        <div className="lg:col-span-5 space-y-4">
+        <div className="lg:col-span-5 2xl:col-span-4 space-y-4">
           {pbp && pbp.events.length > 0 && (
             <Section
               title={<span className="flex items-center gap-2">Live Events {isLive(game.state) && <Chip tone="live" pulse>LIVE</Chip>}</span>}

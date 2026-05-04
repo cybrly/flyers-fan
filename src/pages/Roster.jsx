@@ -123,7 +123,7 @@ export const Roster = ({ roster, clubStats }) => {
   const goalieLeaders = clubStats ? [...clubStats.goalies].sort((a, b) => (b.savePct ?? 0) - (a.savePct ?? 0)) : [];
 
   return (
-    <div className="p-4 md:p-6 space-y-5">
+    <div className="p-4 md:p-6 space-y-4">
       <div className="flex items-end justify-between flex-wrap gap-3">
         <div>
           <h1 className="text-[20px] font-semibold tracking-tight">Roster</h1>

@@ -26,11 +26,12 @@ const Standings = lazy(() => import('./pages/Standings.jsx').then((m) => ({ defa
 const GameTape  = lazy(() => import('./pages/GameTape.jsx').then((m) => ({ default: m.GameTape })));
 const Playoffs  = lazy(() => import('./pages/Playoffs.jsx').then((m) => ({ default: m.Playoffs })));
 const Roster    = lazy(() => import('./pages/Roster.jsx').then((m) => ({ default: m.Roster })));
+const PlayerProfile = lazy(() => import('./pages/PlayerProfile.jsx').then((m) => ({ default: m.PlayerProfile })));
 
 export default function App() {
   // Route-derived state — URL is the source of truth. /game/123, ?player=8478,
   // ?series=A all survive refresh and become shareable links.
-  const { page, gameId: routeGameId, playerId, seriesLetter } = useRoute();
+  const { page, gameId: routeGameId, profileId, playerId, seriesLetter } = useRoute();
   const [paletteOpen, setPaletteOpen] = useState(false);
 
   const setPage = useCallback((p) => navigate(pageHref(p)), []);
@@ -50,6 +51,7 @@ export default function App() {
       game: 'Game Tape · flyers.fan',
       playoffs: 'Playoffs · flyers.fan',
       roster: 'Roster · flyers.fan',
+      player: 'Player · flyers.fan',
     };
     document.title = titles[page] || 'flyers.fan';
   }, [page]);
@@ -248,6 +250,7 @@ export default function App() {
                 {page === 'game'      && <GameTape game={game} loading={boxscore.loading} pbp={pbp} pbpRaw={pbpRaw.data} customGameId={routeGameId} onClearCustom={clearSelectedGame} />}
                 {page === 'playoffs'  && <Playoffs bracket={bracket} onOpenSeries={onOpenSeries} />}
                 {page === 'roster'    && <Roster roster={roster} clubStats={clubStats} />}
+                {page === 'player'    && <PlayerProfile playerId={profileId} />}
               </Suspense>
             </ErrorBoundary>
           </main>

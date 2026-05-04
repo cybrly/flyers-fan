@@ -3,7 +3,7 @@ import { Label, Delta, Skeleton } from './primitives.jsx';
 import { Sparkline } from './charts.jsx';
 
 export const KPI = ({ label, value, sub, delta, sparkData, trendColor, loading }) => (
-  <div className="flex-1 min-w-[150px] border border-white/[0.06] bg-[#0C0C0C]/60 backdrop-blur-sm rounded-md p-3 hover:border-white/[0.12] transition-colors">
+  <div className="min-w-0 border border-white/[0.06] bg-[#0C0C0C]/60 backdrop-blur-sm rounded-md p-3 hover:border-white/[0.12] transition-colors">
     <div className="flex items-start justify-between mb-2">
       <Label>{label}</Label>
       {delta !== undefined && !loading && <Delta value={delta} />}

@@ -18,7 +18,7 @@ import { useEffect, useState } from 'react';
 // Path-based (not hash) for clean URLs and OG-friendly sharing. Requires the
 // SPA rewrite in vercel.json so direct visits to /game/123 hit index.html.
 
-const PAGES = new Set(['dashboard', 'schedule', 'standings', 'game', 'playoffs', 'roster']);
+const PAGES = new Set(['dashboard', 'schedule', 'standings', 'game', 'playoffs', 'roster', 'player']);
 
 export function parseRoute(pathname, search) {
   const [, first = '', second = ''] = pathname.split('/');
@@ -27,7 +27,8 @@ export function parseRoute(pathname, search) {
   return {
     page,
     gameId: page === 'game' && second ? second : null,
-    playerId: params.get('player') || null,
+    profileId: page === 'player' && second ? second : null,  // /player/:id full page
+    playerId: params.get('player') || null,                   // ?player=:id modal overlay
     seriesLetter: params.get('series') || null,
   };
 }
@@ -68,3 +69,4 @@ export function setOverlay(key, value) {
 
 export const pageHref = (page) => (page === 'dashboard' ? '/' : `/${page}`);
 export const gameHref = (id) => (id ? `/game/${id}` : '/game');
+export const playerHref = (id) => `/player/${id}`;

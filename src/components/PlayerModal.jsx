@@ -1,9 +1,10 @@
 import { useEffect } from 'react';
-import { X, AlertCircle } from 'lucide-react';
+import { X, AlertCircle, ArrowRight } from 'lucide-react';
 import { cx, fmtDate } from '../config.js';
 import { useNHL } from '../api.js';
 import { Label, Skeleton } from './primitives.jsx';
 import { TeamLogo } from './Logo.jsx';
+import { navigate, playerHref } from '../router.js';
 
 const StatCell = ({ label, value }) => (
   <div className="flex flex-col gap-0.5 px-3 py-2 border border-white/[0.05] rounded-md bg-white/[0.02]">
@@ -43,13 +44,22 @@ export const PlayerModal = ({ playerId, onClose }) => {
         className="relative w-full max-w-2xl max-h-[90vh] overflow-y-auto border border-white/10 bg-[#0C0D11] rounded-lg shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
-        <button
-          onClick={onClose}
-          className="absolute top-3 right-3 z-10 w-7 h-7 flex items-center justify-center rounded-md bg-white/[0.04] hover:bg-white/[0.1] text-white/60 hover:text-white transition-colors"
-          aria-label="Close"
-        >
-          <X size={14} />
-        </button>
+        <div className="absolute top-3 right-3 z-10 flex items-center gap-1.5">
+          <button
+            onClick={() => { onClose(); navigate(playerHref(playerId)); }}
+            className="hidden sm:flex items-center gap-1.5 h-7 px-2.5 rounded-md bg-[#F74902]/15 hover:bg-[#F74902]/25 border border-[#F74902]/30 text-[#FF8A4C] text-[11px] font-mono transition-colors"
+            aria-label="View full profile"
+          >
+            full profile <ArrowRight size={11} />
+          </button>
+          <button
+            onClick={onClose}
+            className="w-7 h-7 flex items-center justify-center rounded-md bg-white/[0.04] hover:bg-white/[0.1] text-white/60 hover:text-white transition-colors"
+            aria-label="Close"
+          >
+            <X size={14} />
+          </button>
+        </div>
 
         {loading && !data && (
           <div className="p-5 space-y-3">
@@ -214,6 +224,15 @@ export const PlayerModal = ({ playerId, onClose }) => {
                 </div>
               </div>
             )}
+
+            <div className="p-4 border-t border-white/[0.06] bg-white/[0.015]">
+              <button
+                onClick={() => { onClose(); navigate(playerHref(playerId)); }}
+                className="w-full flex items-center justify-center gap-2 h-9 rounded-md bg-[#F74902]/15 hover:bg-[#F74902]/25 border border-[#F74902]/30 text-[#FF8A4C] text-[12px] font-medium transition-colors"
+              >
+                View full profile <ArrowRight size={13} />
+              </button>
+            </div>
           </>
         )}
       </div>

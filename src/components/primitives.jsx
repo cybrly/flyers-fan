@@ -60,22 +60,32 @@ export const Delta = ({ value, suffix = '', neutral = false }) => {
   );
 };
 
-export const ScoreReadout = ({ us, them }) => {
+// Score readout. `reverse` flips the visual order (use when PHI is home — the
+// scoreboard convention is away-left, home-right). The Flyers number stays
+// orange when winning regardless of which side it's rendered on.
+export const ScoreReadout = ({ us, them, reverse = false }) => {
   const usFlash = useFlashOnChange(us);
   const themFlash = useFlashOnChange(them);
+  const usWinning = us >= them;
+  const usEl = (
+    <span className={cx(
+      'text-[44px] font-semibold tabular-nums tracking-tight inline-block',
+      usWinning ? 'text-[#FF8A4C]' : 'text-white/70',
+      usFlash,
+    )}>{us}</span>
+  );
+  const themEl = (
+    <span className={cx(
+      'text-[44px] font-semibold tabular-nums tracking-tight inline-block',
+      !usWinning && them > us ? 'text-white' : 'text-white/70',
+      themFlash,
+    )}>{them}</span>
+  );
   return (
     <div className="flex items-baseline gap-3 justify-center">
-      <span className={cx(
-        'text-[44px] font-semibold tabular-nums tracking-tight inline-block',
-        us >= them ? 'text-[#FF8A4C]' : 'text-white/70',
-        usFlash,
-      )}>{us}</span>
+      {reverse ? themEl : usEl}
       <span className="text-[24px] text-white/25">–</span>
-      <span className={cx(
-        'text-[44px] font-semibold tabular-nums tracking-tight inline-block',
-        them > us ? 'text-white' : 'text-white/70',
-        themFlash,
-      )}>{them}</span>
+      {reverse ? usEl : themEl}
     </div>
   );
 };

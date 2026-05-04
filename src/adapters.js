@@ -346,7 +346,21 @@ export function adaptPlayByPlay(raw) {
   };
 }
 
-// playoff bracket → array of series annotated with our team
+// playoff bracket → series annotated with our team + conference key.
+// confKey is 'E' / 'W' for rounds 1–3, 'F' for the Stanley Cup Final. NHL's
+// bracket uses a stable lettering scheme that encodes the bracket position:
+// A–D = East R1, E–H = West R1, I/J = East R2, K/L = West R2, M = ECF, N = WCF,
+// O = SCF. Top seeds within each conference R1 (A/B = Atlantic, C/D = Metro,
+// E/F = Central, G/H = Pacific) feed into R2 winners that meet in the
+// conference final, and the SCF is the cross-conference championship.
+const confFromLetter = (letter) => {
+  if (!letter) return null;
+  if ('ABCDIJM'.includes(letter)) return 'E';
+  if ('EFGHKLN'.includes(letter)) return 'W';
+  if (letter === 'O') return 'F';
+  return null;
+};
+
 export function adaptBracket(raw) {
   if (!raw?.series) return null;
   const series = raw.series.map((s) => {
@@ -357,6 +371,7 @@ export function adaptBracket(raw) {
       letter: s.seriesLetter,
       title: s.seriesTitle,
       round: s.playoffRound,
+      conf: s.playoffRound === 4 ? 'F' : confFromLetter(s.seriesLetter),
       top: {
         abbr: top.abbrev,
         name: top.commonName?.default || top.abbrev,

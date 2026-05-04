@@ -29,27 +29,15 @@ const cacheFor = (path) => {
   return 30;
 };
 
-// Walk redirects manually and re-issue with the same headers. Vercel's edge
-// fetch silently strips the user-agent on auto-follow, and the upstream's
-// Cloudflare WAF then returns 404 — /v1/standings/now (which 307s to a dated
-// URL) is the one that bites.
-async function fetchFollowing(url, init, maxHops = 5) {
-  let current = url;
-  let hops = 0;
-  let lastLoc = '';
-  let lastResUrl = '';
-  for (let i = 0; i < maxHops; i++) {
-    const r = await fetch(current, { ...init, redirect: 'manual' });
-    lastResUrl = r.url || '';
-    if (r.status >= 300 && r.status < 400) {
-      const loc = r.headers.get('location');
-      lastLoc = loc || '';
-      if (loc) { current = new URL(loc, current).href; hops++; continue; }
-    }
-    return { res: r, hops, finalUrl: current, lastLoc, lastResUrl };
-  }
-  throw new Error('too many redirects');
-}
+// NHL endpoints ending in /now (e.g. /v1/standings/now) return a 307 redirect
+// to a dated URL. Vercel's edge runtime mangles the Location header during
+// fetch (rewrites the host to the Vercel domain), so we resolve /now to
+// today's UTC date here and call the dated URL directly.
+const todayUTC = () => {
+  const d = new Date();
+  return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}-${String(d.getUTCDate()).padStart(2, '0')}`;
+};
+const resolveNow = (path) => path.endsWith('/now') ? path.replace(/\/now$/, `/${todayUTC()}`) : path;
 
 export default async function handler(req) {
   const { searchParams } = new URL(req.url);
@@ -62,26 +50,19 @@ export default async function handler(req) {
     });
   }
 
-  const upstream = `https://api-web.nhle.com/${path}`;
+  const resolved = resolveNow(path);
+  const upstream = `https://api-web.nhle.com/${resolved}`;
   const ttl = cacheFor(path);
-  const fetchInit = {
-    headers: { 'accept': 'application/json', 'user-agent': 'flyers.fan/0.2' },
-  };
 
   try {
-    const { res: r, hops, finalUrl, lastLoc, lastResUrl } = await fetchFollowing(upstream, fetchInit);
-    const debug = {
-      'x-proxy-version': '4',
-      'x-proxy-hops': String(hops),
-      'x-proxy-final': finalUrl,
-      'x-proxy-lastloc': lastLoc,
-      'x-proxy-resurl': lastResUrl,
-    };
+    const r = await fetch(upstream, {
+      headers: { 'accept': 'application/json', 'user-agent': 'flyers.fan/0.2' },
+    });
 
     if (!r.ok) {
-      return new Response(JSON.stringify({ error: 'upstream', status: r.status, finalUrl, hops, lastLoc, lastResUrl }), {
+      return new Response(JSON.stringify({ error: 'upstream', status: r.status }), {
         status: r.status,
-        headers: { 'content-type': 'application/json', ...debug },
+        headers: { 'content-type': 'application/json' },
       });
     }
 
@@ -93,13 +74,12 @@ export default async function handler(req) {
         'content-type': 'application/json',
         'cache-control': `public, s-maxage=${ttl}, stale-while-revalidate=${ttl * 3}`,
         'access-control-allow-origin': '*',
-        ...debug,
       },
     });
   } catch (e) {
     return new Response(JSON.stringify({ error: String(e?.message || e) }), {
       status: 500,
-      headers: { 'content-type': 'application/json', 'x-proxy-version': '3' },
+      headers: { 'content-type': 'application/json' },
     });
   }
 }

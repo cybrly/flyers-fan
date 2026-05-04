@@ -36,13 +36,17 @@ const cacheFor = (path) => {
 async function fetchFollowing(url, init, maxHops = 5) {
   let current = url;
   let hops = 0;
+  let lastLoc = '';
+  let lastResUrl = '';
   for (let i = 0; i < maxHops; i++) {
     const r = await fetch(current, { ...init, redirect: 'manual' });
+    lastResUrl = r.url || '';
     if (r.status >= 300 && r.status < 400) {
       const loc = r.headers.get('location');
+      lastLoc = loc || '';
       if (loc) { current = new URL(loc, current).href; hops++; continue; }
     }
-    return { res: r, hops, finalUrl: current };
+    return { res: r, hops, finalUrl: current, lastLoc, lastResUrl };
   }
   throw new Error('too many redirects');
 }
@@ -65,15 +69,17 @@ export default async function handler(req) {
   };
 
   try {
-    const { res: r, hops, finalUrl } = await fetchFollowing(upstream, fetchInit);
+    const { res: r, hops, finalUrl, lastLoc, lastResUrl } = await fetchFollowing(upstream, fetchInit);
     const debug = {
-      'x-proxy-version': '3',
+      'x-proxy-version': '4',
       'x-proxy-hops': String(hops),
       'x-proxy-final': finalUrl,
+      'x-proxy-lastloc': lastLoc,
+      'x-proxy-resurl': lastResUrl,
     };
 
     if (!r.ok) {
-      return new Response(JSON.stringify({ error: 'upstream', status: r.status, finalUrl, hops }), {
+      return new Response(JSON.stringify({ error: 'upstream', status: r.status, finalUrl, hops, lastLoc, lastResUrl }), {
         status: r.status,
         headers: { 'content-type': 'application/json', ...debug },
       });

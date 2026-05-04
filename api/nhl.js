@@ -25,6 +25,7 @@ const ALLOWED = /^v1\/[a-zA-Z0-9/_\-?=&.]+$/;
 const cacheFor = (path) => {
   if (path.includes('/gamecenter/') && path.includes('/play-by-play')) return 5;    // live play
   if (path.includes('/gamecenter/'))                                   return 10;   // boxscore, landing, right-rail
+  if (path.startsWith('v1/score/'))                                    return 10;   // around-the-league scoreboard
   if (path.startsWith('v1/standings'))                                 return 300;  // 5 min
   if (path.startsWith('v1/club-schedule-season'))                      return 60;   // 1 min
   if (path.startsWith('v1/playoff-bracket'))                           return 120;  // 2 min

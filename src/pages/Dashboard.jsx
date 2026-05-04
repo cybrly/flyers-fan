@@ -5,8 +5,9 @@ import { GoalDiffBars, FormDots, MiniBar } from '../components/charts.jsx';
 import { FlyersMark, TeamLogo } from '../components/Logo.jsx';
 import { KPI } from '../components/KPI.jsx';
 import { Hero } from '../components/Hero.jsx';
+import { Scoreboard } from '../components/Scoreboard.jsx';
 
-export const Dashboard = ({ schedule, standings, loading, onOpenGame }) => {
+export const Dashboard = ({ schedule, standings, scoreboard, loading, onOpenGame }) => {
   const games = schedule?.games?.slice(0, 20) || [];
   const chronGames = [...games].reverse();
   const l10 = games.slice(0, 10);
@@ -47,6 +48,8 @@ export const Dashboard = ({ schedule, standings, loading, onOpenGame }) => {
   return (
     <div className="p-4 md:p-6 space-y-4">
       <Hero liveGame={liveGame} nextGame={nextGame} lastResult={lastResult} us={us} />
+
+      {scoreboard?.games?.length > 0 && <Scoreboard data={scoreboard} />}
 
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div className="flex items-center gap-2 flex-wrap">

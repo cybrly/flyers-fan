@@ -6,7 +6,7 @@ import { PlayerCtx } from './context.js';
 import { useRoute, navigate, setOverlay, pageHref, gameHref } from './router.js';
 import {
   adaptSchedule, adaptStandings, adaptGame,
-  adaptPlayByPlay, adaptBracket, adaptRoster, adaptClubStats,
+  adaptPlayByPlay, adaptBracket, adaptRoster, adaptClubStats, adaptScoreboard,
 } from './adapters.js';
 
 import { Sidebar } from './components/Sidebar.jsx';
@@ -94,6 +94,15 @@ export default function App() {
   // Standings — lower cadence.
   const standingsRaw = useNHL('v1/standings/now', POLL.standings);
   const standings = useMemo(() => adaptStandings(standingsRaw.data), [standingsRaw.data]);
+
+  // Around-the-league scoreboard — only fetched on Dashboard. Polls on POLL.live
+  // when any game is live so scores stay fresh.
+  const scoreboardPath = page === 'dashboard' ? 'v1/score/now' : null;
+  const scoreboardRaw = useNHL(scoreboardPath, (d) => {
+    const games = d?.games || [];
+    return games.some((g) => isLive(g.gameState)) ? POLL.live : POLL.near;
+  });
+  const scoreboard = useMemo(() => adaptScoreboard(scoreboardRaw.data), [scoreboardRaw.data]);
 
   // Pick game ID for Game Tape: explicit selection (URL /game/:id) wins,
   // otherwise live game, otherwise most recent finished.
@@ -244,7 +253,7 @@ export default function App() {
               <Suspense fallback={
                 <div className="p-6 text-[12px] font-mono text-white/35">loading…</div>
               }>
-                {page === 'dashboard' && <Dashboard schedule={schedule} standings={standings} loading={scheduleRaw.loading || standingsRaw.loading} onOpenGame={openGame} />}
+                {page === 'dashboard' && <Dashboard schedule={schedule} standings={standings} scoreboard={scoreboard} loading={scheduleRaw.loading || standingsRaw.loading} onOpenGame={openGame} />}
                 {page === 'schedule'  && <Schedule schedule={schedule} onOpenGame={openGame} />}
                 {page === 'standings' && <Standings standings={standings} />}
                 {page === 'game'      && <GameTape game={game} loading={boxscore.loading} pbp={pbp} pbpRaw={pbpRaw.data} customGameId={routeGameId} onClearCustom={clearSelectedGame} />}

@@ -347,18 +347,25 @@ export function adaptPlayByPlay(raw) {
 }
 
 // playoff bracket → series annotated with our team + conference key.
-// confKey is 'E' / 'W' for rounds 1–3, 'F' for the Stanley Cup Final. NHL's
-// bracket uses a stable lettering scheme that encodes the bracket position:
-// A–D = East R1, E–H = West R1, I/J = East R2, K/L = West R2, M = ECF, N = WCF,
-// O = SCF. Top seeds within each conference R1 (A/B = Atlantic, C/D = Metro,
-// E/F = Central, G/H = Pacific) feed into R2 winners that meet in the
-// conference final, and the SCF is the cross-conference championship.
-const confFromLetter = (letter) => {
-  if (!letter) return null;
-  if ('ABCDIJM'.includes(letter)) return 'E';
-  if ('EFGHKLN'.includes(letter)) return 'W';
-  if (letter === 'O') return 'F';
-  return null;
+//
+// The NHL bracket uses a stable lettering scheme that encodes both round and
+// conference (since 2014):
+//   A–D  = East R1     E–H  = West R1
+//   I, J = East R2     K, L = West R2
+//   M    = East CF     N    = West CF
+//   O    = Stanley Cup Final (cross-conference)
+//
+// We trust the letter over the API's `playoffRound` field — when future series
+// don't have teams set yet, the API has been observed returning them with
+// playoffRound=2 (incorrect) and empty topSeedTeam/bottomSeedTeam objects.
+// Letter-based derivation gives us the correct round in every case.
+const BRACKET_INFO = {
+  A: { round: 1, conf: 'E' }, B: { round: 1, conf: 'E' }, C: { round: 1, conf: 'E' }, D: { round: 1, conf: 'E' },
+  E: { round: 1, conf: 'W' }, F: { round: 1, conf: 'W' }, G: { round: 1, conf: 'W' }, H: { round: 1, conf: 'W' },
+  I: { round: 2, conf: 'E' }, J: { round: 2, conf: 'E' },
+  K: { round: 2, conf: 'W' }, L: { round: 2, conf: 'W' },
+  M: { round: 3, conf: 'E' }, N: { round: 3, conf: 'W' },
+  O: { round: 4, conf: 'F' },
 };
 
 export function adaptBracket(raw) {
@@ -366,12 +373,13 @@ export function adaptBracket(raw) {
   const series = raw.series.map((s) => {
     const top = s.topSeedTeam || {};
     const bot = s.bottomSeedTeam || {};
+    const info = BRACKET_INFO[s.seriesLetter] || { round: s.playoffRound, conf: null };
     const usTeam = [top, bot].find((t) => t.abbrev === TEAM_ABBR) || null;
     return {
       letter: s.seriesLetter,
       title: s.seriesTitle,
-      round: s.playoffRound,
-      conf: s.playoffRound === 4 ? 'F' : confFromLetter(s.seriesLetter),
+      round: info.round,
+      conf: info.conf,
       top: {
         abbr: top.abbrev,
         name: top.commonName?.default || top.abbrev,
@@ -389,7 +397,12 @@ export function adaptBracket(raw) {
       complete: s.winningTeamId != null,
       hasUs: !!usTeam,
     };
-  });
+  })
+  // Drop placeholder series with no teams set — round 3/4 series often come
+  // back from the API before the matchups are known. We render them as TBD
+  // slots in the UI via column padding instead.
+  .filter((s) => s.top.abbr || s.bottom.abbr);
+
   const byRound = [1, 2, 3, 4].map((r) => series.filter((s) => s.round === r));
   return { rounds: byRound, title: raw.bracketTitle, subtitle: raw.bracketSubTitle };
 }
@@ -432,6 +445,33 @@ export function adaptSeries(raw) {
     },
     games,
   };
+}
+
+// score/now → tonight's NHL games (across all teams). Used for the
+// Around-the-League widget on the Dashboard.
+export function adaptScoreboard(raw) {
+  if (!raw?.games) return null;
+  const games = raw.games.map((g) => ({
+    id: g.id,
+    state: g.gameState, // PRE / FUT / LIVE / CRIT / OFF / FINAL
+    startUTC: g.startTimeUTC,
+    away: { abbr: g.awayTeam?.abbrev, score: g.awayTeam?.score, sog: g.awayTeam?.sog },
+    home: { abbr: g.homeTeam?.abbrev, score: g.homeTeam?.score, sog: g.homeTeam?.sog },
+    clock: g.clock,
+    period: g.periodDescriptor,
+    gameType: g.gameType, // 2 = reg, 3 = playoffs
+    series: g.seriesStatus
+      ? {
+          round: g.seriesStatus.round,
+          letter: g.seriesStatus.seriesLetter,
+          gameNum: g.seriesStatus.gameNumberOfSeries,
+          neededToWin: g.seriesStatus.neededToWin,
+          top: { abbr: g.seriesStatus.topSeedTeamAbbrev, wins: g.seriesStatus.topSeedWins },
+          bottom: { abbr: g.seriesStatus.bottomSeedTeamAbbrev, wins: g.seriesStatus.bottomSeedWins },
+        }
+      : null,
+  }));
+  return { date: raw.currentDate, games };
 }
 
 // roster → forwards / defensemen / goalies, normalized

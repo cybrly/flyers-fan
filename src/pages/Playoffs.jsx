@@ -199,7 +199,10 @@ export const Playoffs = ({ bracket, onOpenSeries }) => {
         <>
           {/* Desktop / tablet — full traditional bracket layout */}
           <div className="hidden md:block border border-white/[0.06] bg-[#0C0C0C]/40 rounded-md p-4 lg:p-5">
-            <div className="grid grid-cols-[1fr_1fr_1fr_1.4fr_1fr_1fr_1fr] gap-2 lg:gap-3" style={{ minHeight: 560 }}>
+            <div
+              className="grid gap-2 lg:gap-3"
+              style={{ gridTemplateColumns: '1fr 1fr 1fr 1.4fr 1fr 1fr 1fr', minHeight: 560 }}
+            >
               {/* WEST — left side, R1 → R2 → CF */}
               <Column series={r1.west} count={4} label="West · R1" onOpen={onOpenSeries} />
               <Column series={r2.west} count={2} label="West · R2" onOpen={onOpenSeries} />

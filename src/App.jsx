@@ -216,8 +216,13 @@ function adaptSchedule(raw) {
 // standings → { metro, east, league, us }
 function adaptStandings(raw) {
   if (!raw?.standings) return { metro: [], east: [], us: null };
-  const all = raw.standings.map((t) => ({
-    team: `${t.placeName?.default || ''} ${t.teamCommonName?.default || ''}`.trim() || t.teamName?.default,
+  const all = raw.standings.map((t) => {
+    const place = t.placeName?.default || '';
+    const common = t.teamCommonName?.default || '';
+    const fallback = t.teamName?.default || '';
+    const teamStr = `${place} ${common}`.trim() || fallback || t.teamAbbrev?.default || '—';
+    return {
+    team: teamStr,
     abbr: t.teamAbbrev?.default,
     w: t.wins,
     l: t.losses,
@@ -238,7 +243,8 @@ function adaptStandings(raw) {
     confRank: t.conferenceSequence,
     leagueRank: t.leagueSequence,
     us: t.teamAbbrev?.default === TEAM_ABBR,
-  }));
+    };
+  });
   const metro = all.filter((t) => t.division === 'Metropolitan').sort((a, b) => a.divRank - b.divRank);
   const east  = all.filter((t) => t.conference === 'Eastern').sort((a, b) => a.confRank - b.confRank);
   const us = all.find((t) => t.us);
@@ -303,8 +309,16 @@ function adaptGame(boxscore, rightRail, landing) {
     });
   }
 
-  // Three stars
-  const stars = landing?.summary?.threeStars || [];
+  // Three stars — flatten { name: { default } } shapes into plain strings
+  const stars = (landing?.summary?.threeStars || []).map((s) => ({
+    star: s.star,
+    name: s.name?.default || s.name || '—',
+    teamAbbrev: s.teamAbbrev || s.teamAbbrev?.default || '',
+    position: s.position || '',
+    goals: s.goals || 0,
+    assists: s.assists || 0,
+    points: s.points || 0,
+  }));
 
   return {
     id: boxscore.id,
@@ -1604,10 +1618,12 @@ const GameTape = ({ game, loading }) => {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-white/[0.04]">
-                  {game.skaters.map((s) => (
-                    <tr key={s.name} className="hover:bg-white/[0.02]">
+                  {game.skaters.map((s) => {
+                    const displayName = typeof s.name === 'string' ? s.name : (s.name?.default || '—');
+                    return (
+                    <tr key={`${displayName}-${s.num}`} className="hover:bg-white/[0.02]">
                       <td className="px-4 text-right text-[10px] font-mono tabular-nums text-white/30 h-9">{s.num}</td>
-                      <td className="px-2 text-[12px] text-white/85">{s.name}</td>
+                      <td className="px-2 text-[12px] text-white/85">{displayName}</td>
                       <td className="px-2 text-center text-[10px] font-mono text-white/45">{s.pos}</td>
                       <td className={cx('px-2 text-right text-[12px] font-mono tabular-nums',
                         s.g > 0 ? 'text-[#FF8A4C] font-medium' : 'text-white/35'
@@ -1628,7 +1644,8 @@ const GameTape = ({ game, loading }) => {
                       )}>{s.pm > 0 ? '+' : ''}{s.pm}</td>
                       <td className="px-4 text-right text-[11px] font-mono tabular-nums text-white/55">{s.toi}</td>
                     </tr>
-                  ))}
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
@@ -1681,6 +1698,39 @@ const GameTape = ({ game, loading }) => {
     </div>
   );
 };
+
+/* ═══════════════════════════════════════════════════════════════
+   ERROR BOUNDARY — catches render crashes per page
+   ═══════════════════════════════════════════════════════════════ */
+
+class ErrorBoundary extends React.Component {
+  constructor(props) { super(props); this.state = { error: null }; }
+  static getDerivedStateFromError(error) { return { error }; }
+  componentDidCatch(error, info) { console.error('[flyers.fan]', error, info); }
+  componentDidUpdate(prev) { if (prev.resetKey !== this.props.resetKey) this.setState({ error: null }); }
+  render() {
+    if (this.state.error) {
+      return (
+        <div className="p-6">
+          <div className="border border-red-500/30 bg-red-500/[0.05] rounded-md p-5">
+            <div className="flex items-center gap-2 mb-3">
+              <AlertCircle size={16} className="text-red-400" />
+              <span className="text-[13px] font-medium text-red-300">Render error</span>
+            </div>
+            <div className="text-[12px] font-mono text-white/70 whitespace-pre-wrap break-words">
+              {String(this.state.error?.message || this.state.error)}
+            </div>
+            <div className="text-[11px] font-mono text-white/40 mt-3">
+              The data source likely returned an unexpected shape. Try refreshing.
+              If it persists, the NHL API endpoint may have changed.
+            </div>
+          </div>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
 
 /* ═══════════════════════════════════════════════════════════════
    APP
@@ -1813,10 +1863,12 @@ export default function App() {
             className="flex-1 min-w-0"
             style={{ animation: 'fadeIn 0.25s ease-out' }}
           >
-            {page === 'dashboard' && <Dashboard schedule={schedule} standings={standings} loading={scheduleRaw.loading || standingsRaw.loading} />}
-            {page === 'schedule'  && <Schedule schedule={schedule} />}
-            {page === 'standings' && <Standings standings={standings} />}
-            {page === 'game'      && <GameTape game={game} loading={boxscore.loading} />}
+            <ErrorBoundary resetKey={page}>
+              {page === 'dashboard' && <Dashboard schedule={schedule} standings={standings} loading={scheduleRaw.loading || standingsRaw.loading} />}
+              {page === 'schedule'  && <Schedule schedule={schedule} />}
+              {page === 'standings' && <Standings standings={standings} />}
+              {page === 'game'      && <GameTape game={game} loading={boxscore.loading} />}
+            </ErrorBoundary>
           </main>
 
           <Statusbar lastFetch={lastFetch} error={anyError} refresh={refresh} />

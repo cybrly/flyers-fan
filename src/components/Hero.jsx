@@ -178,15 +178,24 @@ const CenterShield = () => {
 // sized and aligned: PHI on the left, centerpiece in the middle, OPP on the
 // right, all at the same baseline. Replaces the old city-name + team-name
 // stack which read as much smaller than the score and felt mis-aligned.
-const TeamSide = ({ logo, abbr, side, sub, tone }) => {
+// `logoSm` and `logoLg` accept pre-rendered logo elements at distinct sizes
+// so the same component can show a tight 44 px logo on mobile and an 88 px
+// one on desktop without juggling responsive Tailwind classes inside an SVG
+// img tag (whose width/height are baked at render time).
+const TeamSide = ({ logoSm, logoLg, abbr, side, sub, tone }) => {
   const isLeft = side === 'left';
   return (
-    <div className={cx('flex items-center gap-3 sm:gap-4 min-w-0', isLeft ? '' : 'justify-end')}>
-      {isLeft && logo}
+    <div className={cx('flex items-center gap-2 sm:gap-4 min-w-0', isLeft ? '' : 'justify-end')}>
+      {isLeft && (
+        <>
+          <span className="block sm:hidden">{logoSm}</span>
+          <span className="hidden sm:block">{logoLg}</span>
+        </>
+      )}
       <div className={cx('min-w-0', isLeft ? '' : 'text-right')}>
         <div
           className={cx(
-            'text-[56px] sm:text-[76px] font-semibold tabular-nums tracking-tight leading-none',
+            'text-[34px] sm:text-[76px] font-semibold tabular-nums tracking-tight leading-none',
             tone === 'muted' ? 'text-white/85' : 'text-white',
           )}
           style={{ textShadow: '0 2px 4px rgba(0,0,0,0.6)' }}
@@ -194,10 +203,15 @@ const TeamSide = ({ logo, abbr, side, sub, tone }) => {
           {abbr}
         </div>
         {sub && (
-          <div className={cx('mt-2', isLeft ? '' : 'flex justify-end')}>{sub}</div>
+          <div className={cx('mt-1.5 sm:mt-2', isLeft ? '' : 'flex justify-end')}>{sub}</div>
         )}
       </div>
-      {!isLeft && logo}
+      {!isLeft && (
+        <>
+          <span className="block sm:hidden">{logoSm}</span>
+          <span className="hidden sm:block">{logoLg}</span>
+        </>
+      )}
     </div>
   );
 };
@@ -286,30 +300,18 @@ const HeroLive = ({ liveGame, liveDetail, oppFull, recentGames, oppRow }) => {
           {liveGame.home ? 'Home' : 'Away'}{liveGame.venue ? ` · ${liveGame.venue}` : ''}
         </span>
       </div>
-      <div className="relative grid grid-cols-[1fr_auto_1fr] items-center gap-4 sm:gap-8 mt-5">
+      <div className="relative grid grid-cols-2 sm:grid-cols-[1fr_auto_1fr] items-center gap-y-4 gap-x-3 sm:gap-x-8 mt-5">
         {goalBurst && <GoalCelebration />}
         <TeamSide
-          logo={<FlyersMark size={88} />}
+          logoSm={<FlyersMark size={44} />}
+          logoLg={<FlyersMark size={88} />}
           abbr="PHI"
           side="left"
           sub={<FormDots games={recentGames} />}
         />
-        <div className="flex items-baseline gap-3 sm:gap-4">
-          <span
-            className={cx(
-              'text-[56px] sm:text-[76px] font-semibold tabular-nums tracking-tight text-[#FF8A4C] leading-none',
-              goalBurst && 'score-flash',
-            )}
-            style={{ textShadow: '0 0 24px rgba(247,73,2,0.4), 0 2px 4px rgba(0,0,0,0.6)' }}
-          >{liveGame.us}</span>
-          <span className="text-[36px] sm:text-[44px] text-white/20 leading-none">–</span>
-          <span
-            className="text-[56px] sm:text-[76px] font-semibold tabular-nums tracking-tight text-white/85 leading-none"
-            style={{ textShadow: '0 2px 4px rgba(0,0,0,0.6)' }}
-          >{liveGame.them}</span>
-        </div>
         <TeamSide
-          logo={<TeamLogo abbr={liveGame.opp} size={88} />}
+          logoSm={<TeamLogo abbr={liveGame.opp} size={44} />}
+          logoLg={<TeamLogo abbr={liveGame.opp} size={88} />}
           abbr={liveGame.opp}
           side="right"
           tone="muted"
@@ -319,6 +321,23 @@ const HeroLive = ({ liveGame, liveDetail, oppFull, recentGames, oppRow }) => {
             </span>
           )}
         />
+        {/* Score block — full width on mobile (its own row), center column
+            on desktop. Sized down on mobile so the dash separator and both
+            digits stay on one line. */}
+        <div className="col-span-2 sm:col-span-1 sm:row-start-1 sm:col-start-2 flex items-baseline justify-center gap-3 sm:gap-4">
+          <span
+            className={cx(
+              'text-[44px] sm:text-[76px] font-semibold tabular-nums tracking-tight text-[#FF8A4C] leading-none',
+              goalBurst && 'score-flash',
+            )}
+            style={{ textShadow: '0 0 24px rgba(247,73,2,0.4), 0 2px 4px rgba(0,0,0,0.6)' }}
+          >{liveGame.us}</span>
+          <span className="text-[28px] sm:text-[44px] text-white/20 leading-none">–</span>
+          <span
+            className="text-[44px] sm:text-[76px] font-semibold tabular-nums tracking-tight text-white/85 leading-none"
+            style={{ textShadow: '0 2px 4px rgba(0,0,0,0.6)' }}
+          >{liveGame.them}</span>
+        </div>
       </div>
 
       {/* Win probability + projection tiles — broadcast-feel during live play */}
@@ -396,41 +415,17 @@ const HeroNext = ({ nextGame, oppFull, recentGames, oppRow }) => {
         </span>
         {nextGame.gameType === 3 && <Chip tone="amber">PLAYOFFS</Chip>}
       </div>
-      <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-4 sm:gap-8 mt-5">
+      <div className="grid grid-cols-2 sm:grid-cols-[1fr_auto_1fr] items-center gap-y-4 gap-x-3 sm:gap-x-8 mt-5">
         <TeamSide
-          logo={<FlyersMark size={88} />}
+          logoSm={<FlyersMark size={44} />}
+          logoLg={<FlyersMark size={88} />}
           abbr="PHI"
           side="left"
           sub={<FormDots games={recentGames} />}
         />
-        {cd && !cd.past ? (
-          <div className="text-center">
-            <div className="text-[10px] font-mono text-white/40 uppercase tracking-wider mb-1.5 flex items-center justify-center gap-1.5">
-              <PuckIcon size={9} />
-              Puck drops in
-            </div>
-            <div className="flex items-baseline gap-1 justify-center font-semibold tabular-nums tracking-tight text-[#FF8A4C] leading-none whitespace-nowrap"
-              style={{ textShadow: '0 0 22px rgba(247,73,2,0.4), 0 2px 4px rgba(0,0,0,0.6)' }}>
-              {cd.d > 0 && (
-                <>
-                  <span className="text-[56px] sm:text-[76px]">{cd.d}</span>
-                  <span className="text-[20px] sm:text-[28px] text-white/40 font-mono mr-2">d</span>
-                </>
-              )}
-              <span className="text-[56px] sm:text-[76px]">{String(cd.h).padStart(2, '0')}</span>
-              <span className="text-[28px] sm:text-[40px] text-white/35 mx-0.5">:</span>
-              <span className="text-[56px] sm:text-[76px]">{String(cd.m).padStart(2, '0')}</span>
-              <span className="text-[28px] sm:text-[40px] text-white/35 mx-0.5">:</span>
-              <span className="text-[56px] sm:text-[76px]">{String(cd.s).padStart(2, '0')}</span>
-            </div>
-          </div>
-        ) : (
-          <div className="text-center">
-            <div className="text-[56px] sm:text-[76px] font-semibold tabular-nums tracking-tight text-white/40 leading-none">VS</div>
-          </div>
-        )}
         <TeamSide
-          logo={<TeamLogo abbr={nextGame.opp} size={88} />}
+          logoSm={<TeamLogo abbr={nextGame.opp} size={44} />}
+          logoLg={<TeamLogo abbr={nextGame.opp} size={88} />}
           abbr={nextGame.opp}
           side="right"
           tone="muted"
@@ -440,6 +435,34 @@ const HeroNext = ({ nextGame, oppFull, recentGames, oppRow }) => {
             </span>
           )}
         />
+        {/* Countdown — full width on its own row on mobile, center column on
+            desktop. Mobile drops to text-[36px] so HH:MM:SS fits a phone. */}
+        <div className="col-span-2 sm:col-span-1 sm:row-start-1 sm:col-start-2 text-center">
+          {cd && !cd.past ? (
+            <>
+              <div className="text-[10px] font-mono text-white/40 uppercase tracking-wider mb-1.5 flex items-center justify-center gap-1.5">
+                <PuckIcon size={9} />
+                Puck drops in
+              </div>
+              <div className="flex items-baseline gap-1 justify-center font-semibold tabular-nums tracking-tight text-[#FF8A4C] leading-none whitespace-nowrap"
+                style={{ textShadow: '0 0 22px rgba(247,73,2,0.4), 0 2px 4px rgba(0,0,0,0.6)' }}>
+                {cd.d > 0 && (
+                  <>
+                    <span className="text-[36px] sm:text-[76px]">{cd.d}</span>
+                    <span className="text-[14px] sm:text-[28px] text-white/40 font-mono mr-1.5 sm:mr-2">d</span>
+                  </>
+                )}
+                <span className="text-[36px] sm:text-[76px]">{String(cd.h).padStart(2, '0')}</span>
+                <span className="text-[18px] sm:text-[40px] text-white/35 mx-0.5">:</span>
+                <span className="text-[36px] sm:text-[76px]">{String(cd.m).padStart(2, '0')}</span>
+                <span className="text-[18px] sm:text-[40px] text-white/35 mx-0.5">:</span>
+                <span className="text-[36px] sm:text-[76px]">{String(cd.s).padStart(2, '0')}</span>
+              </div>
+            </>
+          ) : (
+            <div className="text-[44px] sm:text-[76px] font-semibold tabular-nums tracking-tight text-white/40 leading-none">VS</div>
+          )}
+        </div>
       </div>
     </>
   );
@@ -451,34 +474,17 @@ const HeroLatest = ({ lastResult, oppFull, recentGames, oppRow }) => (
       <Chip tone={lastResult.w ? 'orange' : 'muted'}>{lastResult.w ? '● WIN' : '● LOSS'}</Chip>
       <span className="text-[11px] font-mono text-white/55 uppercase tracking-wider">{fmtDateFull(lastResult.date)} · Final</span>
     </div>
-    <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-4 sm:gap-8 mt-5">
+    <div className="grid grid-cols-2 sm:grid-cols-[1fr_auto_1fr] items-center gap-y-4 gap-x-3 sm:gap-x-8 mt-5">
       <TeamSide
-        logo={<FlyersMark size={88} />}
+        logoSm={<FlyersMark size={44} />}
+        logoLg={<FlyersMark size={88} />}
         abbr="PHI"
         side="left"
         sub={<FormDots games={recentGames} />}
       />
-      <div className="flex items-baseline gap-3 sm:gap-4">
-        <span
-          className={cx('text-[56px] sm:text-[76px] font-semibold tabular-nums tracking-tight leading-none',
-            lastResult.w ? 'text-emerald-400' : 'text-white/55'
-          )}
-          style={{ textShadow: lastResult.w
-            ? '0 0 22px rgba(16,185,129,0.35), 0 2px 4px rgba(0,0,0,0.6)'
-            : '0 2px 4px rgba(0,0,0,0.6)' }}
-        >{lastResult.us}</span>
-        <span className="text-[36px] sm:text-[44px] text-white/20 leading-none">–</span>
-        <span
-          className={cx('text-[56px] sm:text-[76px] font-semibold tabular-nums tracking-tight leading-none',
-            !lastResult.w ? 'text-red-400' : 'text-white/55'
-          )}
-          style={{ textShadow: !lastResult.w
-            ? '0 0 22px rgba(239,68,68,0.32), 0 2px 4px rgba(0,0,0,0.6)'
-            : '0 2px 4px rgba(0,0,0,0.6)' }}
-        >{lastResult.them}</span>
-      </div>
       <TeamSide
-        logo={<TeamLogo abbr={lastResult.opp} size={88} />}
+        logoSm={<TeamLogo abbr={lastResult.opp} size={44} />}
+        logoLg={<TeamLogo abbr={lastResult.opp} size={88} />}
         abbr={lastResult.opp}
         side="right"
         tone="muted"
@@ -488,6 +494,25 @@ const HeroLatest = ({ lastResult, oppFull, recentGames, oppRow }) => (
           </span>
         )}
       />
+      <div className="col-span-2 sm:col-span-1 sm:row-start-1 sm:col-start-2 flex items-baseline justify-center gap-3 sm:gap-4">
+        <span
+          className={cx('text-[44px] sm:text-[76px] font-semibold tabular-nums tracking-tight leading-none',
+            lastResult.w ? 'text-emerald-400' : 'text-white/55'
+          )}
+          style={{ textShadow: lastResult.w
+            ? '0 0 22px rgba(16,185,129,0.35), 0 2px 4px rgba(0,0,0,0.6)'
+            : '0 2px 4px rgba(0,0,0,0.6)' }}
+        >{lastResult.us}</span>
+        <span className="text-[28px] sm:text-[44px] text-white/20 leading-none">–</span>
+        <span
+          className={cx('text-[44px] sm:text-[76px] font-semibold tabular-nums tracking-tight leading-none',
+            !lastResult.w ? 'text-red-400' : 'text-white/55'
+          )}
+          style={{ textShadow: !lastResult.w
+            ? '0 0 22px rgba(239,68,68,0.32), 0 2px 4px rgba(0,0,0,0.6)'
+            : '0 2px 4px rgba(0,0,0,0.6)' }}
+        >{lastResult.them}</span>
+      </div>
     </div>
   </>
 );

@@ -307,6 +307,28 @@ export default function App() {
       className="min-h-screen bg-[#0A0A0A] text-white/90 relative"
       style={{ '--header-offset': schedule.liveGame && page !== 'game' ? '84px' : '48px' }}
     >
+      {/* Page-top Flyers watermark — large, full-width, behind everything,
+          neutral white via the same grayscale + brightness filter the Hero
+          watermarks use so it never tints the dark surface. Sits above the
+          topbar with a soft radial mask so it fades out before the content
+          band starts. */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-x-0 top-0 h-[420px] overflow-hidden select-none z-0"
+      >
+        <img
+          src="https://assets.nhle.com/logos/nhl/svg/PHI_dark.svg"
+          alt=""
+          className="absolute left-1/2 -translate-x-1/2 -top-[100px] w-[1100px] max-w-[140vw] h-[640px] object-contain"
+          style={{
+            opacity: 0.05,
+            filter: 'grayscale(1) brightness(1.7) contrast(0.9) blur(0.5px)',
+            maskImage: 'radial-gradient(ellipse 70% 60% at 50% 40%, black 30%, transparent 80%)',
+            WebkitMaskImage: 'radial-gradient(ellipse 70% 60% at 50% 40%, black 30%, transparent 80%)',
+          }}
+          onError={(e) => { e.currentTarget.style.display = 'none'; }}
+        />
+      </div>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&family=Geist+Mono:wght@400;500;600&display=swap');
         html, body { background: #0A0A0A; }

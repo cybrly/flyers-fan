@@ -5,6 +5,7 @@ import { Kbd, Chip, Label, Skeleton } from './primitives.jsx';
 import { FlyersMark, TeamLogo } from './Logo.jsx';
 import { NAV_ITEMS } from './nav.js';
 import { navigate, playerHref } from '../router.js';
+import { TeamSwitcherPrank } from './TeamSwitcherPrank.jsx';
 
 export const Sidebar = ({ page, setPage, team, liveGame, metro, roster, lastFetch, error, refresh, mobileOpen = false, onCloseMobile }) => {
   const status = connStatus(lastFetch, error);
@@ -55,13 +56,7 @@ export const Sidebar = ({ page, setPage, team, liveGame, metro, roster, lastFetc
       mobileOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0',
     )}>
       <div className="h-12 px-4 flex items-center justify-between border-b border-white/[0.05]">
-        <div className="flex items-center gap-2">
-          <FlyersMark size={20} />
-          <div className="flex items-baseline gap-1">
-            <span className="text-[13px] font-semibold tracking-tight">flyers</span>
-            <span className="text-[13px] text-[#F74902] font-semibold">.fan</span>
-          </div>
-        </div>
+        <TeamSwitcherPrank />
         <div className="flex items-center gap-1">
           <button
             onClick={refresh}

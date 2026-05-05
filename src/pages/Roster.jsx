@@ -5,6 +5,7 @@ import { PlayerLink } from '../components/PlayerLink.jsx';
 import { Headshot } from '../components/Headshot.jsx';
 import { Hometowns } from '../components/Hometowns.jsx';
 import { Birthdays } from '../components/Birthdays.jsx';
+import { ProjectedLineup } from '../components/ProjectedLineup.jsx';
 import { TeamLogo } from '../components/Logo.jsx';
 
 const HEIGHT = (inches) => inches ? `${Math.floor(inches / 12)}'${inches % 12}"` : '—';
@@ -267,6 +268,8 @@ export const Roster = ({ roster, clubStats, prospects, draftPicks }) => {
       )}
 
       {clubStats && <IceTimeLeaderboard skaters={clubStats.skaters} />}
+
+      <ProjectedLineup clubStats={clubStats} />
 
       <Birthdays roster={roster} />
 

@@ -523,7 +523,15 @@ const Stat = ({ row, v }) => (
 // SVG career arc chart. For skaters it stacks G + A bars per season with a
 // points-line overlay; for goalies it draws a SV% line with a reference at
 // .910 (league baseline). Each x-axis tick is a season label, e.g. 17–18.
+//
+// Hover or click on a season slot — invisible hit-rects covering each
+// column trigger a custom HTML tooltip with the full stat line, so users
+// don't have to rely on the cramped native <title> attribute.
 const CareerArc = ({ seasons, isSkater }) => {
+  const [hoverIdx, setHoverIdx] = useState(null);
+  const [stickyIdx, setStickyIdx] = useState(null);
+  const [containerW, setContainerW] = useState(0);
+  const [tipPos, setTipPos] = useState({ x: 0, y: 0 });
   // Aggregate by season — players traded mid-year produce two rows per
   // season; we sum them so the chart isn't visually duplicated.
   const byYear = {};
@@ -579,7 +587,7 @@ const CareerArc = ({ seasons, isSkater }) => {
       title="Career Arc"
       action={<span className="text-[10px] font-mono text-white/40">{isSkater ? 'goals · assists · points' : 'save % per season'}</span>}
     >
-      <div className="p-3">
+      <div className="p-3 relative">
         <svg viewBox={`0 0 ${W} ${H}`} width="100%" height="auto" className="block">
           {/* Y grid + labels */}
           {ticksY.map((t) => (
@@ -663,18 +671,117 @@ const CareerArc = ({ seasons, isSkater }) => {
               </text>
             </g>
           ))}
+
+          {/* Hover/click hit-rects per season — full-height transparent
+              columns make every season equally easy to target, even where
+              the bar is short or absent. Hover shows the tooltip; click
+              pins it so it stays open after the cursor leaves. */}
+          {rows.map((r, i) => {
+            const colW = rows.length === 1 ? PW : PW / (rows.length - 1);
+            const hitX = i === 0 ? PAD.left : x(i) - colW / 2;
+            const hitW = i === 0 || i === rows.length - 1 ? colW / 2 : colW;
+            const isActive = stickyIdx === i || hoverIdx === i;
+            return (
+              <g key={`hit-${r.season}`}>
+                {isActive && (
+                  <line
+                    x1={x(i)} x2={x(i)} y1={PAD.top} y2={PAD.top + PH}
+                    stroke="rgba(247,73,2,0.4)" strokeWidth="1" strokeDasharray="3 3"
+                  />
+                )}
+                <rect
+                  x={hitX}
+                  y={PAD.top}
+                  width={hitW}
+                  height={PH}
+                  fill="transparent"
+                  style={{ cursor: 'pointer' }}
+                  onMouseEnter={() => setHoverIdx(i)}
+                  onMouseMove={(e) => {
+                    const wrap = e.currentTarget.ownerSVGElement?.parentElement;
+                    if (!wrap) return;
+                    const rect = wrap.getBoundingClientRect();
+                    setContainerW(rect.width);
+                    setTipPos({ x: e.clientX - rect.left, y: e.clientY - rect.top });
+                  }}
+                  onMouseLeave={() => setHoverIdx(null)}
+                  onClick={() => setStickyIdx((cur) => (cur === i ? null : i))}
+                />
+              </g>
+            );
+          })}
         </svg>
+        {(() => {
+          const idx = stickyIdx ?? hoverIdx;
+          if (idx == null || idx < 0 || idx >= rows.length) return null;
+          const r = rows[idx];
+          const TIP_W = 220;
+          const flip = tipPos.x + 14 + TIP_W > (containerW || Infinity);
+          const left = flip ? Math.max(8, tipPos.x - 14 - TIP_W) : tipPos.x + 14;
+          const top = Math.max(8, tipPos.y - 8);
+          return (
+            <div
+              className="absolute pointer-events-none rounded-md border border-white/[0.12] bg-[#0C0D11]/96 backdrop-blur-md shadow-2xl"
+              style={{ left, top, width: TIP_W, zIndex: 5 }}
+            >
+              <div className="px-3 py-2 border-b border-white/[0.06] flex items-center justify-between">
+                <span className="text-[11px] font-mono text-white/85 font-semibold tabular-nums">{seasonLabel(r.season)}</span>
+                <span className="text-[10px] font-mono text-white/45 tabular-nums">{r.gp} GP</span>
+              </div>
+              <div className="px-3 py-2 space-y-1">
+                {isSkater ? (
+                  <>
+                    <CareerArcRow label="Goals" value={r.g} dotClass="bg-emerald-400/80" />
+                    <CareerArcRow label="Assists" value={r.a} dotClass="bg-sky-400/70" />
+                    <CareerArcRow label="Points" value={r.p} dotClass="bg-[#F74902]" highlight />
+                    {r.gp > 0 && (
+                      <div className="text-[10px] font-mono text-white/45 pt-1.5 mt-1.5 border-t border-white/[0.05] tabular-nums">
+                        {(r.p / r.gp).toFixed(2)} PPG
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  <>
+                    <CareerArcRow label="Save %" value={r.savePctg != null ? `${(r.savePctg * 100).toFixed(2)}%` : '—'} dotClass="bg-[#F74902]" highlight />
+                    <CareerArcRow label="Saves" value={r.sv} />
+                    <CareerArcRow label="Shots Ag" value={r.sa} />
+                  </>
+                )}
+              </div>
+              {stickyIdx === idx && (
+                <div className="px-3 py-1.5 border-t border-white/[0.05] text-[9px] font-mono text-white/35 uppercase tracking-wider">
+                  click again to dismiss
+                </div>
+              )}
+            </div>
+          );
+        })()}
         {isSkater && (
           <div className="flex items-center gap-4 px-2 mt-1 text-[10px] font-mono text-white/45">
             <span className="flex items-center gap-1.5"><span className="w-2 h-2 bg-emerald-400/70 rounded-sm" /> goals</span>
             <span className="flex items-center gap-1.5"><span className="w-2 h-2 bg-sky-400/70 rounded-sm" /> assists</span>
             <span className="flex items-center gap-1.5"><span className="w-2 h-2 bg-[#F74902] rounded-sm" /> points</span>
+            <span className="text-white/30 ml-2">hover or click a year</span>
           </div>
         )}
       </div>
     </Section>
   );
 };
+
+// One row in the CareerArc tooltip. Highlight is the points/save% line so
+// it pops above goals/assists.
+const CareerArcRow = ({ label, value, dotClass, highlight }) => (
+  <div className="flex items-center justify-between text-[11px] font-mono">
+    <span className="flex items-center gap-1.5 text-white/55">
+      {dotClass && <span className={`w-1.5 h-1.5 rounded-full ${dotClass}`} />}
+      {label}
+    </span>
+    <span className={cx('tabular-nums', highlight ? 'text-[#FF8A4C]' : 'text-white/85')}>
+      {value}
+    </span>
+  </div>
+);
 
 // Convert "MM:SS" to total seconds for trend calculations.
 const toiToSec = (toi) => {

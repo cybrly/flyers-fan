@@ -62,6 +62,7 @@ const Trends   = lazyPage(() => import('./pages/Trends.jsx'),   'Trends');
 const Coaches  = lazyPage(() => import('./pages/Coaches.jsx'),  'Coaches');
 const Draft    = lazyPage(() => import('./pages/Draft.jsx'),    'Draft');
 const Records  = lazyPage(() => import('./pages/Records.jsx'),  'Records');
+const Broadcast = lazyPage(() => import('./pages/Broadcast.jsx'), 'Broadcast');
 
 export default function App() {
   // Route-derived state — URL is the source of truth. /game/123, ?player=8478,
@@ -93,6 +94,7 @@ export default function App() {
       coaches: 'Coaches · flyers.fan',
       draft: 'Draft Rankings · flyers.fan',
       records: 'Records · flyers.fan',
+      broadcast: 'Broadcast · flyers.fan',
     };
     document.title = titles[page] || 'flyers.fan';
   }, [page]);
@@ -425,6 +427,7 @@ export default function App() {
                 {page === 'coaches'   && <Coaches />}
                 {page === 'draft'     && <Draft rankings={draftRankings} loading={drNAS.loading} />}
                 {page === 'records'   && <Records />}
+                {page === 'broadcast' && <Broadcast schedule={schedule} liveDetail={isLive(boxscore.data?.gameState) ? game : null} lastGame={game} />}
               </Suspense>
             </ErrorBoundary>
           </main>

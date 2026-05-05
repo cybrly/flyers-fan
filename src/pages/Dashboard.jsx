@@ -13,7 +13,6 @@ import { SeriesTracker } from '../components/SeriesTracker.jsx';
 import { HeadToHead } from '../components/HeadToHead.jsx';
 import { LeagueLeaders } from '../components/LeagueLeaders.jsx';
 import { ThreeStarsPanel, AwardWatchPanel, RecordsTrackerPanel } from '../components/EngagementPanels.jsx';
-import { PredictionsPanel } from '../components/PredictionsPanel.jsx';
 
 // Dashboard is laid out as a single linear flow split into named bands
 // (Tonight / Season / Recent / Offense / Roster / Reference). Each band
@@ -116,10 +115,6 @@ export const Dashboard = ({ schedule, standings, scoreboard, clubStats, roster, 
         <LatestResultCard lastResult={lastResult} lastGame={lastGame} onOpenGame={onOpenGame} />
         <HeadToHead schedule={schedule} onOpenGame={onOpenGame} />
       </div>
-
-      {nextGame && !liveGame && (
-        <PredictionsPanel nextGame={nextGame} recentGames={games} />
-      )}
 
       {/* ─── BAND · SEASON OVERVIEW ───────────────────────────────────────── */}
       <SectionBand label="Season Overview" color="warm" sub="2025–26 · all 82" />

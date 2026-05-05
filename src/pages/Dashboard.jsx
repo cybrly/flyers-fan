@@ -11,6 +11,7 @@ import { PlayerLink } from '../components/PlayerLink.jsx';
 import { SeriesTracker } from '../components/SeriesTracker.jsx';
 import { HeadToHead } from '../components/HeadToHead.jsx';
 import { LeagueLeaders } from '../components/LeagueLeaders.jsx';
+import { ThreeStarsPanel, AwardWatchPanel, RecordsTrackerPanel } from '../components/EngagementPanels.jsx';
 
 // Dashboard is laid out as a single linear flow split into named bands
 // (Tonight / Season / Recent / Offense / Roster / Reference). Each band
@@ -313,6 +314,9 @@ export const Dashboard = ({ schedule, standings, scoreboard, clubStats, roster, 
 
       <ScoringPanel games={games} us={us} />
 
+      {/* Three Stars from latest finalized game */}
+      {lastGame?.stars?.length > 0 && <ThreeStarsPanel lastGame={lastGame} />}
+
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {topScorers.length > 0 && (
           <Section title="Top Scorers · PHI" action={<span className="text-[10px] font-mono text-white/40">season</span>}>
@@ -376,6 +380,10 @@ export const Dashboard = ({ schedule, standings, scoreboard, clubStats, roster, 
 
       {/* League leaders panel — full-width pivot from PHI to NHL-wide. */}
       <LeagueLeaders data={leagueLeaders} />
+
+      <RecordsTrackerPanel clubStats={clubStats} />
+
+      <AwardWatchPanel />
 
       {/* ─── BAND · ROSTER & FRANCHISE ────────────────────────────────────── */}
       <SectionBand label="Roster & Franchise" color="amber" sub="young guns · honors" />

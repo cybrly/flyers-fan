@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { Maximize2, Minimize2 } from 'lucide-react';
 import { cx, OPP_FULL, fmtTime, fmtDateFull } from '../config.js';
 import { FlyersMark, TeamLogo } from '../components/Logo.jsx';
 import { Chip } from '../components/primitives.jsx';
@@ -142,11 +143,31 @@ const ThreeStarsRibbon = ({ stars }) => {
   );
 };
 
+// Track browser fullscreen state and expose toggle. Native Fullscreen API
+// must be called from a user gesture, so the toggle wraps the request and
+// silently no-ops if denied.
+const useFullscreen = () => {
+  const [isFs, setIsFs] = useState(() => !!document.fullscreenElement);
+  useEffect(() => {
+    const sync = () => setIsFs(!!document.fullscreenElement);
+    document.addEventListener('fullscreenchange', sync);
+    return () => document.removeEventListener('fullscreenchange', sync);
+  }, []);
+  const toggle = async () => {
+    try {
+      if (document.fullscreenElement) await document.exitFullscreen();
+      else await document.documentElement.requestFullscreen();
+    } catch { /* user denied or unsupported */ }
+  };
+  return [isFs, toggle];
+};
+
 export const Broadcast = ({ schedule, liveDetail, lastGame }) => {
   const liveGame = schedule?.liveGame;
   const nextGame = schedule?.nextGame;
   const games = schedule?.games || [];
   const lastResult = games[0];
+  const [isFs, toggleFs] = useFullscreen();
 
   // What state to render
   const phase = liveGame ? 'LIVE' : nextGame ? 'PRE' : lastResult ? 'FINAL' : 'IDLE';
@@ -191,9 +212,18 @@ export const Broadcast = ({ schedule, liveDetail, lastGame }) => {
             {phase === 'FINAL' && lastResult && `${fmtDateFull(lastResult.date)} · Final`}
           </span>
         </div>
-        <span className="text-[14px] xl:text-[16px] font-mono uppercase tracking-wider text-white/35">
-          flyers.fan · broadcast view
-        </span>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={toggleFs}
+            aria-label={isFs ? 'Exit fullscreen' : 'Enter fullscreen'}
+            className="p-2 rounded-md border border-white/[0.08] bg-white/[0.02] hover:bg-white/[0.06] text-white/60 hover:text-white/90 transition-colors"
+          >
+            {isFs ? <Minimize2 size={16} /> : <Maximize2 size={16} />}
+          </button>
+          <span className="text-[14px] xl:text-[16px] font-mono uppercase tracking-wider text-white/35">
+            flyers.fan · broadcast view
+          </span>
+        </div>
       </div>
 
       {/* MAIN MATCHUP */}

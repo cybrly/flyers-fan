@@ -13,11 +13,6 @@ const HERO_KEYFRAMES = `
   0%, 100% { opacity: 0.55; transform: scale(1); }
   50%      { opacity: 1;    transform: scale(1.18); }
 }
-@keyframes flyersHeroSweep {
-  0%   { transform: translateX(-30%); opacity: 0; }
-  50%  { opacity: 0.6; }
-  100% { transform: translateX(130%); opacity: 0; }
-}
 `;
 
 // Full-rink overhead graphic. Spans the entire Hero width as a stylized
@@ -176,24 +171,6 @@ const CenterShield = () => {
     </div>
   );
 };
-
-// A slim "skating sweep" highlight that periodically arcs across the Hero
-// to suggest motion. Single horizontal soft gradient, slow loop.
-const HeroSweep = () => (
-  <div
-    aria-hidden
-    className="pointer-events-none absolute inset-x-0 top-1/2 -translate-y-1/2 h-32 hidden md:block overflow-hidden"
-  >
-    <div
-      style={{
-        width: '40%',
-        height: '100%',
-        background: 'linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.06) 50%, transparent 100%)',
-        animation: 'flyersHeroSweep 9s ease-in-out infinite',
-      }}
-    />
-  </div>
-);
 
 // Big team side — logo + 3-letter abbreviation rendered at the same scale
 // as the centerpiece score/countdown. Sub line (form dots / opponent record)
@@ -564,7 +541,6 @@ export const Hero = ({ liveGame, liveDetail, nextGame, lastResult, us, recentGam
             stays clean. */}
         <FullRinkMark />
         <CenterShield />
-        <HeroSweep />
         {/* Top edge highlight + bottom shadow for the "raised card" feel. */}
         <div aria-hidden className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/15 to-transparent" />
         <div aria-hidden className="pointer-events-none absolute inset-x-8 bottom-0 h-12 bg-gradient-to-t from-black/60 to-transparent" />

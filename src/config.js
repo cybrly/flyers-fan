@@ -110,6 +110,22 @@ export const OPP_FULL = {
   PHI: 'Philadelphia Flyers',
 };
 
+// Reverse map: full team name → 3-letter abbreviation. Used when an API
+// payload only carries the team's display name (e.g. NHL player landing
+// /seasonTotals returns teamName.default = "Philadelphia Flyers" with no
+// teamAbbrev) and we need the abbrev to load the team logo. We dedupe on
+// canonical names so the second "NJ"/"SJ"/"LA" alias entries in OPP_FULL
+// don't override the canonical 3-letter codes.
+export const NAME_TO_ABBR = (() => {
+  const out = {};
+  // Walk in reverse so the canonical 3-letter entry wins (it appears first
+  // for each team in OPP_FULL).
+  for (const [abbr, name] of Object.entries(OPP_FULL)) {
+    if (abbr.length === 3 || !out[name]) out[name] = abbr;
+  }
+  return out;
+})();
+
 const GAME_LIVE_STATES = ['LIVE', 'CRIT'];
 const GAME_FINAL_STATES = ['OFF', 'FINAL'];
 const GAME_FUTURE_STATES = ['FUT', 'PRE'];

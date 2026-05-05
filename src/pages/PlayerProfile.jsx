@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { ArrowLeft, AlertCircle } from 'lucide-react';
-import { cx, fmtDate, SEASON } from '../config.js';
+import { cx, fmtDate, SEASON, NAME_TO_ABBR } from '../config.js';
 import { useNHL } from '../api.js';
 import { Section, Skeleton, Chip, Label } from '../components/primitives.jsx';
 import { TeamLogo } from '../components/Logo.jsx';
@@ -312,13 +312,21 @@ export const PlayerProfile = ({ playerId }) => {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-white/[0.04]">
-                    {nhlSeasons.map((s, i) => (
-                      <tr key={`${s.season}-${s.teamName?.default || i}`} className="hover:bg-white/[0.02]">
+                    {nhlSeasons.map((s, i) => {
+                      const teamName = s.teamName?.default || s.teamCommonName?.default || '';
+                      // Prefer an explicit teamAbbrev, then fall back to the
+                      // name → abbrev lookup so TeamLogo can actually find
+                      // the SVG instead of falling back to the abbr-as-text
+                      // tile (which caused "Philadelphia Flyers" to render
+                      // twice on every row).
+                      const abbr = s.teamAbbrev || NAME_TO_ABBR[teamName] || null;
+                      return (
+                      <tr key={`${s.season}-${teamName || i}`} className="hover:bg-white/[0.02]">
                         <td className="px-4 text-[11px] font-mono tabular-nums text-white/65 h-9">{seasonLabel(s.season)}</td>
                         <td className="px-2">
                           <div className="flex items-center gap-2 text-[12px] text-white/80">
-                            {s.teamName?.default && <TeamLogo abbr={s.teamName?.default} size={14} />}
-                            <span className="truncate">{s.teamName?.default || s.teamCommonName?.default || '—'}</span>
+                            {abbr && <TeamLogo abbr={abbr} size={14} />}
+                            <span className="truncate">{teamName || '—'}</span>
                           </div>
                         </td>
                         <td className="px-2 text-right text-[11px] font-mono tabular-nums text-white/55">{s.gamesPlayed ?? '—'}</td>
@@ -346,7 +354,8 @@ export const PlayerProfile = ({ playerId }) => {
                           </>
                         )}
                       </tr>
-                    ))}
+                      );
+                    })}
                     {career && (
                       <tr className="border-t-2 border-white/[0.08] bg-white/[0.02]">
                         <td className="px-4 h-9 text-[11px] font-mono text-white/85 uppercase tracking-wider">Career</td>

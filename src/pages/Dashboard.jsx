@@ -8,8 +8,9 @@ import { Hero } from '../components/Hero.jsx';
 import { Scoreboard } from '../components/Scoreboard.jsx';
 import { Headshot } from '../components/Headshot.jsx';
 import { PlayerLink } from '../components/PlayerLink.jsx';
+import { SeriesTracker } from '../components/SeriesTracker.jsx';
 
-export const Dashboard = ({ schedule, standings, scoreboard, clubStats, liveDetail, lastGame, loading, onOpenGame }) => {
+export const Dashboard = ({ schedule, standings, scoreboard, clubStats, roster, liveDetail, lastGame, loading, onOpenGame }) => {
   const games = schedule?.games?.slice(0, 20) || [];
   const chronGames = [...games].reverse();
   const l10 = games.slice(0, 10);
@@ -56,6 +57,8 @@ export const Dashboard = ({ schedule, standings, scoreboard, clubStats, liveDeta
     <div className="p-3 md:p-5 space-y-3">
       <Hero liveGame={liveGame} liveDetail={liveDetail} nextGame={nextGame} lastResult={lastResult} us={us} />
 
+      <SeriesTracker scoreboard={scoreboard} schedule={schedule} onOpenGame={onOpenGame} />
+
       {scoreboard?.games?.length > 0 && <Scoreboard data={scoreboard} />}
 
       <div className="flex items-center justify-between flex-wrap gap-3">
@@ -73,9 +76,10 @@ export const Dashboard = ({ schedule, standings, scoreboard, clubStats, liveDeta
         </div>
       </div>
 
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3">
         <KPI label="Record" value={us ? `${us.w}–${us.l}${us.ot ? `–${us.ot}` : ''}` : '—'} sub={us ? `${us.gp} GP` : ''} sparkData={running.winPctArr} loading={loading && !us} />
-        <KPI label="Points %" value={us ? (us.pct * 100).toFixed(1) : '—'} sub="%" sparkData={running.winPctArr} loading={loading && !us} />
+        <KPI label="Points" value={us?.pts ?? '—'} sub={us ? `${(us.pct * 100).toFixed(1)}%` : ''} sparkData={running.winPctArr} loading={loading && !us} />
+        <KPI label="82-game Pace" value={us?.gp ? Math.round((us.pts / us.gp) * 82) : '—'} sub="pts" loading={loading && !us} trendColor="#F74902" />
         <KPI label="Goal Diff" value={us ? `${us.diff >= 0 ? '+' : ''}${us.diff}` : '—'} sub="season" sparkData={running.diffArr} trendColor={(us?.diff ?? 0) >= 0 ? '#F74902' : '#EF4444'} loading={loading && !us} />
         <KPI label="Streak" value={streak ? `${streak.type}${streak.count}` : '—'} sub={streak?.type === 'W' ? 'hot' : 'cold'} sparkData={running.winPctArr} loading={!streak} />
         <KPI label="Last 10" value={games.length ? `${l10Record.w}–${l10Record.l}` : '—'} sub="recent" sparkData={l10.map((g) => g.w ? 1 : 0).reverse()} loading={!games.length} />
@@ -209,6 +213,11 @@ export const Dashboard = ({ schedule, standings, scoreboard, clubStats, liveDeta
           </div>
 
           <ScoringPanel games={games} us={us} />
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <YoungGunsPanel roster={roster} clubStats={clubStats} />
+            <HonorsPanel />
+          </div>
         </div>
 
         <div className="lg:col-span-4 2xl:col-span-3 space-y-4">
@@ -390,6 +399,8 @@ export const Dashboard = ({ schedule, standings, scoreboard, clubStats, liveDeta
             </Section>
           )}
 
+          <MilestoneWatch clubStats={clubStats} />
+
           {lastGameGoals.length > 0 && (
             <Section title="Last Game · Goals" action={<span className="text-[10px] font-mono text-white/40">{lastGame?.dateLabel || ''}</span>}>
               <div className="divide-y divide-white/[0.04]">
@@ -520,6 +531,179 @@ const ScoringPanel = ({ games, us }) => {
             {t.sub && <div className="text-[9px] font-mono text-white/30 mt-0.5">{t.sub}</div>}
           </div>
         ))}
+      </div>
+    </Section>
+  );
+};
+
+// Players within striking distance of a round-number milestone — fun engagement
+// content. Computes from clubStats season totals; only shows if there's at
+// least one player within ~5 of a milestone.
+const MilestoneWatch = ({ clubStats }) => {
+  if (!clubStats) return null;
+  const list = [];
+
+  const skaterChecks = [
+    { key: 'g',   step: 10, abbr: 'G',   label: 'goals' },
+    { key: 'a',   step: 10, abbr: 'A',   label: 'assists' },
+    { key: 'pts', step: 25, abbr: 'PTS', label: 'points' },
+  ];
+  for (const p of clubStats.skaters || []) {
+    for (const c of skaterChecks) {
+      const v = p[c.key];
+      if (v == null || v < c.step / 2) continue;
+      const next = Math.ceil((v + 1) / c.step) * c.step;
+      const away = next - v;
+      if (away <= 4) list.push({ id: p.id, name: p.name, num: p.num, headshot: p.headshot, abbr: c.abbr, current: v, target: next, away });
+    }
+  }
+  const goalieChecks = [
+    { key: 'w',     step: 10,  abbr: 'W',  label: 'wins' },
+    { key: 'so',    step: 1,   abbr: 'SO', label: 'shutouts' },
+    { key: 'saves', step: 250, abbr: 'SV', label: 'saves' },
+  ];
+  for (const p of clubStats.goalies || []) {
+    for (const c of goalieChecks) {
+      const v = p[c.key];
+      if (v == null) continue;
+      if (c.key === 'so' && v < 1) continue;
+      if (c.key === 'w' && v < 5) continue;
+      if (c.key === 'saves' && v < 100) continue;
+      const next = Math.ceil((v + 1) / c.step) * c.step;
+      const away = next - v;
+      if (away <= (c.key === 'saves' ? 50 : c.key === 'so' ? 1 : 4)) {
+        list.push({ id: p.id, name: p.name, headshot: p.headshot, abbr: c.abbr, current: v, target: next, away });
+      }
+    }
+  }
+  list.sort((a, b) => a.away - b.away);
+  if (!list.length) return null;
+  return (
+    <Section title="Milestone Watch" action={<span className="text-[10px] font-mono text-white/40">approaching</span>}>
+      <div className="divide-y divide-white/[0.04]">
+        {list.slice(0, 5).map((m, i) => (
+          <div key={`${m.id}-${m.abbr}`} className="grid grid-cols-[1fr_auto] items-center gap-2 px-3 h-9">
+            <span className="flex items-center gap-2 min-w-0">
+              <Headshot src={m.headshot} num={m.num} size={20} />
+              <PlayerLink playerId={m.id}>
+                <span className="text-[12px] truncate">{m.name}</span>
+              </PlayerLink>
+            </span>
+            <span className="flex items-baseline gap-1 text-[10px] font-mono tabular-nums shrink-0">
+              <span className="text-white/55">{m.current}</span>
+              <span className="text-white/25">→</span>
+              <span className="text-[#FF8A4C] font-medium">{m.target}</span>
+              <span className="text-[9px] text-white/40 ml-1">{m.abbr}</span>
+              <span className="text-[9px] text-white/35 ml-1">·</span>
+              <span className="text-[10px] text-white/65">{m.away} away</span>
+            </span>
+          </div>
+        ))}
+      </div>
+    </Section>
+  );
+};
+
+// Players age 23 or younger, joined with their season stats. Crosses roster
+// (which has age) with clubStats (which has season totals).
+const YoungGunsPanel = ({ roster, clubStats }) => {
+  if (!roster || !clubStats) return null;
+  const all = [...(roster.forwards || []), ...(roster.defense || []), ...(roster.goalies || [])];
+  const young = all
+    .filter((p) => p.age != null && p.age <= 23)
+    .map((p) => {
+      const sk = clubStats.skaters?.find((s) => s.id === p.id);
+      const g  = clubStats.goalies?.find((s) => s.id === p.id);
+      return { ...p, sk, g };
+    })
+    .sort((a, b) => {
+      const aPts = a.sk?.pts ?? a.g?.w ?? 0;
+      const bPts = b.sk?.pts ?? b.g?.w ?? 0;
+      return bPts - aPts;
+    })
+    .slice(0, 6);
+  if (!young.length) return null;
+  return (
+    <Section title="Young Guns" action={<span className="text-[10px] font-mono text-white/40">23 & under</span>}>
+      <div className="divide-y divide-white/[0.04]">
+        {young.map((p) => (
+          <div key={p.id} className="grid grid-cols-[1fr_auto] items-center gap-2 px-3 h-9">
+            <span className="flex items-center gap-2 min-w-0">
+              <Headshot src={p.headshot} num={p.num} size={20} />
+              <PlayerLink playerId={p.id}>
+                <span className="text-[12px] truncate">{p.name}</span>
+              </PlayerLink>
+              <span className="text-[9px] font-mono text-white/30 shrink-0">{p.pos} · {p.age}</span>
+            </span>
+            <span className="flex items-baseline gap-1 text-[10px] font-mono tabular-nums shrink-0">
+              {p.sk ? (
+                <>
+                  <span className="text-white/55">{p.sk.gp ?? 0}<span className="text-white/30">GP</span></span>
+                  <span className="text-white/55 ml-1">{p.sk.g ?? 0}<span className="text-white/30">G</span></span>
+                  <span className="text-white/55 ml-1">{p.sk.a ?? 0}<span className="text-white/30">A</span></span>
+                  <span className="text-[12px] text-[#FF8A4C] font-medium ml-1">{p.sk.pts ?? 0}</span>
+                </>
+              ) : p.g ? (
+                <>
+                  <span className="text-white/55">{p.g.gp ?? 0}<span className="text-white/30">GP</span></span>
+                  <span className="text-[#FF8A4C] font-medium ml-1">{p.g.w ?? 0}<span className="text-white/30 font-normal">W</span></span>
+                  <span className="text-white/55 ml-1">{p.g.savePct ?? '—'}<span className="text-white/30">%</span></span>
+                </>
+              ) : (
+                <span className="text-white/35">no stats yet</span>
+              )}
+            </span>
+          </div>
+        ))}
+      </div>
+    </Section>
+  );
+};
+
+// Static franchise pride content — Stanley Cups, retired numbers, hall-of-fame
+// alumni. Doesn't change between requests so it's safe to hard-code.
+const HonorsPanel = () => {
+  const cups = [
+    { year: 1974, vs: 'BOS', result: '4–2' },
+    { year: 1975, vs: 'BUF', result: '4–2' },
+  ];
+  const retired = [
+    { num: 1,  name: 'Bernie Parent',   year: 1979 },
+    { num: 2,  name: 'Mark Howe',       year: 2012 },
+    { num: 4,  name: 'Barry Ashbee',    year: 1977 },
+    { num: 7,  name: 'Bill Barber',     year: 1990 },
+    { num: 16, name: 'Bobby Clarke',    year: 1984 },
+    { num: 88, name: 'Eric Lindros',    year: 2018 },
+  ];
+  return (
+    <Section title="Franchise Honors" action={<span className="text-[10px] font-mono text-white/40">since 1967</span>}>
+      <div className="p-3.5 space-y-3">
+        <div>
+          <div className="text-[10px] font-mono text-white/40 uppercase tracking-wider mb-1.5">Stanley Cups</div>
+          <div className="flex items-center gap-2">
+            {cups.map((c) => (
+              <div key={c.year} className="flex-1 border border-[#F74902]/30 bg-[#F74902]/[0.06] rounded-md px-3 py-2">
+                <div className="text-[18px] font-semibold tabular-nums tracking-tight text-[#FF8A4C]">{c.year}</div>
+                <div className="text-[10px] font-mono text-white/55 mt-0.5">def. {c.vs} · {c.result}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div>
+          <div className="text-[10px] font-mono text-white/40 uppercase tracking-wider mb-1.5">Retired Numbers</div>
+          <div className="grid grid-cols-3 gap-1.5">
+            {retired.map((r) => (
+              <div key={r.num} className="flex items-center gap-1.5 px-2 py-1.5 border border-white/[0.06] bg-white/[0.02] rounded-md">
+                <span className="text-[14px] font-semibold tabular-nums text-[#FF8A4C] shrink-0 w-6">#{r.num}</span>
+                <span className="min-w-0 flex-1">
+                  <span className="block text-[10px] text-white/85 truncate">{r.name}</span>
+                  <span className="block text-[9px] font-mono text-white/35">{r.year}</span>
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
     </Section>
   );

@@ -407,11 +407,14 @@ export function adaptBracket(raw) {
 
   const byRound = [1, 2, 3, 4].map((r) => series.filter((s) => s.round === r));
   // bracketTitle/SubTitle come back as localized {default} objects from the
-  // API — extract the string so callers can render them directly.
+  // API — extract the string so callers can render them directly. Guard
+  // explicitly against the object-with-empty-string case (`{default: ''}`)
+  // because `'' || obj` would fall through to the object and React error #31.
+  const localStr = (v) => (typeof v === 'string' ? v : (v && typeof v === 'object' ? (v.default || '') : ''));
   return {
     rounds: byRound,
-    title: raw.bracketTitle?.default || raw.bracketTitle || '',
-    subtitle: raw.bracketSubTitle?.default || raw.bracketSubTitle || '',
+    title: localStr(raw.bracketTitle),
+    subtitle: localStr(raw.bracketSubTitle),
   };
 }
 

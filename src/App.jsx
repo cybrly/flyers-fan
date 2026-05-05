@@ -134,8 +134,9 @@ export default function App() {
   const bracketRaw = useNHL(bracketPath, POLL.standings);
   const bracket = useMemo(() => adaptBracket(bracketRaw.data), [bracketRaw.data]);
 
-  // Roster + club stats — only fetched when on Roster page.
-  const rosterPath = page === 'roster' ? `v1/roster/${TEAM_ABBR}/current` : null;
+  // Roster + club stats — fetched on Roster (full table) and Dashboard (Young
+  // Guns + Top Scorers panels). Roster has a 1h CDN TTL so this is cheap.
+  const rosterPath = (page === 'roster' || page === 'dashboard') ? `v1/roster/${TEAM_ABBR}/current` : null;
   const rosterRaw = useNHL(rosterPath, POLL.standings);
   const roster = useMemo(() => adaptRoster(rosterRaw.data), [rosterRaw.data]);
   const clubStatsPath = (page === 'roster' || page === 'dashboard') ? `v1/club-stats/${TEAM_ABBR}/now` : null;
@@ -253,7 +254,7 @@ export default function App() {
               <Suspense fallback={
                 <div className="p-6 text-[12px] font-mono text-white/35">loading…</div>
               }>
-                {page === 'dashboard' && <Dashboard schedule={schedule} standings={standings} scoreboard={scoreboard} clubStats={clubStats} liveDetail={isLive(boxscore.data?.gameState) ? game : null} lastGame={game} loading={scheduleRaw.loading || standingsRaw.loading} onOpenGame={openGame} />}
+                {page === 'dashboard' && <Dashboard schedule={schedule} standings={standings} scoreboard={scoreboard} clubStats={clubStats} roster={roster} liveDetail={isLive(boxscore.data?.gameState) ? game : null} lastGame={game} loading={scheduleRaw.loading || standingsRaw.loading} onOpenGame={openGame} />}
                 {page === 'schedule'  && <Schedule schedule={schedule} onOpenGame={openGame} />}
                 {page === 'standings' && <Standings standings={standings} />}
                 {page === 'game'      && <GameTape game={game} loading={boxscore.loading} pbp={pbp} pbpRaw={pbpRaw.data} customGameId={routeGameId} onClearCustom={clearSelectedGame} />}

@@ -380,7 +380,7 @@ export const GameTape = ({ game, loading, pbp, pbpRaw, customGameId, onClearCust
               <div className="divide-y divide-white/[0.04]">
                 {game.timeline.map((g, i) => (
                   <div key={i} className={cx(
-                    'grid grid-cols-[36px_56px_1fr_70px] items-center gap-3 px-4 h-12',
+                    'grid grid-cols-[36px_56px_1fr_84px_28px] items-center gap-3 px-4 h-12',
                     g.us ? 'bg-[#F74902]/[0.04]' : 'hover:bg-white/[0.02]',
                   )}>
                     <span className="text-[10px] font-mono text-white/40 uppercase">
@@ -416,7 +416,22 @@ export const GameTape = ({ game, loading, pbp, pbpRaw, customGameId, onClearCust
                       <span className="text-[11px] font-mono tabular-nums text-white/65">
                         {g.awayScore}<span className="text-white/25 mx-0.5">–</span>{g.homeScore}
                       </span>
+                      {g.shotType && (
+                        <div className="text-[9px] font-mono text-white/35 mt-0.5">{g.shotType}</div>
+                      )}
                     </div>
+                    {g.highlightUrl ? (
+                      <a
+                        href={`https://www.${g.highlightUrl.replace(/^https?:\/\/(www\.)?/, '')}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        title="Watch highlight on NHL.com"
+                        className="flex items-center justify-center w-6 h-6 rounded-md text-white/40 hover:text-[#FF8A4C] hover:bg-white/[0.04] transition-colors"
+                        aria-label="Watch highlight"
+                      >
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z" /></svg>
+                      </a>
+                    ) : <span />}
                   </div>
                 ))}
               </div>

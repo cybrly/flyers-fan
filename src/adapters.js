@@ -201,6 +201,8 @@ export function adaptGame(boxscore, rightRail, landing) {
           score: { us: isUs ? g.homeScore : g.awayScore, them: isUs ? g.awayScore : g.homeScore },
           awayScore: g.awayScore,
           homeScore: g.homeScore,
+          // NHL.com video clip — direct shareable URL for the highlight reel.
+          highlightUrl: g.highlightClipSharingUrl || null,
         });
       });
       periods[num] = [uGoals, tGoals];
@@ -284,6 +286,23 @@ export function adaptPlayByPlay(raw) {
 
   const playerName = (id) => players[id]?.name || '—';
 
+  // Shot quality from coordinates. NHL rink is 200ft × 85ft, with the goal
+  // at x=±89, y=0 of the offensive zone. Distance and angle inform a coarse
+  // "danger" classification (high / medium / low) — not a real xG model,
+  // just a useful tooltip for shot/goal events.
+  const shotQuality = (x, y) => {
+    if (x == null || y == null) return null;
+    const goalX = x > 0 ? 89 : -89;
+    const dx = goalX - x;
+    const dy = y;
+    const distance = Math.round(Math.sqrt(dx * dx + dy * dy));
+    const angle = Math.round(Math.abs(Math.atan2(Math.abs(dy), Math.abs(dx)) * 180 / Math.PI));
+    let danger = 'low';
+    if (distance <= 20 && angle <= 30) danger = 'high';
+    else if (distance <= 35) danger = 'medium';
+    return { distance, angle, danger };
+  };
+
   const events = [];
   for (const p of raw.plays) {
     if (!KEEP.has(p.typeDescKey)) continue;
@@ -291,6 +310,9 @@ export function adaptPlayByPlay(raw) {
     const teamId = det.eventOwnerTeamId;
     const team = teamAbbr[teamId] || '';
     const us = teamId === usTeamId;
+    const sq = shotQuality(det.xCoord, det.yCoord);
+    const emptyNet = (p.typeDescKey === 'goal') && det.goalieInNetId == null;
+    const highlightUrl = det.highlightClipSharingUrl || null;
 
     let summary = '';
     switch (p.typeDescKey) {
@@ -300,6 +322,7 @@ export function adaptPlayByPlay(raw) {
         const a2 = det.assist2PlayerId ? playerName(det.assist2PlayerId) : '';
         const assists = [a1, a2].filter(Boolean).join(', ');
         summary = `${scorer} scores${assists ? ` (${assists})` : ' (unassisted)'}`;
+        if (emptyNet) summary += ' · EN';
         break;
       }
       case 'shot-on-goal':
@@ -346,6 +369,13 @@ export function adaptPlayByPlay(raw) {
       us,
       summary,
       sortOrder: p.sortOrder,
+      shotType: det.shotType || null,
+      distance: sq?.distance ?? null,
+      angle: sq?.angle ?? null,
+      danger: sq?.danger ?? null,
+      emptyNet,
+      highlightUrl,
+      situationCode: p.situationCode || null,
     });
   }
   events.sort((a, b) => (b.period - a.period) || (b.sortOrder - a.sortOrder));

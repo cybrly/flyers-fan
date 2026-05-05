@@ -349,7 +349,7 @@ export const Dashboard = ({ schedule, standings, scoreboard, clubStats, roster, 
             <div className="divide-y divide-white/[0.04]">
               {lastGameGoals.slice(-6).reverse().map((g, i) => (
                 <div key={i} className={cx(
-                  'grid grid-cols-[40px_1fr_auto] items-center gap-2 px-3 h-9',
+                  'grid grid-cols-[40px_1fr_auto_22px] items-center gap-2 px-3 h-9',
                   g.us ? 'bg-[#F74902]/[0.04]' : '',
                 )}>
                   <span className="text-[9px] font-mono text-white/40 tabular-nums">
@@ -369,6 +369,18 @@ export const Dashboard = ({ schedule, standings, scoreboard, clubStats, roster, 
                     <span className="text-white/25 mx-0.5">–</span>
                     <span className={g.us ? 'text-emerald-400' : 'text-white/65'}>{g.homeScore}</span>
                   </span>
+                  {g.highlightUrl ? (
+                    <a
+                      href={`https://www.${g.highlightUrl.replace(/^https?:\/\/(www\.)?/, '')}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      title="Watch highlight"
+                      aria-label="Watch highlight"
+                      className="flex items-center justify-center w-5 h-5 rounded text-white/40 hover:text-[#FF8A4C] hover:bg-white/[0.04] transition-colors"
+                    >
+                      <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z" /></svg>
+                    </a>
+                  ) : <span />}
                 </div>
               ))}
             </div>

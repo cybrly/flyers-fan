@@ -143,6 +143,36 @@ const ThreeStarsRibbon = ({ stars }) => {
   );
 };
 
+// Acquire a Screen Wake Lock so the TV / laptop driving the display stays
+// awake while broadcast is open. The lock auto-releases when the page is
+// hidden (tab change, etc.) and re-acquires on visibility return. Silent
+// no-op on browsers without support.
+const useWakeLock = () => {
+  useEffect(() => {
+    if (!('wakeLock' in navigator)) return;
+    let lock = null;
+    let released = false;
+
+    const acquire = async () => {
+      try {
+        lock = await navigator.wakeLock.request('screen');
+        lock.addEventListener('release', () => { lock = null; });
+      } catch { /* user denied or unsupported */ }
+    };
+    const onVisibility = () => {
+      if (document.visibilityState === 'visible' && !lock && !released) acquire();
+    };
+
+    acquire();
+    document.addEventListener('visibilitychange', onVisibility);
+    return () => {
+      released = true;
+      document.removeEventListener('visibilitychange', onVisibility);
+      lock?.release().catch(() => {});
+    };
+  }, []);
+};
+
 // Track browser fullscreen state and expose toggle. Native Fullscreen API
 // must be called from a user gesture, so the toggle wraps the request and
 // silently no-ops if denied.
@@ -168,6 +198,7 @@ export const Broadcast = ({ schedule, liveDetail, lastGame }) => {
   const games = schedule?.games || [];
   const lastResult = games[0];
   const [isFs, toggleFs] = useFullscreen();
+  useWakeLock();
 
   // What state to render
   const phase = liveGame ? 'LIVE' : nextGame ? 'PRE' : lastResult ? 'FINAL' : 'IDLE';

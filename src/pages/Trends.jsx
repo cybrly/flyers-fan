@@ -245,7 +245,16 @@ export const Trends = ({ schedule, roster }) => {
     return { lastX, lastY: yForCum(lastVal, yScales.cum), endX, endY, scaleX };
   })() : null;
 
-  const skaters = (roster?.skaters || []).slice().sort((a, b) => a.last.localeCompare(b.last));
+  // Roster from adaptRoster is shaped { forwards, defense, goalies } with
+  // each player exposing { id, name, num, pos, ... } — flatten skaters from
+  // forwards + defense and sort alphabetically by surname for the picker.
+  const skaters = [...(roster?.forwards || []), ...(roster?.defense || [])]
+    .slice()
+    .sort((a, b) => {
+      const la = a.name.split(' ').slice(-1)[0] || '';
+      const lb = b.name.split(' ').slice(-1)[0] || '';
+      return la.localeCompare(lb);
+    });
   const goalies = roster?.goalies || [];
 
   return (
@@ -290,7 +299,7 @@ export const Trends = ({ schedule, roster }) => {
             {skaters.length > 0 && (
               <optgroup label="Skaters">
                 {skaters.map((p) => (
-                  <option key={p.id} value={p.id}>{p.first} {p.last} · {p.position} #{p.number}</option>
+                  <option key={p.id} value={p.id}>{p.name} · {p.pos} #{p.num}</option>
                 ))}
               </optgroup>
             )}

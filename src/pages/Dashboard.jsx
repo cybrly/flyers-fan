@@ -1,5 +1,5 @@
 import { ChevronRight, Home, Plane } from 'lucide-react';
-import { cx, OPP_FULL, fmtDateFull, fmtTime } from '../config.js';
+import { cx, OPP_FULL, fmtDate, fmtDateFull, fmtTime } from '../config.js';
 import { Chip, Section, Skeleton } from '../components/primitives.jsx';
 import { GoalDiffBars, FormDots, MiniBar } from '../components/charts.jsx';
 import { FlyersMark, TeamLogo } from '../components/Logo.jsx';

@@ -2,9 +2,9 @@ import { TEAM_ABBR, isLive, isFinal, isFuture, fmtDate, fmtDateFull } from './co
 
 // schedule → array of games (newest first), Flyers perspective
 export function adaptSchedule(raw) {
-  if (!raw?.games) return { games: [], nextGame: null, liveGame: null, team: null };
+  if (!raw?.games) return { games: [], nextGame: null, liveGame: null, upcoming: [], team: null };
   const finished = [];
-  let nextGame = null;
+  const upcoming = [];
   let liveGame = null;
 
   for (const g of raw.games) {
@@ -40,17 +40,19 @@ export function adaptSchedule(raw) {
         w: usScore > themScore,
         label: fmtDate(g.gameDate),
       });
-    } else if (isFuture(g.gameState) && !nextGame) {
-      nextGame = { ...common, us: null, them: null };
+    } else if (isFuture(g.gameState)) {
+      upcoming.push({ ...common, us: null, them: null });
     }
   }
 
-  // Newest first
+  // Newest first for finished, soonest first for upcoming.
   finished.sort((a, b) => b.date.localeCompare(a.date));
+  upcoming.sort((a, b) => a.date.localeCompare(b.date));
 
   return {
     games: finished,
-    nextGame,
+    nextGame: upcoming[0] || null,
+    upcoming: upcoming.slice(0, 8),
     liveGame,
     team: {
       gp: finished.length,

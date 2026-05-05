@@ -184,6 +184,15 @@ export const Dashboard = ({ schedule, standings, scoreboard, clubStats, liveDeta
               </div>
             </Section>
           </div>
+
+          {/* Splits + Upcoming + Scoring averages — fills the left column to
+              keep parity with the right column's mix of widgets. */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <SplitsPanel games={games} us={us} />
+            <UpcomingPanel upcoming={schedule?.upcoming || []} />
+          </div>
+
+          <ScoringPanel games={games} us={us} />
         </div>
 
         <div className="lg:col-span-4 2xl:col-span-3 space-y-4">
@@ -396,5 +405,106 @@ export const Dashboard = ({ schedule, standings, scoreboard, clubStats, liveDeta
         </div>
       </div>
     </div>
+  );
+};
+
+// ─── Auxiliary panels for the left column ──────────────────────────────────
+
+// Win/loss breakdowns derived from the games array — home, away, OT/SO,
+// 1-goal games, and the standings-supplied L10. Compact 2-column layout.
+const SplitsPanel = ({ games, us }) => {
+  const home = games.filter((g) => g.home);
+  const away = games.filter((g) => !g.home);
+  const otGames = games.filter((g) => g.lastPeriodType === 'OT' || g.lastPeriodType === 'SO');
+  const oneGoal = games.filter((g) => Math.abs(g.us - g.them) === 1);
+  const wl = (arr) => `${arr.filter((g) => g.w).length}–${arr.filter((g) => !g.w).length}`;
+  const rows = [
+    { l: 'Home',          v: wl(home),    sub: home.length    ? `${(home.filter((g)=>g.w).length / home.length * 100).toFixed(0)}%` : '—' },
+    { l: 'Away',          v: wl(away),    sub: away.length    ? `${(away.filter((g)=>g.w).length / away.length * 100).toFixed(0)}%` : '—' },
+    { l: 'Last 10',       v: us ? `${us.l10W ?? '—'}–${us.l10L ?? '—'}` : '—', sub: 'recent' },
+    { l: 'OT / SO',       v: wl(otGames), sub: `${otGames.length} games` },
+    { l: '1-goal games',  v: wl(oneGoal), sub: `${oneGoal.length} games` },
+    { l: 'Streak',        v: us?.streak || '—', sub: 'current' },
+  ];
+  return (
+    <Section title="Splits" action={<span className="text-[10px] font-mono text-white/40">{games.length} GP</span>}>
+      <div className="divide-y divide-white/[0.04]">
+        {rows.map((r) => (
+          <div key={r.l} className="grid grid-cols-[1fr_auto_60px] items-center gap-2 px-3.5 h-8">
+            <span className="text-[11px] text-white/55">{r.l}</span>
+            <span className="text-[12px] font-mono tabular-nums text-white">{r.v}</span>
+            <span className="text-[10px] font-mono text-white/35 text-right">{r.sub}</span>
+          </div>
+        ))}
+      </div>
+    </Section>
+  );
+};
+
+const UpcomingPanel = ({ upcoming }) => {
+  if (!upcoming?.length) {
+    return (
+      <Section title="Upcoming">
+        <div className="px-4 py-6 text-center text-[11px] font-mono text-white/30">
+          No scheduled games.
+        </div>
+      </Section>
+    );
+  }
+  return (
+    <Section title="Upcoming" action={<span className="text-[10px] font-mono text-white/40">next {Math.min(upcoming.length, 5)}</span>}>
+      <div className="divide-y divide-white/[0.04]">
+        {upcoming.slice(0, 5).map((g) => (
+          <div key={g.id} className="grid grid-cols-[60px_1fr_auto] items-center gap-2 px-3.5 h-8">
+            <span className="text-[10px] font-mono text-white/45 tabular-nums">{fmtDate(g.startUTC)}</span>
+            <span className="flex items-center gap-2 min-w-0">
+              <span className="text-[10px] font-mono text-white/35 shrink-0">{g.home ? 'vs' : '@'}</span>
+              <TeamLogo abbr={g.opp} size={14} />
+              <span className="text-[11px] text-white/80 truncate">{OPP_FULL[g.opp] || g.oppName}</span>
+            </span>
+            <span className="text-[10px] font-mono text-white/45 tabular-nums">{fmtTime(g.startUTC)}</span>
+          </div>
+        ))}
+      </div>
+    </Section>
+  );
+};
+
+// Scoring averages + advanced rate stats per game. Simple but useful.
+const ScoringPanel = ({ games, us }) => {
+  if (!games.length) return null;
+  const gf = games.reduce((a, g) => a + g.us, 0);
+  const ga = games.reduce((a, g) => a + g.them, 0);
+  const gpf = (gf / games.length).toFixed(2);
+  const gpa = (ga / games.length).toFixed(2);
+  const shutoutsFor = games.filter((g) => g.them === 0).length;
+  const shutoutsAg  = games.filter((g) => g.us === 0).length;
+  const blowouts    = games.filter((g) => Math.abs(g.us - g.them) >= 3).length;
+  const comebacks   = games.filter((g) => g.w && g.them >= 3).length; // won despite allowing 3+
+
+  const tiles = [
+    { l: 'GF/Gm',   v: gpf,                     accent: true },
+    { l: 'GA/Gm',   v: gpa },
+    { l: 'Diff',    v: us ? `${us.diff >= 0 ? '+' : ''}${us.diff}` : '—', tone: (us?.diff ?? 0) >= 0 ? 'up' : 'down' },
+    { l: 'SO For',  v: shutoutsFor },
+    { l: 'SO Ag.',  v: shutoutsAg },
+    { l: '3+ wins', v: blowouts },
+    { l: 'Comebacks', v: comebacks, sub: 'won down 3+' },
+    { l: 'Pts %',   v: us ? `${(us.pct * 100).toFixed(1)}%` : '—' },
+  ];
+  return (
+    <Section title="Scoring & Rate Stats" action={<span className="text-[10px] font-mono text-white/40">season</span>}>
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-px bg-white/[0.05]">
+        {tiles.map((t) => (
+          <div key={t.l} className="bg-[#0A0A0A] px-3 py-2.5">
+            <div className="text-[9px] font-mono text-white/40 uppercase tracking-wider">{t.l}</div>
+            <div className={cx('text-[18px] font-semibold tabular-nums tracking-tight mt-0.5',
+              t.accent ? 'text-[#FF8A4C]' : t.tone === 'up' ? 'text-[#FF8A4C]' : t.tone === 'down' ? 'text-red-400' : 'text-white'
+            )}>{t.v}</div>
+            {t.sub && <div className="text-[9px] font-mono text-white/30 mt-0.5">{t.sub}</div>}
+          </div>
+        ))}
+      </div>
+    </Section>
   );
 };

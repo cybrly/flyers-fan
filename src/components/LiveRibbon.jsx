@@ -23,7 +23,7 @@ export const LiveRibbon = ({ liveGame, liveDetail, onOpenGame, currentPage }) =>
   const last = liveDetail?.timeline?.[liveDetail.timeline.length - 1];
 
   return (
-    <div className="sticky top-12 z-20 h-9 border-b border-white/[0.06] bg-[#0A0A0A]/95 backdrop-blur-md">
+    <div className="sticky top-12 z-20 h-9 border-b border-[#F74902]/[0.22] bg-[#0A0A0A]/95 backdrop-blur-md">
       <button
         onClick={() => onOpenGame?.(liveGame.id)}
         className="w-full h-full px-4 md:px-6 flex items-center gap-3 sm:gap-4 hover:bg-white/[0.02] transition-colors group"

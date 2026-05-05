@@ -1,10 +1,11 @@
+import { useMemo, useState } from 'react';
 import { ArrowLeft, AlertCircle } from 'lucide-react';
-import { cx, fmtDate } from '../config.js';
+import { cx, fmtDate, SEASON } from '../config.js';
 import { useNHL } from '../api.js';
 import { Section, Skeleton, Chip, Label } from '../components/primitives.jsx';
 import { TeamLogo } from '../components/Logo.jsx';
 import { Sparkline } from '../components/charts.jsx';
-import { navigate } from '../router.js';
+import { navigate, gameHref } from '../router.js';
 
 const HEIGHT = (inches) => inches ? `${Math.floor(inches / 12)}'${inches % 12}"` : '—';
 
@@ -76,7 +77,6 @@ export const PlayerProfile = ({ playerId }) => {
   const sub = data.featuredStats?.regularSeason?.subSeason;
   const seasonAvg = data.featuredStats?.regularSeason?.career;
   const career = data.careerTotals?.regularSeason;
-  const last5 = data.last5Games || [];
   const { nhl: nhlSeasons, other: otherSeasons } = seasonsFromTotals(data.seasonTotals);
   const awards = data.awards || [];
   const draft = data.draftDetails;
@@ -320,77 +320,11 @@ export const PlayerProfile = ({ playerId }) => {
             </Section>
           )}
 
-          {/* Last 5 games */}
-          {last5.length > 0 && (
-            <Section title="Recent Games">
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead>
-                    <tr className="text-[10px] font-mono text-white/35 uppercase tracking-wider border-b border-white/[0.05]">
-                      <th className="font-normal text-left px-4 h-8 w-[80px]">Date</th>
-                      <th className="font-normal text-left px-2 h-8">Opp</th>
-                      {isSkater ? (
-                        <>
-                          <th className="font-normal text-right px-2 h-8 w-[36px]">G</th>
-                          <th className="font-normal text-right px-2 h-8 w-[36px]">A</th>
-                          <th className="font-normal text-right px-2 h-8 w-[36px]">P</th>
-                          <th className="font-normal text-right px-2 h-8 w-[40px]">+/–</th>
-                          <th className="font-normal text-right px-2 h-8 w-[44px]">SOG</th>
-                          <th className="font-normal text-right px-2 h-8 w-[44px]">PIM</th>
-                          <th className="font-normal text-right px-4 h-8 w-[60px]">TOI</th>
-                        </>
-                      ) : (
-                        <>
-                          <th className="font-normal text-right px-2 h-8 w-[44px]">SV%</th>
-                          <th className="font-normal text-right px-2 h-8 w-[44px]">SA</th>
-                          <th className="font-normal text-right px-2 h-8 w-[44px]">GA</th>
-                          <th className="font-normal text-right px-2 h-8 w-[44px]">SO</th>
-                          <th className="font-normal text-right px-2 h-8 w-[60px]">TOI</th>
-                          <th className="font-normal text-right px-4 h-8 w-[44px]">Dec</th>
-                        </>
-                      )}
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-white/[0.04]">
-                    {last5.map((g) => (
-                      <tr key={g.gameId} className="hover:bg-white/[0.02]">
-                        <td className="px-4 h-9 text-[11px] font-mono text-white/55 tabular-nums">{fmtDate(g.gameDate)}</td>
-                        <td className="px-2">
-                          <span className="flex items-center gap-1.5 text-[11px] text-white/80">
-                            <span className="text-white/35">{g.homeRoadFlag === 'H' ? 'vs' : '@'}</span>
-                            <TeamLogo abbr={g.opponentAbbrev} size={14} />
-                            <span className="font-mono">{g.opponentAbbrev}</span>
-                          </span>
-                        </td>
-                        {isSkater ? (
-                          <>
-                            <td className="px-2 text-right text-[11px] font-mono tabular-nums">{g.goals || '—'}</td>
-                            <td className="px-2 text-right text-[11px] font-mono tabular-nums">{g.assists || '—'}</td>
-                            <td className="px-2 text-right text-[12px] font-mono tabular-nums font-medium">{g.points || '—'}</td>
-                            <td className={cx('px-2 text-right text-[11px] font-mono tabular-nums',
-                              g.plusMinus > 0 ? 'text-emerald-400' : g.plusMinus < 0 ? 'text-red-400' : 'text-white/55'
-                            )}>{g.plusMinus > 0 ? '+' : ''}{g.plusMinus}</td>
-                            <td className="px-2 text-right text-[11px] font-mono tabular-nums text-white/65">{g.shots ?? '—'}</td>
-                            <td className="px-2 text-right text-[11px] font-mono tabular-nums text-white/55">{g.pim ?? '—'}</td>
-                            <td className="px-4 text-right text-[11px] font-mono tabular-nums text-white/55">{g.toi || '—'}</td>
-                          </>
-                        ) : (
-                          <>
-                            <td className="px-2 text-right text-[11px] font-mono tabular-nums">{g.savePercentage != null ? (g.savePercentage * 100).toFixed(1) : '—'}</td>
-                            <td className="px-2 text-right text-[11px] font-mono tabular-nums text-white/65">{g.shotsAgainst ?? '—'}</td>
-                            <td className="px-2 text-right text-[11px] font-mono tabular-nums">{g.goalsAgainst ?? '—'}</td>
-                            <td className="px-2 text-right text-[11px] font-mono tabular-nums">{g.shutouts ? '1' : '—'}</td>
-                            <td className="px-2 text-right text-[11px] font-mono tabular-nums text-white/55">{g.toi || '—'}</td>
-                            <td className="px-4 text-right text-[11px] font-mono">{g.decision || '—'}</td>
-                          </>
-                        )}
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </Section>
-          )}
+          {/* Full season game log — every game, scrollable, with reg-season /
+              playoffs toggle. Replaces the prior Last-5 panel with full data
+              from /v1/player/{id}/game-log/{season}/{type}. Click a row to
+              jump to that game's Game Tape page. */}
+          <PlayerGameLog playerId={playerId} isSkater={isSkater} />
         </div>
 
         {/* Side panel — career totals + awards + minor leagues */}
@@ -515,3 +449,273 @@ const Stat = ({ row, v }) => (
     <span className="text-[12px] font-mono tabular-nums text-white/85">{v ?? '—'}</span>
   </div>
 );
+
+// Convert "MM:SS" to total seconds for trend calculations.
+const toiToSec = (toi) => {
+  if (!toi || typeof toi !== 'string') return 0;
+  const [m, s] = toi.split(':').map(Number);
+  return (m || 0) * 60 + (s || 0);
+};
+const secToToi = (sec) => {
+  const m = Math.floor(sec / 60);
+  const s = sec % 60;
+  return `${m}:${String(s).padStart(2, '0')}`;
+};
+
+// Full season game log. NHL endpoint:
+//   /v1/player/{id}/game-log/{season}/{gameType}
+// gameType 2 = regular season, 3 = playoffs. We default to 2 and offer a
+// toggle when playoff data exists.
+const PlayerGameLog = ({ playerId, isSkater }) => {
+  const [gameType, setGameType] = useState(2);
+  const path = playerId ? `v1/player/${playerId}/game-log/${SEASON}/${gameType}` : null;
+  const { data, loading, error } = useNHL(path, 0);
+
+  const games = data?.gameLog || [];
+  const hasPlayoffData = data?.playerStatsSeasons?.some(
+    (s) => s.season === Number(SEASON) && s.gameTypes?.includes(3)
+  );
+
+  // Aggregate footer + TOI trend numbers.
+  const totals = useMemo(() => {
+    if (!games.length) return null;
+    if (isSkater) {
+      return games.reduce((a, g) => ({
+        gp: a.gp + 1,
+        g: a.g + (g.goals || 0),
+        a: a.a + (g.assists || 0),
+        p: a.p + (g.points || 0),
+        plus: a.plus + (g.plusMinus || 0),
+        sog: a.sog + (g.shots || 0),
+        pim: a.pim + (g.pim || 0),
+        toi: a.toi + toiToSec(g.toi),
+      }), { gp: 0, g: 0, a: 0, p: 0, plus: 0, sog: 0, pim: 0, toi: 0 });
+    }
+    return games.reduce((a, g) => ({
+      gp: a.gp + 1,
+      sa: a.sa + (g.shotsAgainst || 0),
+      ga: a.ga + (g.goalsAgainst || 0),
+      sv: a.sv + ((g.shotsAgainst || 0) - (g.goalsAgainst || 0)),
+      so: a.so + (g.shutouts ? 1 : 0),
+      toi: a.toi + toiToSec(g.toi),
+    }), { gp: 0, sa: 0, ga: 0, sv: 0, so: 0, toi: 0 });
+  }, [games, isSkater]);
+
+  // TOI trend points — chronological (oldest left, newest right).
+  const toiTrend = useMemo(() => {
+    if (!games.length) return [];
+    return [...games].reverse().map((g) => toiToSec(g.toi));
+  }, [games]);
+
+  return (
+    <Section
+      title="2025–26 · Game Log"
+      action={
+        <div className="flex items-center gap-2">
+          <span className="text-[10px] font-mono text-white/40">{games.length} games</span>
+          {hasPlayoffData && (
+            <div className="flex border border-white/[0.08] rounded-md overflow-hidden">
+              <button
+                onClick={() => setGameType(2)}
+                className={cx(
+                  'px-2 h-6 text-[10px] font-mono transition-colors',
+                  gameType === 2 ? 'bg-[#F74902]/15 text-[#FF8A4C]' : 'text-white/45 hover:text-white/75',
+                )}
+              >REG</button>
+              <button
+                onClick={() => setGameType(3)}
+                className={cx(
+                  'px-2 h-6 text-[10px] font-mono border-l border-white/[0.08] transition-colors',
+                  gameType === 3 ? 'bg-amber-500/15 text-amber-300' : 'text-white/45 hover:text-white/75',
+                )}
+              >PLAYOFFS</button>
+            </div>
+          )}
+        </div>
+      }
+    >
+      {loading && !data && (
+        <div className="p-6"><Skeleton height={120} /></div>
+      )}
+      {error && !data && (
+        <div className="p-6 text-center text-[11px] font-mono text-red-400">{error}</div>
+      )}
+      {!loading && games.length === 0 && (
+        <div className="p-6 text-center text-[11px] font-mono text-white/35">
+          No {gameType === 3 ? 'playoff ' : ''}games yet this season.
+        </div>
+      )}
+      {games.length > 0 && (
+        <>
+          {/* TOI trend strip — shows ice-time arc across the season at a
+              glance, with avg + min/max labels. Only meaningful for skaters. */}
+          {isSkater && toiTrend.length > 1 && (
+            <div className="px-4 py-3 border-b border-white/[0.05] flex items-center gap-4">
+              <div>
+                <div className="text-[10px] font-mono text-white/40 uppercase tracking-wider">TOI / Game</div>
+                <div className="text-[14px] font-mono tabular-nums mt-0.5">
+                  <span className="text-[#FF8A4C]">{secToToi(Math.round(totals.toi / totals.gp))}</span>
+                  <span className="text-white/30 mx-1.5">avg</span>
+                </div>
+              </div>
+              <div className="flex-1">
+                <Sparkline data={toiTrend} h={28} stroke="#F74902" />
+              </div>
+              <div className="text-right">
+                <div className="text-[10px] font-mono text-white/40 uppercase tracking-wider">Range</div>
+                <div className="text-[11px] font-mono tabular-nums mt-0.5 text-white/65">
+                  {secToToi(Math.min(...toiTrend))} – {secToToi(Math.max(...toiTrend))}
+                </div>
+              </div>
+            </div>
+          )}
+          <div className="overflow-x-auto max-h-[520px] overflow-y-auto">
+            <table className="w-full">
+              <thead className="sticky top-0 bg-[#0C0C0C]/95 backdrop-blur-sm z-[1]">
+                <tr className="text-[10px] font-mono text-white/35 uppercase tracking-wider border-b border-white/[0.06]">
+                  <th className="font-normal text-left px-4 h-8 w-[40px]">#</th>
+                  <th className="font-normal text-left px-2 h-8 w-[80px]">Date</th>
+                  <th className="font-normal text-left px-2 h-8">Opponent</th>
+                  {isSkater ? (
+                    <>
+                      <th className="font-normal text-right px-2 h-8 w-[36px]">G</th>
+                      <th className="font-normal text-right px-2 h-8 w-[36px]">A</th>
+                      <th className="font-normal text-right px-2 h-8 w-[36px]">P</th>
+                      <th className="font-normal text-right px-2 h-8 w-[40px]">+/–</th>
+                      <th className="font-normal text-right px-2 h-8 w-[44px]">SOG</th>
+                      <th className="font-normal text-right px-2 h-8 w-[44px]">PIM</th>
+                      <th className="font-normal text-right px-2 h-8 w-[44px]">PPP</th>
+                      <th className="font-normal text-right px-2 h-8 w-[44px]">SHF</th>
+                      <th className="font-normal text-right px-4 h-8 w-[60px]">TOI</th>
+                    </>
+                  ) : (
+                    <>
+                      <th className="font-normal text-right px-2 h-8 w-[44px]">Dec</th>
+                      <th className="font-normal text-right px-2 h-8 w-[52px]">SV%</th>
+                      <th className="font-normal text-right px-2 h-8 w-[44px]">SA</th>
+                      <th className="font-normal text-right px-2 h-8 w-[44px]">SV</th>
+                      <th className="font-normal text-right px-2 h-8 w-[44px]">GA</th>
+                      <th className="font-normal text-right px-2 h-8 w-[40px]">SO</th>
+                      <th className="font-normal text-right px-4 h-8 w-[60px]">TOI</th>
+                    </>
+                  )}
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-white/[0.04]">
+                {games.map((g, idx) => {
+                  const num = games.length - idx; // newest first → highest number
+                  const decision = g.decision;
+                  const decTone =
+                    decision === 'W' ? 'text-emerald-400' :
+                    decision === 'L' ? 'text-red-400' :
+                    decision === 'O' ? 'text-amber-400' : 'text-white/45';
+                  const svPct = g.shotsAgainst
+                    ? (((g.shotsAgainst - (g.goalsAgainst || 0)) / g.shotsAgainst) * 100).toFixed(1)
+                    : null;
+                  return (
+                    <tr
+                      key={g.gameId}
+                      onClick={() => navigate(gameHref(g.gameId))}
+                      className="hover:bg-white/[0.03] cursor-pointer transition-colors"
+                    >
+                      <td className="px-4 h-9 text-[10px] font-mono text-white/30 tabular-nums">{num}</td>
+                      <td className="px-2 text-[11px] font-mono text-white/55 tabular-nums">{fmtDate(g.gameDate)}</td>
+                      <td className="px-2">
+                        <span className="flex items-center gap-1.5 text-[11px] text-white/80">
+                          <span className="text-white/35 w-4">{g.homeRoadFlag === 'H' ? 'vs' : '@'}</span>
+                          <TeamLogo abbr={g.opponentAbbrev} size={14} />
+                          <span className="font-mono">{g.opponentAbbrev}</span>
+                          <span className="truncate text-white/55 hidden sm:inline">
+                            {g.opponentCommonName?.default || ''}
+                          </span>
+                        </span>
+                      </td>
+                      {isSkater ? (
+                        <>
+                          <td className={cx('px-2 text-right text-[11px] font-mono tabular-nums',
+                            g.goals > 0 ? 'text-emerald-400' : 'text-white/45'
+                          )}>{g.goals || '—'}</td>
+                          <td className={cx('px-2 text-right text-[11px] font-mono tabular-nums',
+                            g.assists > 0 ? 'text-sky-300' : 'text-white/45'
+                          )}>{g.assists || '—'}</td>
+                          <td className={cx('px-2 text-right text-[12px] font-mono tabular-nums font-medium',
+                            g.points > 0 ? 'text-[#FF8A4C]' : 'text-white/45'
+                          )}>{g.points || '—'}</td>
+                          <td className={cx('px-2 text-right text-[11px] font-mono tabular-nums',
+                            g.plusMinus > 0 ? 'text-emerald-400' : g.plusMinus < 0 ? 'text-red-400' : 'text-white/55'
+                          )}>{g.plusMinus > 0 ? '+' : ''}{g.plusMinus ?? '—'}</td>
+                          <td className="px-2 text-right text-[11px] font-mono tabular-nums text-white/65">{g.shots ?? '—'}</td>
+                          <td className="px-2 text-right text-[11px] font-mono tabular-nums text-white/45">{g.pim ?? '—'}</td>
+                          <td className="px-2 text-right text-[11px] font-mono tabular-nums text-white/55">{g.powerPlayPoints ?? 0}</td>
+                          <td className="px-2 text-right text-[11px] font-mono tabular-nums text-white/45">{g.shifts ?? '—'}</td>
+                          <td className="px-4 text-right text-[11px] font-mono tabular-nums text-white/65">{g.toi || '—'}</td>
+                        </>
+                      ) : (
+                        <>
+                          <td className={cx('px-2 text-right text-[11px] font-mono font-semibold', decTone)}>
+                            {decision || '—'}
+                          </td>
+                          <td className={cx('px-2 text-right text-[11px] font-mono tabular-nums',
+                            svPct != null && +svPct >= 91.5 ? 'text-emerald-400'
+                            : svPct != null && +svPct >= 89 ? 'text-amber-300'
+                            : svPct != null ? 'text-red-400' : 'text-white/45'
+                          )}>{svPct ?? '—'}</td>
+                          <td className="px-2 text-right text-[11px] font-mono tabular-nums text-white/65">{g.shotsAgainst ?? '—'}</td>
+                          <td className="px-2 text-right text-[11px] font-mono tabular-nums text-white/65">
+                            {g.shotsAgainst != null && g.goalsAgainst != null ? g.shotsAgainst - g.goalsAgainst : '—'}
+                          </td>
+                          <td className="px-2 text-right text-[11px] font-mono tabular-nums text-red-300/80">{g.goalsAgainst ?? '—'}</td>
+                          <td className="px-2 text-right text-[11px] font-mono tabular-nums">
+                            {g.shutouts ? <span className="text-amber-300">1</span> : <span className="text-white/35">—</span>}
+                          </td>
+                          <td className="px-4 text-right text-[11px] font-mono tabular-nums text-white/65">{g.toi || '—'}</td>
+                        </>
+                      )}
+                    </tr>
+                  );
+                })}
+                {totals && (
+                  <tr className="bg-white/[0.025] border-t-2 border-white/[0.08] sticky bottom-0">
+                    <td className="px-4 h-9 text-[10px] font-mono text-white/55 uppercase tracking-wider" colSpan={2}>Totals</td>
+                    <td className="px-2 text-[11px] font-mono text-white/55 tabular-nums">{totals.gp} GP</td>
+                    {isSkater ? (
+                      <>
+                        <td className="px-2 text-right text-[11px] font-mono tabular-nums text-emerald-400">{totals.g}</td>
+                        <td className="px-2 text-right text-[11px] font-mono tabular-nums text-sky-300">{totals.a}</td>
+                        <td className="px-2 text-right text-[12px] font-mono tabular-nums font-semibold text-[#FF8A4C]">{totals.p}</td>
+                        <td className={cx('px-2 text-right text-[11px] font-mono tabular-nums',
+                          totals.plus > 0 ? 'text-emerald-400' : totals.plus < 0 ? 'text-red-400' : 'text-white/55'
+                        )}>{totals.plus > 0 ? '+' : ''}{totals.plus}</td>
+                        <td className="px-2 text-right text-[11px] font-mono tabular-nums text-white/85">{totals.sog}</td>
+                        <td className="px-2 text-right text-[11px] font-mono tabular-nums text-white/55">{totals.pim}</td>
+                        <td className="px-2" />
+                        <td className="px-2" />
+                        <td className="px-4 text-right text-[11px] font-mono tabular-nums text-white/65">
+                          avg {secToToi(Math.round(totals.toi / totals.gp))}
+                        </td>
+                      </>
+                    ) : (
+                      <>
+                        <td />
+                        <td className="px-2 text-right text-[11px] font-mono tabular-nums text-[#FF8A4C]">
+                          {totals.sa ? ((totals.sv / totals.sa) * 100).toFixed(1) : '—'}
+                        </td>
+                        <td className="px-2 text-right text-[11px] font-mono tabular-nums text-white/85">{totals.sa}</td>
+                        <td className="px-2 text-right text-[11px] font-mono tabular-nums text-white/85">{totals.sv}</td>
+                        <td className="px-2 text-right text-[11px] font-mono tabular-nums text-red-300">{totals.ga}</td>
+                        <td className="px-2 text-right text-[11px] font-mono tabular-nums text-amber-300">{totals.so}</td>
+                        <td className="px-4 text-right text-[11px] font-mono tabular-nums text-white/65">
+                          avg {secToToi(Math.round(totals.toi / totals.gp))}
+                        </td>
+                      </>
+                    )}
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </>
+      )}
+    </Section>
+  );
+};

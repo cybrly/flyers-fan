@@ -173,11 +173,89 @@ export const Roster = ({ roster, clubStats }) => {
         </div>
       )}
 
+      {clubStats && <IceTimeLeaderboard skaters={clubStats.skaters} />}
+
       <Section title={view === 'forwards' ? 'Forwards' : view === 'defense' ? 'Defense' : 'Goalies'}>
         <div className="overflow-x-auto">
           <RosterTable players={list} showSaves={view === 'goalies'} />
         </div>
       </Section>
     </div>
+  );
+};
+
+// Ice Time leaderboard. NHL clubStats endpoint exposes per-game ice-time
+// breakdowns in seconds (avgTimeOnIcePerGame, even-strength, PP, SH). We
+// stack them as a horizontal bar so the EV/PP/SH split is readable at a
+// glance, plus a numeric ATOI in the right column.
+const secToMin = (s) => {
+  if (s == null) return '—';
+  const m = Math.floor(s / 60);
+  const sec = Math.round(s % 60);
+  return `${m}:${String(sec).padStart(2, '0')}`;
+};
+
+const IceTimeLeaderboard = ({ skaters }) => {
+  if (!skaters?.length) return null;
+  const rows = [...skaters]
+    .filter((p) => p.avgToi != null && p.gp > 0)
+    .sort((a, b) => (b.avgToi || 0) - (a.avgToi || 0))
+    .slice(0, 18);
+  if (!rows.length) return null;
+  const maxToi = rows[0].avgToi;
+  return (
+    <Section
+      title="Ice Time Leaders"
+      action={<span className="text-[10px] font-mono text-white/40">avg per game · EV · PP · SH</span>}
+    >
+      <div className="px-4 py-2 grid grid-cols-[24px_2fr_1fr_180px_64px] gap-3 text-[9px] font-mono text-white/35 uppercase tracking-wider border-b border-white/[0.05]">
+        <span>#</span>
+        <span>Player</span>
+        <span>Pos</span>
+        <span>Ice time split</span>
+        <span className="text-right">ATOI</span>
+      </div>
+      <div className="divide-y divide-white/[0.04]">
+        {rows.map((p, i) => {
+          const ev = p.avgEvToi || 0;
+          const pp = p.avgPpToi || 0;
+          const sh = p.avgShToi || 0;
+          const total = ev + pp + sh || p.avgToi || 1;
+          const widthPct = (p.avgToi / maxToi) * 100;
+          return (
+            <div key={p.id} className="grid grid-cols-[24px_2fr_1fr_180px_64px] gap-3 items-center px-4 h-10 hover:bg-white/[0.02]">
+              <span className={cx('text-[10px] font-mono tabular-nums',
+                i === 0 ? 'text-amber-300 font-semibold'
+                : i === 1 ? 'text-white/65'
+                : i === 2 ? 'text-orange-300/70'
+                : 'text-white/35'
+              )}>{i + 1}</span>
+              <span className="flex items-center gap-2 min-w-0">
+                <Headshot src={p.headshot} num={p.num} size={22} />
+                <PlayerLink playerId={p.id}>{p.name}</PlayerLink>
+              </span>
+              <span className="text-[10px] font-mono text-white/45">{p.pos}</span>
+              <div className="relative h-3 bg-white/[0.03] rounded-sm overflow-hidden" style={{ width: `${widthPct}%`, minWidth: 48 }}>
+                <div className="absolute inset-y-0 left-0 bg-sky-500/70" style={{ width: `${(ev / total) * 100}%` }} />
+                <div
+                  className="absolute inset-y-0 bg-[#F74902]/80"
+                  style={{ left: `${(ev / total) * 100}%`, width: `${(pp / total) * 100}%` }}
+                />
+                <div
+                  className="absolute inset-y-0 bg-amber-500/80"
+                  style={{ left: `${((ev + pp) / total) * 100}%`, width: `${(sh / total) * 100}%` }}
+                />
+              </div>
+              <span className="text-[12px] font-mono tabular-nums text-right text-[#FF8A4C] font-medium">{secToMin(p.avgToi)}</span>
+            </div>
+          );
+        })}
+      </div>
+      <div className="px-4 py-2 flex items-center gap-4 text-[10px] font-mono text-white/45 border-t border-white/[0.04]">
+        <span className="flex items-center gap-1.5"><span className="w-2 h-2 bg-sky-500/70 rounded-sm" /> Even strength</span>
+        <span className="flex items-center gap-1.5"><span className="w-2 h-2 bg-[#F74902]/80 rounded-sm" /> Power play</span>
+        <span className="flex items-center gap-1.5"><span className="w-2 h-2 bg-amber-500/80 rounded-sm" /> Shorthanded</span>
+      </div>
+    </Section>
   );
 };

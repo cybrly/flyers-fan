@@ -513,6 +513,7 @@ export function adaptClubStats(raw) {
   if (!raw) return null;
   const skaters = (raw.skaters || []).map((p) => ({
     id: p.playerId,
+    num: p.sweaterNumber,
     name: `${p.firstName?.default?.[0] || ''}. ${p.lastName?.default || ''}`.trim(),
     pos: p.positionCode,
     gp: p.gamesPlayed,
@@ -523,10 +524,19 @@ export function adaptClubStats(raw) {
     pim: p.penaltyMinutes,
     sog: p.shots,
     shootingPct: p.shootingPctg != null ? +(p.shootingPctg * 100).toFixed(1) : null,
+    avgToi: p.avgTimeOnIcePerGame != null ? p.avgTimeOnIcePerGame : null, // seconds
+    avgEvToi: p.avgEvenStrengthTimeOnIcePerGame ?? null,                  // seconds
+    avgPpToi: p.avgPowerPlayTimeOnIcePerGame ?? null,                     // seconds
+    avgShToi: p.avgShorthandedTimeOnIcePerGame ?? null,                   // seconds
+    avgShifts: p.avgShiftsPerGame ?? null,
+    hits: p.hits,
+    blocks: p.blockedShots,
+    faceoffPct: p.faceoffWinPctg != null ? +(p.faceoffWinPctg * 100).toFixed(1) : null,
     headshot: p.headshot,
   }));
   const goalies = (raw.goalies || []).map((p) => ({
     id: p.playerId,
+    num: p.sweaterNumber,
     name: `${p.firstName?.default?.[0] || ''}. ${p.lastName?.default || ''}`.trim(),
     gp: p.gamesPlayed,
     w: p.wins,

@@ -28,8 +28,8 @@ const HERO_KEYFRAMES = `
 const FullRinkMark = () => (
   <div
     aria-hidden
-    className="pointer-events-none absolute inset-x-0 top-2 sm:top-3 hidden sm:block select-none"
-    style={{ height: 'calc(100% - 110px)', minHeight: 200 }}
+    className="pointer-events-none absolute inset-x-0 top-2 sm:top-3 select-none"
+    style={{ height: 'calc(100% - 130px)', minHeight: 160 }}
   >
     <style>{HERO_KEYFRAMES}</style>
     <svg
@@ -37,7 +37,7 @@ const FullRinkMark = () => (
       width="100%"
       height="100%"
       preserveAspectRatio="xMidYMid meet"
-      style={{ opacity: 0.18 }}
+      style={{ opacity: 0.32 }}
     >
       <defs>
         {/* A subtle radial fade so the rink edges don't visually fight the
@@ -121,14 +121,84 @@ const FullRinkMark = () => (
       </g>
     </svg>
 
-    {/* Glowing center-ice puck — separate DOM so we can give it a real CSS
-        glow + pulse animation that wouldn't render the same inside SVG. */}
+  </div>
+);
+
+// Tightly-framed center face-off ring. Sits behind the score/countdown
+// centerpiece so the matchup feels like it's happening on the actual
+// face-off spot. Uses brand orange so it reads as a Flyers element rather
+// than a generic chart decoration. Two counter-rotating rings + a glowing
+// puck core. Crucially this is much bolder than the rink behind it (higher
+// opacity, brand-colored) — it's the visual focal point of the Hero.
+const CenterFaceoff = () => (
+  <div
+    aria-hidden
+    className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 select-none"
+    style={{ width: 360, height: 360 }}
+  >
+    <style>{HERO_KEYFRAMES}</style>
+    {/* Soft radial halo so the centerpiece feels lit from the rink */}
+    <div
+      className="absolute inset-0 rounded-full"
+      style={{
+        background: 'radial-gradient(circle at 50% 50%, rgba(247,73,2,0.16) 0%, rgba(247,73,2,0.05) 35%, transparent 70%)',
+      }}
+    />
+    {/* Outer brand ring */}
+    <svg
+      viewBox="0 0 360 360"
+      width="100%"
+      height="100%"
+      className="absolute inset-0"
+      style={{ opacity: 0.6 }}
+    >
+      <circle cx="180" cy="180" r="170" fill="none" stroke="#F74902" strokeWidth="1.6" opacity="0.7" />
+      <circle cx="180" cy="180" r="158" fill="none" stroke="#FF8A4C" strokeWidth="0.9" opacity="0.5" />
+    </svg>
+    {/* Slow-spinning dashed ring (clockwise) */}
+    <svg
+      viewBox="0 0 360 360"
+      width="100%"
+      height="100%"
+      className="absolute inset-0"
+      style={{
+        opacity: 0.6,
+        animation: 'flyersHeroSpin 60s linear infinite',
+        transformOrigin: '50% 50%',
+      }}
+    >
+      <circle cx="180" cy="180" r="140" fill="none" stroke="white" strokeWidth="1" strokeDasharray="2 8" opacity="0.55" />
+    </svg>
+    {/* Faster counter-rotating tick ring */}
+    <svg
+      viewBox="0 0 360 360"
+      width="100%"
+      height="100%"
+      className="absolute inset-0"
+      style={{
+        opacity: 0.55,
+        animation: 'flyersHeroSpin 28s linear infinite reverse',
+        transformOrigin: '50% 50%',
+      }}
+    >
+      {Array.from({ length: 24 }).map((_, i) => {
+        const a = (i / 24) * 2 * Math.PI;
+        const r1 = 118;
+        const r2 = 124;
+        const x1 = 180 + Math.cos(a) * r1;
+        const y1 = 180 + Math.sin(a) * r1;
+        const x2 = 180 + Math.cos(a) * r2;
+        const y2 = 180 + Math.sin(a) * r2;
+        return <line key={i} x1={x1} y1={y1} x2={x2} y2={y2} stroke="#FF8A4C" strokeWidth="1.2" opacity="0.6" />;
+      })}
+    </svg>
+    {/* Glowing center puck — large and dramatic */}
     <div
       className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full"
       style={{
-        width: 22, height: 22,
-        background: 'radial-gradient(circle at 35% 35%, #FFB47A 0%, #F74902 60%, #8A2A00 100%)',
-        boxShadow: '0 0 32px 6px rgba(247,73,2,0.55), 0 0 0 1.5px rgba(255,255,255,0.18) inset',
+        width: 36, height: 36,
+        background: 'radial-gradient(circle at 35% 35%, #FFB47A 0%, #F74902 55%, #8A2A00 100%)',
+        boxShadow: '0 0 56px 12px rgba(247,73,2,0.55), 0 0 0 2px rgba(255,255,255,0.22) inset, 0 4px 16px rgba(0,0,0,0.5)',
         animation: 'flyersHeroPuckPulse 2.6s ease-in-out infinite',
       }}
     />
@@ -496,6 +566,7 @@ export const Hero = ({ liveGame, liveDetail, nextGame, lastResult, us, recentGam
             rink is clipped to the upper portion so the bottom HeroStats row
             stays clean. */}
         <FullRinkMark />
+        <CenterFaceoff />
         <HeroSweep />
         {/* Top edge highlight + bottom shadow for the "raised card" feel. */}
         <div aria-hidden className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/15 to-transparent" />

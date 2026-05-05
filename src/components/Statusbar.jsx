@@ -29,7 +29,7 @@ export const Statusbar = ({ lastFetch, error, refresh }) => {
       </div>
       <div className="flex items-center gap-4">
         <span className="hidden md:inline">2025–26 Season</span>
-        <span>v0.3</span>
+        <span>v0.4</span>
       </div>
     </div>
   );

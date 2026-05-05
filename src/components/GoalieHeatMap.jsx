@@ -149,7 +149,7 @@ export const GoalieHeatMap = ({ pbpRaw }) => {
       }
     >
       <div className="p-3">
-        <svg viewBox={`0 0 ${SVG_W} ${SVG_H}`} className="w-full block" role="img" aria-label="Goalie zone save percentages">
+        <svg viewBox={`0 0 ${SVG_W} ${SVG_H}`} className="block mx-auto w-full" style={{ maxWidth: 640 }} role="img" aria-label="Goalie zone save percentages">
           {/* Ice — offensive half (opponent's, where they shot at PHI) */}
           {(() => {
             const r = ftToX(28) - ftToX(0);

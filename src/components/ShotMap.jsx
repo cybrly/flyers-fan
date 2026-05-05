@@ -475,7 +475,10 @@ export const ShotMap = ({ pbpData, oppAbbr }) => {
         </div>
       </div>
 
-      <div className="shotmap-wrap relative">
+      {/* Cap the rink width so it doesn't dominate full-bleed layouts.
+          720px keeps SOG / goal markers readable while leaving the rest of
+          the row/section breathable. Centered horizontally for symmetry. */}
+      <div className="shotmap-wrap relative mx-auto" style={{ maxWidth: 720 }}>
         <RinkSVG ariaLabel="Shot map">
           {mode === 'heat' ? (
             <ShotHeat shots={filtered} />

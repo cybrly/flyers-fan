@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Search, X, ArrowLeftRight, AlertCircle } from 'lucide-react';
-import { cx } from '../config.js';
+import { cx, TEAM_CAPTAINS, TEAM_ABBR } from '../config.js';
 import { useNHL } from '../api.js';
 import { Section, Skeleton } from '../components/primitives.jsx';
 import { TeamLogo } from '../components/Logo.jsx';
@@ -237,9 +237,10 @@ const StatBar = ({ label, a, b, higherBetter = true, fmt }) => {
   );
 };
 
-export const PlayerCompare = () => {
+export const PlayerCompare = ({ schedule }) => {
   const [aId, setAId] = useState(null);
   const [bId, setBId] = useState(null);
+  const [didDefault, setDidDefault] = useState(false);
 
   // Hydrate from URL ?a=&b= so the page is shareable.
   useEffect(() => {
@@ -249,6 +250,26 @@ export const PlayerCompare = () => {
     if (a) setAId(a);
     if (b) setBId(b);
   }, []);
+
+  // First-time default: when the URL doesn't pin a/b, drop in the captains
+  // of the next (or most recent) Flyers game. Runs once per page mount.
+  // schedule may load asynchronously, so we wait for it before defaulting,
+  // and we only default the slots the user hasn't already filled via URL.
+  const oppAbbr =
+    schedule?.liveGame?.opp ||
+    schedule?.nextGame?.opp ||
+    schedule?.games?.[0]?.opp ||
+    null;
+  useEffect(() => {
+    if (didDefault) return;
+    if (!schedule) return;
+    const params = new URLSearchParams(window.location.search);
+    const urlA = params.get('a');
+    const urlB = params.get('b');
+    if (!urlA) setAId(TEAM_CAPTAINS[TEAM_ABBR] || null);
+    if (!urlB && oppAbbr) setBId(TEAM_CAPTAINS[oppAbbr] || null);
+    setDidDefault(true);
+  }, [schedule, oppAbbr, didDefault]);
 
   // Reflect selections back to the URL (replace, no history spam).
   useEffect(() => {
@@ -284,7 +305,9 @@ export const PlayerCompare = () => {
         <div>
           <h1 className="text-[20px] font-semibold tracking-tight">Compare Players</h1>
           <p className="text-[12px] text-white/45 mt-1 font-mono">
-            Pick any two NHL players · stat-by-stat comparison
+            {oppAbbr
+              ? <>Defaulting to PHI captain vs <span className="text-[#FF8A4C]">{oppAbbr}</span> captain · pick any two NHL players</>
+              : 'Pick any two NHL players · stat-by-stat comparison'}
           </p>
         </div>
         <div className="flex items-center gap-2">

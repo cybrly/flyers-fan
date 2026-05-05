@@ -16,6 +16,47 @@ export const API = (path) => `/api/nhl?path=${encodeURIComponent(path)}`;
 
 export const cx = (...a) => a.filter(Boolean).join(' ');
 
+// Current team captains (2025–26 NHL season) keyed by team abbreviation.
+// Used as the default left/right players on the Compare page when no IDs
+// are pinned via URL. NHL roster API doesn't expose a captain flag in the
+// public schema we hit, so this is the most reliable path. If a captaincy
+// changes mid-season just update the ID — names show up in the page from
+// /v1/player/{id}/landing, not from this map.
+export const TEAM_CAPTAINS = {
+  PHI: '8476461', // Sean Couturier
+  PIT: '8471675', // Sidney Crosby
+  WSH: '8471214', // Alex Ovechkin
+  BUF: '8480839', // Rasmus Dahlin
+  DET: '8477946', // Dylan Larkin
+  TOR: '8479318', // Auston Matthews
+  MTL: '8480018', // Nick Suzuki
+  OTT: '8480801', // Brady Tkachuk
+  NYI: '8475314', // Anders Lee
+  NYR: '8475184', // Chris Kreider
+  NJD: '8480002', // Nico Hischier
+  BOS: '8473419', // Brad Marchand
+  CAR: '8473533', // Jordan Staal
+  TBL: '8475167', // Victor Hedman
+  FLA: '8477493', // Aleksander Barkov
+  CBJ: '8476432', // Boone Jenner
+  CHI: '8473492', // Nick Foligno
+  NSH: '8474600', // Roman Josi
+  STL: '8475170', // Brayden Schenn
+  WPG: '8476392', // Adam Lowry
+  DAL: '8473994', // Jamie Benn
+  MIN: '8474716', // Jared Spurgeon
+  COL: '8476454', // Gabriel Landeskog
+  VAN: '8480800', // Quinn Hughes
+  SEA: '8474586', // Jordan Eberle
+  CGY: '8474150', // Mikael Backlund
+  EDM: '8478402', // Connor McDavid
+  LAK: '8471685', // Anze Kopitar
+  SJS: '8474053', // Logan Couture
+  ANA: '8475462', // Radko Gudas
+  VGK: '8475913', // Mark Stone
+  UTA: '8478420', // Clayton Keller (Utah Mammoth)
+};
+
 export const OPP_FULL = {
   MTL: 'Montreal Canadiens', CAR: 'Carolina Hurricanes', WPG: 'Winnipeg Jets',
   DET: 'Detroit Red Wings', NJD: 'New Jersey Devils', NJ: 'New Jersey Devils',

@@ -278,7 +278,7 @@ export default function App() {
                 {page === 'playoffs'  && <Playoffs bracket={bracket} onOpenSeries={onOpenSeries} />}
                 {page === 'roster'    && <Roster roster={roster} clubStats={clubStats} />}
                 {page === 'player'    && <PlayerProfile playerId={profileId} />}
-                {page === 'compare'   && <PlayerCompare />}
+                {page === 'compare'   && <PlayerCompare schedule={schedule} />}
                 {page === 'trends'    && <Trends schedule={schedule} standings={standings} />}
               </Suspense>
             </ErrorBoundary>

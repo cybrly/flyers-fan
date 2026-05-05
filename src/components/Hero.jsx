@@ -244,11 +244,15 @@ export const Hero = ({ liveGame, liveDetail, nextGame, lastResult, us }) => {
             WebkitMaskImage: 'radial-gradient(ellipse at center, black 30%, transparent 75%)',
           }}
         />
-        {/* Large featured team logos — flanking the panel, properly contained
-            so they don't tint the surface. Each logo gets a neutral white
-            radial halo behind it for separation. */}
-        <FeatureLogo abbr="PHI" url={PHI_LOGO} side="left" />
-        <FeatureLogo abbr={opp} url={teamLogoUrl(opp)} side="right" />
+        {/* Large transparent team-logo watermarks — artistically scaled to
+            fill the left and right halves of the hero. Critically, we run
+            them through `grayscale(1) brightness(1.5)` so the orange and
+            opponent colors are flattened to neutral white silhouettes. This
+            preserves the dramatic background presence the user wants while
+            avoiding the brown / tinted-surface problem that solid-color
+            watermarks always cause on a dark panel. */}
+        <Watermark url={PHI_LOGO} side="left" />
+        <Watermark url={teamLogoUrl(opp)} side="right" />
         {/* Top edge highlight + bottom shadow for the "raised card" feel. */}
         <div aria-hidden className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/15 to-transparent" />
         <div aria-hidden className="pointer-events-none absolute inset-x-8 bottom-0 h-12 bg-gradient-to-t from-black/60 to-transparent" />
@@ -284,35 +288,31 @@ export const Hero = ({ liveGame, liveDetail, nextGame, lastResult, us }) => {
   );
 };
 
-// Featured team logo — large, soft-glow halo behind, lifts off the surface
-// with a subtle drop shadow. Sits behind text content but above the
-// background gradients. We tuck it slightly off-screen on the inside edge so
-// the score block has room to breathe.
-const FeatureLogo = ({ abbr, url, side }) => {
-  if (!url || !abbr) return null;
+// Large transparent watermark — sits in the background, scaled big to fill
+// the side of the hero. The grayscale + brightness filter is the key bit:
+// it strips the brand color out of the SVG so the watermark is a pure white
+// silhouette, which never tints the dark surface (the bug the user has
+// flagged repeatedly when orange watermarks were used at low opacity).
+const Watermark = ({ url, side }) => {
+  if (!url) return null;
   const isLeft = side === 'left';
   return (
     <div
       aria-hidden
       className={cx(
-        'pointer-events-none absolute top-1/2 -translate-y-1/2 hidden md:block',
-        isLeft ? 'left-[-18px]' : 'right-[-18px]',
+        'pointer-events-none absolute top-1/2 -translate-y-1/2 hidden md:block select-none',
+        isLeft ? '-left-[40px]' : '-right-[40px]',
       )}
+      style={{ width: 360, height: 360 }}
     >
-      <div
-        className="absolute inset-0 m-auto w-[200px] h-[200px] rounded-full"
-        style={{
-          background: 'radial-gradient(closest-side, rgba(255,255,255,0.06), transparent 70%)',
-          filter: 'blur(8px)',
-        }}
-      />
       <img
         src={url}
         alt=""
-        className="relative w-[180px] h-[180px] lg:w-[210px] lg:h-[210px] object-contain"
+        className="w-full h-full object-contain"
         style={{
-          opacity: 0.9,
-          filter: 'drop-shadow(0 18px 24px rgba(0,0,0,0.6)) drop-shadow(0 0 1px rgba(255,255,255,0.08))',
+          opacity: 0.07,
+          filter: 'grayscale(1) brightness(1.6) contrast(0.9) blur(0.4px)',
+          transform: isLeft ? 'translateX(-12%)' : 'translateX(12%)',
         }}
         onError={(e) => { e.currentTarget.style.display = 'none'; }}
       />

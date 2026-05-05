@@ -20,6 +20,7 @@ import { CommandPalette } from './components/CommandPalette.jsx';
 import { SeriesModal } from './components/SeriesModal.jsx';
 import { LiveRibbon } from './components/LiveRibbon.jsx';
 import { useGoalHorn, useGoalHornEnabled } from './components/GoalHorn.jsx';
+import { useGoalNotifications, useGoalNotificationsEnabled } from './components/GoalNotifications.jsx';
 
 // Page-level code splitting — each route ships in its own chunk so the first
 // paint only includes the Dashboard. Named exports get unwrapped via .then.
@@ -136,6 +137,10 @@ export default function App() {
   // Goal horn — fires when the live game's goal timeline grows.
   const hornOn = useGoalHornEnabled();
   useGoalHorn(game?.timeline, hornOn);
+
+  // Browser desktop notifications for PHI goals — independent toggle.
+  const notifyOn = useGoalNotificationsEnabled();
+  useGoalNotifications(game?.timeline, notifyOn);
 
   // Live play-by-play — only fetched when on the Game Tape page (saves quota).
   const pbpPath = (page === 'game' && gameId) ? `v1/gamecenter/${gameId}/play-by-play` : null;
@@ -267,6 +272,12 @@ export default function App() {
 
   return (
     <PlayerCtx.Provider value={playerCtx}>
+    <a
+      href="#main-content"
+      className="sr-only focus:not-sr-only focus:absolute focus:top-3 focus:left-3 focus:z-50 focus:px-3 focus:py-1.5 focus:bg-[#F74902] focus:text-black focus:rounded-md focus:text-[12px] focus:font-medium"
+    >
+      Skip to main content
+    </a>
     <div
       className="min-h-screen bg-[#0A0A0A] text-white/90 relative"
       style={{ '--header-offset': schedule.liveGame && page !== 'game' ? '84px' : '48px' }}
@@ -342,8 +353,10 @@ export default function App() {
           />
 
           <main
+            id="main-content"
+            tabIndex={-1}
             key={page}
-            className="flex-1 min-w-0"
+            className="flex-1 min-w-0 outline-none"
             style={{ animation: 'fadeIn 0.25s ease-out' }}
           >
             <ErrorBoundary resetKey={page}>

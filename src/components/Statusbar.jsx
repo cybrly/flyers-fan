@@ -1,6 +1,7 @@
 import { Wifi, WifiOff, RefreshCw } from 'lucide-react';
 import { cx, fmtRelative, connStatus } from '../config.js';
 import { GoalHornToggle } from './GoalHorn.jsx';
+import { GoalNotificationsToggle } from './GoalNotifications.jsx';
 
 export const Statusbar = ({ lastFetch, error, refresh }) => {
   const status = connStatus(lastFetch, error);
@@ -24,6 +25,7 @@ export const Statusbar = ({ lastFetch, error, refresh }) => {
           <span className="sm:hidden">refresh</span>
         </button>
         <GoalHornToggle />
+        <GoalNotificationsToggle />
       </div>
       <div className="flex items-center gap-4">
         <span className="hidden md:inline">2025–26 Season</span>

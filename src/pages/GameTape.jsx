@@ -6,6 +6,7 @@ import { FlyersMark, TeamLogo } from '../components/Logo.jsx';
 import { PlayerLink } from '../components/PlayerLink.jsx';
 import { Headshot } from '../components/Headshot.jsx';
 import { ShotMap } from '../components/ShotMap.jsx';
+import { ShiftChart } from '../components/ShiftChart.jsx';
 
 const CompareRow = ({ label, us, them, higherBetter = true, suffix = '' }) => {
   if (us == null || them == null) return null;
@@ -269,6 +270,10 @@ export const GameTape = ({ game, loading, pbp, pbpRaw, customGameId, onClearCust
             <Section title="Shot Map" action={<span className="text-[10px] font-mono text-white/40">offensive zone · all periods</span>}>
               <ShotMap pbpData={pbpRaw} oppAbbr={game.oppAbbr} />
             </Section>
+          )}
+
+          {game.id && (
+            <ShiftChart gameId={game.id} isPlayoff={game.gameType === 3} />
           )}
 
           <Section title="Skater Box Score · PHI">

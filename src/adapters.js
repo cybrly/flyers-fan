@@ -214,6 +214,7 @@ export function adaptGame(boxscore, rightRail, landing) {
   return {
     id: boxscore.id,
     state: boxscore.gameState,
+    gameType: boxscore.gameType, // 2 = reg, 3 = playoffs
     date: boxscore.gameDate,
     dateLabel: fmtDateFull(boxscore.gameDate),
     home: isHome,

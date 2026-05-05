@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { ArrowLeft, AlertCircle } from 'lucide-react';
-import { cx, fmtDate, SEASON, NAME_TO_ABBR } from '../config.js';
+import { cx, fmtDate, SEASON, SEASON_LABEL, NAME_TO_ABBR } from '../config.js';
 import { useNHL } from '../api.js';
 import { Section, Skeleton, Chip, Label } from '../components/primitives.jsx';
 import { TeamLogo } from '../components/Logo.jsx';
@@ -213,7 +213,7 @@ export const PlayerProfile = ({ playerId }) => {
 
       {/* Featured stats — current season big numbers */}
       {sub && (
-        <Section title="2025–26 · Regular Season"
+        <Section title={`${SEASON_LABEL} · Regular Season`}
           action={isSkater
             ? <span className="text-[10px] font-mono text-white/40">{sub.gamesPlayed || 0} GP</span>
             : <span className="text-[10px] font-mono text-white/40">{sub.gamesPlayed || 0} GP</span>}>
@@ -842,7 +842,7 @@ const PlayerGameLog = ({ playerId, isSkater }) => {
 
   return (
     <Section
-      title="2025–26 · Game Log"
+      title={`${SEASON_LABEL} · Game Log`}
       action={
         <div className="flex items-center gap-2">
           <span className="text-[10px] font-mono text-white/40">{games.length} games</span>

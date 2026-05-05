@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Home, Plane } from 'lucide-react';
-import { cx, OPP_FULL, fmtDate, fmtDateFull, fmtTime } from '../config.js';
+import { cx, OPP_FULL, fmtDate, fmtDateFull, fmtTime, SEASON_LABEL } from '../config.js';
 import { Chip, Section, SectionBand, Skeleton } from '../components/primitives.jsx';
 import { GoalDiffBars, FormDots, MiniBar } from '../components/charts.jsx';
 import { FlyersMark, TeamLogo } from '../components/Logo.jsx';
@@ -117,7 +117,7 @@ export const Dashboard = ({ schedule, standings, scoreboard, clubStats, roster, 
       </div>
 
       {/* ─── BAND · SEASON OVERVIEW ───────────────────────────────────────── */}
-      <SectionBand label="Season Overview" color="warm" sub="2025–26 · all 82" />
+      <SectionBand label="Season Overview" color="warm" sub={`${SEASON_LABEL} · all 82`} />
 
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div className="flex items-center gap-2 flex-wrap">
@@ -126,7 +126,7 @@ export const Dashboard = ({ schedule, standings, scoreboard, clubStats, roster, 
           {us?.clinched === 'z' && <Chip tone="amber">● Clinched Conference</Chip>}
           {us?.clinched === 'p' && <Chip tone="orange">● Playoff Bound</Chip>}
           {us?.clinched === 'e' && <Chip tone="red">● Eliminated</Chip>}
-          {us && <span className="text-[13px] text-white/45 font-mono">{us.gp} of 82 games · 2025–26</span>}
+          {us && <span className="text-[13px] text-white/45 font-mono">{us.gp} of 82 games · {SEASON_LABEL}</span>}
         </div>
         <div className="flex items-center gap-2 text-[12px] font-mono text-white/40">
           <span>good</span><span className="w-2 h-2 bg-emerald-400 rounded-full" />

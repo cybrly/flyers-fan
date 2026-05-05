@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { ChevronRight, Flame, RefreshCw, X } from 'lucide-react';
-import { cx, fmtRelative, connStatus } from '../config.js';
+import { cx, fmtRelative, connStatus, SEASON_LABEL } from '../config.js';
 import { Kbd, Chip, Label, Skeleton } from './primitives.jsx';
 import { FlyersMark, TeamLogo } from './Logo.jsx';
 import { NAV_ITEMS } from './nav.js';
@@ -48,14 +48,14 @@ export const Sidebar = ({ page, setPage, team, liveGame, metro, roster, lastFetc
       )}
 
     <aside className={cx(
-      'flex flex-col w-[244px] shrink-0 border-r border-white/[0.06] bg-[#0A0A0A]/95 backdrop-blur-md',
+      'flex flex-col w-[244px] shrink-0 border-r border-[#F74902]/[0.22] bg-[#0A0A0A]/95 backdrop-blur-md',
       // Desktop: standard sticky sidebar
       'lg:sticky lg:top-0 lg:h-screen',
       // Mobile: fixed-position drawer that slides in from the left
       'fixed lg:relative inset-y-0 left-0 h-screen z-50 transition-transform duration-200 ease-out',
       mobileOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0',
     )}>
-      <div className="h-12 px-4 flex items-center justify-between border-b border-white/[0.05]">
+      <div className="h-12 px-4 flex items-center justify-between border-b border-[#F74902]/[0.22]">
         <TeamSwitcherPrank />
         <div className="flex items-center gap-1">
           <button
@@ -83,7 +83,7 @@ export const Sidebar = ({ page, setPage, team, liveGame, metro, roster, lastFetc
               <span className="text-[9px] font-bold text-black font-mono">PHI</span>
             </div>
             <div className="min-w-0 text-left">
-              <div className="text-[11px] font-medium truncate">2025–26 Season</div>
+              <div className="text-[11px] font-medium truncate">{SEASON_LABEL} Season</div>
               <div className="text-[10px] text-white/40 font-mono">
                 {team ? `${team.w}–${team.l} · Metro #${team.divRank}` : <span className="text-white/30">loading…</span>}
               </div>

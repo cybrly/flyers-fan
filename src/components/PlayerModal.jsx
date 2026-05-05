@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { X, AlertCircle, ArrowRight } from 'lucide-react';
-import { cx, fmtDate } from '../config.js';
+import { cx, fmtDate, SEASON_LABEL } from '../config.js';
 import { useNHL } from '../api.js';
 import { Label, Skeleton } from './primitives.jsx';
 import { TeamLogo } from './Logo.jsx';
@@ -110,7 +110,7 @@ export const PlayerModal = ({ playerId, onClose }) => {
 
             {sub && (
               <div className="p-5 border-b border-white/[0.06]">
-                <Label className="mb-3">2025–26 Regular Season</Label>
+                <Label className="mb-3">{SEASON_LABEL} Regular Season</Label>
                 <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
                   {isSkater ? (
                     <>

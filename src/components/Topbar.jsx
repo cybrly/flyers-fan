@@ -10,7 +10,7 @@ export const Topbar = ({ page, liveGame, lastFetch, error, onOpenPalette, onOpen
   const status = connStatus(lastFetch, error);
 
   return (
-    <header className="h-12 border-b border-white/[0.06] bg-[#0A0A0A]/90 backdrop-blur-md sticky top-0 z-30">
+    <header className="h-12 border-b border-[#F74902]/[0.22] bg-[#0A0A0A]/90 backdrop-blur-md sticky top-0 z-30">
       <div className="h-full px-4 md:px-6 flex items-center justify-between gap-4">
         <div className="flex items-center gap-2 min-w-0">
           <button

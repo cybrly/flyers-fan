@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Search, X, AlertCircle, Plus } from 'lucide-react';
-import { cx, TEAM_CAPTAINS, TEAM_ABBR } from '../config.js';
+import { cx, TEAM_CAPTAINS, TEAM_ABBR, SEASON_LABEL } from '../config.js';
 import { useNHL } from '../api.js';
 import { Section, Skeleton } from '../components/primitives.jsx';
 import { TeamLogo } from '../components/Logo.jsx';
@@ -345,7 +345,7 @@ export const PlayerCompare = ({ schedule }) => {
 
       {players.length >= 2 && (
         <>
-          <Section title="2025–26 · Regular Season" action={<span className="text-[10px] font-mono text-white/40">side-by-side</span>}>
+          <Section title={`${SEASON_LABEL} · Regular Season`} action={<span className="text-[10px] font-mono text-white/40">side-by-side</span>}>
             <div className="divide-y divide-white/[0.04]">
               {allSkaters && (() => {
                 const subs = players.map((p) => p.featuredStats?.regularSeason?.subSeason || {});

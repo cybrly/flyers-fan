@@ -1,7 +1,20 @@
 // Constants, formatters, and tiny utilities. No React, no fetch — pure.
 
 export const TEAM_ABBR = 'PHI';
-export const SEASON = '20252026';
+
+// Auto-rollover season. NHL seasons span Oct → Apr/Jun (regular season +
+// playoffs); the new season's schedule lands in late summer. We flip on
+// Sep 1 so the new schedule is reachable before opening night, but
+// historic Aug/early-Sep traffic still sees the prior season as
+// authoritative.
+const _seasonStartYear = (() => {
+  const d = new Date();
+  // Months are 0-indexed: 8 = September. Sept onward → "new" season year.
+  return d.getMonth() >= 8 ? d.getFullYear() : d.getFullYear() - 1;
+})();
+export const SEASON = `${_seasonStartYear}${_seasonStartYear + 1}`;
+export const SEASON_LABEL = `${String(_seasonStartYear).slice(2)}–${String(_seasonStartYear + 1).slice(2)}`;
+export const SEASON_LABEL_FULL = `${_seasonStartYear}–${String(_seasonStartYear + 1).slice(2)}`;
 
 // Poll intervals (ms). Adjust if you want more or less chatter.
 export const POLL = {

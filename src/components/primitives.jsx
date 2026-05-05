@@ -36,11 +36,15 @@ export const Label = ({ children, className = '' }) => (
   <div className={cx('text-[10px] font-mono tracking-[0.06em] uppercase text-white/40', className)}>{children}</div>
 );
 
+// Section card. Borders use a thin Flyers-orange stroke instead of the
+// neutral white tint so the panels feel brand-aligned without painting
+// the surface (low-opacity orange FILLS perceive as brown on dark — only
+// 1px STROKES preserve the orange hue cleanly).
 export const Section = ({ title, action, children, className = '' }) => (
-  <div className={cx('border border-white/[0.06] bg-[#0C0C0C]/60 rounded-md backdrop-blur-sm', className)}>
+  <div className={cx('border border-[#F74902]/[0.18] bg-[#0C0C0C]/60 rounded-md backdrop-blur-sm', className)}>
     {(title || action) && (
-      <div className="flex items-center justify-between px-3.5 h-8 border-b border-white/[0.05]">
-        <span className="text-[11px] font-medium text-white/80 tracking-tight">{title}</span>
+      <div className="flex items-center justify-between px-3.5 h-8 border-b border-[#F74902]/[0.25]">
+        <span className="text-[11px] font-medium text-white/85 tracking-tight">{title}</span>
         {action}
       </div>
     )}

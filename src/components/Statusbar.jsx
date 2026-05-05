@@ -1,12 +1,12 @@
 import { Wifi, WifiOff, RefreshCw } from 'lucide-react';
-import { cx, fmtRelative, connStatus } from '../config.js';
+import { cx, fmtRelative, connStatus, SEASON_LABEL } from '../config.js';
 import { GoalHornToggle } from './GoalHorn.jsx';
 import { GoalNotificationsToggle } from './GoalNotifications.jsx';
 
 export const Statusbar = ({ lastFetch, error, refresh }) => {
   const status = connStatus(lastFetch, error);
   return (
-    <div className="h-7 border-t border-white/[0.06] bg-[#080808] flex items-center justify-between px-4 md:px-6 text-[10px] font-mono text-white/45">
+    <div className="h-7 border-t border-[#F74902]/[0.22] bg-[#080808] flex items-center justify-between px-4 md:px-6 text-[10px] font-mono text-white/45">
       <div className="flex items-center gap-4">
         <span className={cx('flex items-center gap-1.5',
           status.tone === 'red' && 'text-red-400',
@@ -32,8 +32,8 @@ export const Statusbar = ({ lastFetch, error, refresh }) => {
           Unofficial · Not affiliated with the NHL or Philadelphia Flyers
         </span>
         <span className="lg:hidden text-white/35">Unofficial · not NHL</span>
-        <span className="hidden md:inline">2025–26 Season</span>
-        <span>v2.4</span>
+        <span className="hidden md:inline">{SEASON_LABEL} Season</span>
+        <span>v2.5</span>
       </div>
     </div>
   );

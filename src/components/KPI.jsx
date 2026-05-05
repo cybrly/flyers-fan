@@ -8,7 +8,7 @@ import { Sparkline } from './charts.jsx';
 // when no override is provided. Keep these pre-computed so we don't churn
 // Tailwind class lookups inside the hot render path.
 const TONES = {
-  default: { wrap: 'border-white/[0.06] bg-[#0C0C0C]/60 hover:border-white/[0.12]',
+  default: { wrap: 'border-[#F74902]/[0.18] bg-[#0C0C0C]/60 hover:border-[#F74902]/35',
              value: 'text-white', spark: '#F74902', dot: null },
   good:    { wrap: 'border-emerald-500/15 bg-emerald-500/[0.04] hover:border-emerald-500/30',
              value: 'text-emerald-400', spark: '#10B981', dot: 'bg-emerald-400' },

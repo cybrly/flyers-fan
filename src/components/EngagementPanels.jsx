@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { Star, Trophy, ChevronRight } from 'lucide-react';
-import { cx, TEAM_ABBR } from '../config.js';
+import { cx, TEAM_ABBR, SEASON_LABEL } from '../config.js';
 import { Section } from './primitives.jsx';
 import { Headshot } from './Headshot.jsx';
 import { PlayerLink } from './PlayerLink.jsx';
@@ -142,7 +142,7 @@ const AWARDS = [
 export const AwardWatchPanel = () => {
   return (
     <Section
-      title={<span className="flex items-center gap-2"><Trophy size={12} className="text-amber-300" /> Award Watch · 2025–26</span>}
+      title={<span className="flex items-center gap-2"><Trophy size={12} className="text-amber-300" /> Award Watch · {SEASON_LABEL}</span>}
       action={<span className="text-[10px] font-mono text-white/40">consensus contenders</span>}
     >
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-px bg-white/[0.04]">
@@ -228,7 +228,7 @@ export const RecordsTrackerPanel = ({ clubStats }) => {
   return (
     <Section
       title="Franchise Records · Single Season"
-      action={<span className="text-[10px] font-mono text-white/40">2025–26 leader vs all-time mark</span>}
+      action={<span className="text-[10px] font-mono text-white/40">{SEASON_LABEL} leader vs all-time mark</span>}
     >
       <div className="divide-y divide-white/[0.04]">
         {rows.map((r) => {

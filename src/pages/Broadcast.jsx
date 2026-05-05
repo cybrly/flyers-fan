@@ -173,7 +173,7 @@ export const Broadcast = ({ schedule, liveDetail, lastGame }) => {
   const blocks = detail?.stats?.blocks;
 
   return (
-    <div className="px-6 xl:px-10 py-6 xl:py-8 space-y-6 xl:space-y-8 min-h-[calc(100vh-48px)]">
+    <div className="px-6 xl:px-10 py-6 xl:py-8 space-y-6 xl:space-y-8 min-h-screen">
       {/* TOP BAR — date / venue / phase chip */}
       <div className="flex items-center justify-between flex-wrap gap-4">
         <div className="flex items-center gap-3">

@@ -373,36 +373,45 @@ export default function App() {
       `}</style>
 
       <div className="flex">
-        <Sidebar
-          page={page}
-          setPage={setPage}
-          team={teamCombined}
-          liveGame={schedule.liveGame}
-          metro={standings.metro}
-          roster={roster}
-          lastFetch={lastFetch}
-          error={anyError}
-          refresh={refresh}
-          mobileOpen={navOpen}
-          onCloseMobile={() => setNavOpen(false)}
-        />
-
-        <div className="flex-1 min-w-0 flex flex-col min-h-screen">
-          <Topbar
+        {/* Hide all nav chrome on the Broadcast page so the TV-display view
+            fills the screen edge-to-edge — the user navigates back via the
+            floating "exit" pill rendered below. */}
+        {page !== 'broadcast' && (
+          <Sidebar
             page={page}
+            setPage={setPage}
+            team={teamCombined}
             liveGame={schedule.liveGame}
+            metro={standings.metro}
+            roster={roster}
             lastFetch={lastFetch}
             error={anyError}
-            onOpenPalette={() => setPaletteOpen(true)}
-            onOpenNav={() => setNavOpen(true)}
+            refresh={refresh}
+            mobileOpen={navOpen}
+            onCloseMobile={() => setNavOpen(false)}
           />
+        )}
 
-          <LiveRibbon
-            liveGame={schedule.liveGame}
-            liveDetail={isLive(boxscore.data?.gameState) ? game : null}
-            currentPage={page}
-            onOpenGame={openGame}
-          />
+        <div className="flex-1 min-w-0 flex flex-col min-h-screen">
+          {page !== 'broadcast' && (
+            <Topbar
+              page={page}
+              liveGame={schedule.liveGame}
+              lastFetch={lastFetch}
+              error={anyError}
+              onOpenPalette={() => setPaletteOpen(true)}
+              onOpenNav={() => setNavOpen(true)}
+            />
+          )}
+
+          {page !== 'broadcast' && (
+            <LiveRibbon
+              liveGame={schedule.liveGame}
+              liveDetail={isLive(boxscore.data?.gameState) ? game : null}
+              currentPage={page}
+              onOpenGame={openGame}
+            />
+          )}
 
           <main
             id="main-content"
@@ -432,9 +441,23 @@ export default function App() {
             </ErrorBoundary>
           </main>
 
-          <Statusbar lastFetch={lastFetch} error={anyError} refresh={refresh} />
+          {page !== 'broadcast' && (
+            <Statusbar lastFetch={lastFetch} error={anyError} refresh={refresh} />
+          )}
         </div>
       </div>
+
+      {/* Broadcast-only floating exit pill — mid-bottom-right so it doesn't
+          block the goal log or score; small enough to ignore on a TV but
+          tappable on a touch display. */}
+      {page === 'broadcast' && (
+        <button
+          onClick={() => setPage('dashboard')}
+          className="fixed bottom-4 right-4 z-40 px-3 py-2 rounded-md border border-white/[0.08] bg-[#0E0E0E]/80 backdrop-blur hover:bg-[#0E0E0E] text-[11px] font-mono text-white/55 hover:text-white/85 uppercase tracking-wider transition-colors"
+        >
+          ← exit broadcast
+        </button>
+      )}
 
       <PlayerModal playerId={playerId} onClose={playerCtx.close} />
       <SeriesModal letter={seriesLetter} onClose={closeSeries} />

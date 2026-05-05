@@ -203,23 +203,9 @@ export const Hero = ({ liveGame, liveDetail, nextGame, lastResult, us }) => {
 
   return (
     <div className="relative overflow-hidden rounded-md border border-white/[0.06] bg-gradient-to-br from-[#141414] via-[#101010] to-[#0A0A0A] px-5 sm:px-8 py-6 sm:py-8">
-      {/* Two watermark logos — Flyers tucks behind the left side of the hero,
-          opponent behind the right. Each one occupies its own half so they
-          don't bleed into each other behind the score. */}
-      {/* Watermark logos at low opacity — present but never dominate. */}
-      <div
-        className="absolute inset-y-0 left-0 w-1/2 pointer-events-none opacity-35"
-        style={{ backgroundImage: `url(${PHI_LOGO})`, backgroundRepeat: 'no-repeat', backgroundPosition: 'left -40px center', backgroundSize: 'auto 180%' }}
-      />
-      {opp && (
-        <div
-          className="absolute inset-y-0 right-0 w-1/2 pointer-events-none opacity-35"
-          style={{ backgroundImage: `url(${teamLogoUrl(opp)})`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right -40px center', backgroundSize: 'auto 180%' }}
-        />
-      )}
-      {/* Center veil — keeps the score readable while the muted watermarks
-          show through at the edges. */}
-      <div className="absolute inset-0 pointer-events-none bg-gradient-to-r from-[#0A0A0A]/55 via-[#0A0A0A]/92 to-[#0A0A0A]/55" />
+      {/* No watermark fills — kept the panel pure neutral charcoal. The team
+          logos appear inline in the score block where they belong, instead
+          of as background images that tint the whole surface. */}
 
       <div className="relative">
         {liveGame ? <HeroLive liveGame={liveGame} liveDetail={liveDetail} oppFull={oppFull} /> :

@@ -204,33 +204,33 @@ const StatBar = ({ label, a, b, higherBetter = true, fmt }) => {
   const bWins = aNum != null && bNum != null && (higherBetter ? bNum > aNum : bNum < aNum);
   const f = fmt || ((v) => v);
   return (
-    <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-3 px-4 h-10 hover:bg-white/[0.02]">
+    <div className="grid grid-cols-[1fr_minmax(140px,200px)_1fr] items-center gap-3 px-4 h-11 hover:bg-white/[0.02]">
       {/* Left side bar grows right→left */}
       <div className="flex items-center gap-2 justify-end">
-        <span className={cx('text-[12px] font-mono tabular-nums shrink-0',
-          aWins ? 'text-[#FF8A4C] font-semibold' : 'text-white/65'
+        <span className={cx('text-[13px] font-mono tabular-nums shrink-0',
+          aWins ? 'text-[#FF8A4C] font-semibold' : 'text-white/70'
         )}>{aNum != null ? f(aNum) : '—'}</span>
-        <div className="relative h-1.5 w-full max-w-[140px] bg-white/[0.04] rounded-full overflow-hidden">
+        <div className="relative h-1.5 w-full max-w-[160px] bg-white/[0.04] rounded-full overflow-hidden">
           <div
             className={cx('absolute right-0 top-0 h-full rounded-full',
-              aWins ? 'bg-[#F74902]' : 'bg-white/30'
+              aWins ? 'bg-[#F74902]' : 'bg-white/25'
             )}
             style={{ width: `${aPct}%` }}
           />
         </div>
       </div>
-      <span className="text-[10px] font-mono text-white/45 uppercase tracking-wider text-center shrink-0">{label}</span>
+      <span className="text-[11px] font-mono text-white/55 uppercase tracking-wider text-center shrink-0 whitespace-nowrap">{label}</span>
       <div className="flex items-center gap-2">
-        <div className="relative h-1.5 w-full max-w-[140px] bg-white/[0.04] rounded-full overflow-hidden">
+        <div className="relative h-1.5 w-full max-w-[160px] bg-white/[0.04] rounded-full overflow-hidden">
           <div
             className={cx('absolute left-0 top-0 h-full rounded-full',
-              bWins ? 'bg-[#F74902]' : 'bg-white/30'
+              bWins ? 'bg-[#F74902]' : 'bg-white/25'
             )}
             style={{ width: `${bPct}%` }}
           />
         </div>
-        <span className={cx('text-[12px] font-mono tabular-nums shrink-0',
-          bWins ? 'text-[#FF8A4C] font-semibold' : 'text-white/65'
+        <span className={cx('text-[13px] font-mono tabular-nums shrink-0',
+          bWins ? 'text-[#FF8A4C] font-semibold' : 'text-white/70'
         )}>{bNum != null ? f(bNum) : '—'}</span>
       </div>
     </div>
@@ -310,36 +310,36 @@ export const PlayerCompare = () => {
             <div className="divide-y divide-white/[0.04]">
               {bothSkaters && aSub && bSub && (
                 <>
-                  <StatBar label="GP"  a={aSub.gamesPlayed} b={bSub.gamesPlayed} />
-                  <StatBar label="G"   a={aSub.goals} b={bSub.goals} />
-                  <StatBar label="A"   a={aSub.assists} b={bSub.assists} />
-                  <StatBar label="P"   a={aSub.points} b={bSub.points} />
-                  <StatBar label="+/–" a={aSub.plusMinus} b={bSub.plusMinus} />
-                  <StatBar label="PIM" a={aSub.pim} b={bSub.pim} higherBetter={false} />
-                  <StatBar label="SOG" a={aSub.shots} b={bSub.shots} />
-                  <StatBar label="S%"  a={aSub.shootingPctg != null ? +(aSub.shootingPctg * 100).toFixed(1) : null}
-                                       b={bSub.shootingPctg != null ? +(bSub.shootingPctg * 100).toFixed(1) : null}
-                                       fmt={(v) => `${v}%`} />
-                  <StatBar label="PPG" a={aSub.powerPlayGoals} b={bSub.powerPlayGoals} />
-                  <StatBar label="PPP" a={aSub.powerPlayPoints} b={bSub.powerPlayPoints} />
-                  <StatBar label="GWG" a={aSub.gameWinningGoals} b={bSub.gameWinningGoals} />
-                  <StatBar label="FO%" a={aSub.faceoffWinningPctg != null ? +(aSub.faceoffWinningPctg * 100).toFixed(1) : null}
-                                       b={bSub.faceoffWinningPctg != null ? +(bSub.faceoffWinningPctg * 100).toFixed(1) : null}
-                                       fmt={(v) => `${v}%`} />
+                  <StatBar label="Games Played"     a={aSub.gamesPlayed} b={bSub.gamesPlayed} />
+                  <StatBar label="Goals"            a={aSub.goals} b={bSub.goals} />
+                  <StatBar label="Assists"          a={aSub.assists} b={bSub.assists} />
+                  <StatBar label="Points"           a={aSub.points} b={bSub.points} />
+                  <StatBar label="Plus/Minus"       a={aSub.plusMinus} b={bSub.plusMinus} />
+                  <StatBar label="Penalty Minutes"  a={aSub.pim} b={bSub.pim} higherBetter={false} />
+                  <StatBar label="Shots on Goal"    a={aSub.shots} b={bSub.shots} />
+                  <StatBar label="Shooting %"       a={aSub.shootingPctg != null ? +(aSub.shootingPctg * 100).toFixed(1) : null}
+                                                    b={bSub.shootingPctg != null ? +(bSub.shootingPctg * 100).toFixed(1) : null}
+                                                    fmt={(v) => `${v}%`} />
+                  <StatBar label="Power Play Goals" a={aSub.powerPlayGoals} b={bSub.powerPlayGoals} />
+                  <StatBar label="Power Play Points" a={aSub.powerPlayPoints} b={bSub.powerPlayPoints} />
+                  <StatBar label="Game-Winning Goals" a={aSub.gameWinningGoals} b={bSub.gameWinningGoals} />
+                  <StatBar label="Faceoff %"        a={aSub.faceoffWinningPctg != null ? +(aSub.faceoffWinningPctg * 100).toFixed(1) : null}
+                                                    b={bSub.faceoffWinningPctg != null ? +(bSub.faceoffWinningPctg * 100).toFixed(1) : null}
+                                                    fmt={(v) => `${v}%`} />
                 </>
               )}
               {bothGoalies && aSub && bSub && (
                 <>
-                  <StatBar label="GP"  a={aSub.gamesPlayed} b={bSub.gamesPlayed} />
-                  <StatBar label="W"   a={aSub.wins} b={bSub.wins} />
-                  <StatBar label="L"   a={aSub.losses} b={bSub.losses} higherBetter={false} />
-                  <StatBar label="SV%" a={aSub.savePercentage != null ? +(aSub.savePercentage * 100).toFixed(2) : null}
-                                       b={bSub.savePercentage != null ? +(bSub.savePercentage * 100).toFixed(2) : null}
-                                       fmt={(v) => `${v}%`} />
-                  <StatBar label="GAA" a={aSub.goalsAgainstAverage} b={bSub.goalsAgainstAverage} higherBetter={false}
-                                       fmt={(v) => v?.toFixed?.(2) ?? v} />
-                  <StatBar label="SO"  a={aSub.shutouts} b={bSub.shutouts} />
-                  <StatBar label="SV"  a={aSub.saves} b={bSub.saves} />
+                  <StatBar label="Games Played"     a={aSub.gamesPlayed} b={bSub.gamesPlayed} />
+                  <StatBar label="Wins"             a={aSub.wins} b={bSub.wins} />
+                  <StatBar label="Losses"           a={aSub.losses} b={bSub.losses} higherBetter={false} />
+                  <StatBar label="Save %"           a={aSub.savePercentage != null ? +(aSub.savePercentage * 100).toFixed(2) : null}
+                                                    b={bSub.savePercentage != null ? +(bSub.savePercentage * 100).toFixed(2) : null}
+                                                    fmt={(v) => `${v}%`} />
+                  <StatBar label="Goals Against Avg" a={aSub.goalsAgainstAverage} b={bSub.goalsAgainstAverage} higherBetter={false}
+                                                    fmt={(v) => v?.toFixed?.(2) ?? v} />
+                  <StatBar label="Shutouts"         a={aSub.shutouts} b={bSub.shutouts} />
+                  <StatBar label="Saves"            a={aSub.saves} b={bSub.saves} />
                 </>
               )}
               {!bothSkaters && !bothGoalies && (
@@ -356,29 +356,29 @@ export const PlayerCompare = () => {
               <div className="divide-y divide-white/[0.04]">
                 {bothSkaters && (
                   <>
-                    <StatBar label="GP"  a={aCar.gamesPlayed} b={bCar.gamesPlayed} />
-                    <StatBar label="G"   a={aCar.goals} b={bCar.goals} />
-                    <StatBar label="A"   a={aCar.assists} b={bCar.assists} />
-                    <StatBar label="P"   a={aCar.points} b={bCar.points} />
-                    <StatBar label="P/GP" a={aCar.gamesPlayed ? +(aCar.points / aCar.gamesPlayed).toFixed(2) : null}
-                                          b={bCar.gamesPlayed ? +(bCar.points / bCar.gamesPlayed).toFixed(2) : null} />
-                    <StatBar label="SOG" a={aCar.shots} b={bCar.shots} />
-                    <StatBar label="S%"  a={aCar.shootingPctg != null ? +(aCar.shootingPctg * 100).toFixed(1) : null}
-                                         b={bCar.shootingPctg != null ? +(bCar.shootingPctg * 100).toFixed(1) : null}
-                                         fmt={(v) => `${v}%`} />
+                    <StatBar label="Games Played"     a={aCar.gamesPlayed} b={bCar.gamesPlayed} />
+                    <StatBar label="Goals"            a={aCar.goals} b={bCar.goals} />
+                    <StatBar label="Assists"          a={aCar.assists} b={bCar.assists} />
+                    <StatBar label="Points"           a={aCar.points} b={bCar.points} />
+                    <StatBar label="Points per Game"  a={aCar.gamesPlayed ? +(aCar.points / aCar.gamesPlayed).toFixed(2) : null}
+                                                      b={bCar.gamesPlayed ? +(bCar.points / bCar.gamesPlayed).toFixed(2) : null} />
+                    <StatBar label="Shots on Goal"    a={aCar.shots} b={bCar.shots} />
+                    <StatBar label="Shooting %"       a={aCar.shootingPctg != null ? +(aCar.shootingPctg * 100).toFixed(1) : null}
+                                                      b={bCar.shootingPctg != null ? +(bCar.shootingPctg * 100).toFixed(1) : null}
+                                                      fmt={(v) => `${v}%`} />
                   </>
                 )}
                 {bothGoalies && (
                   <>
-                    <StatBar label="GP"  a={aCar.gamesPlayed} b={bCar.gamesPlayed} />
-                    <StatBar label="W"   a={aCar.wins} b={bCar.wins} />
-                    <StatBar label="L"   a={aCar.losses} b={bCar.losses} higherBetter={false} />
-                    <StatBar label="SV%" a={aCar.savePercentage != null ? +(aCar.savePercentage * 100).toFixed(2) : null}
-                                         b={bCar.savePercentage != null ? +(bCar.savePercentage * 100).toFixed(2) : null}
-                                         fmt={(v) => `${v}%`} />
-                    <StatBar label="GAA" a={aCar.goalsAgainstAverage} b={bCar.goalsAgainstAverage} higherBetter={false}
-                                         fmt={(v) => v?.toFixed?.(2) ?? v} />
-                    <StatBar label="SO"  a={aCar.shutouts} b={bCar.shutouts} />
+                    <StatBar label="Games Played"      a={aCar.gamesPlayed} b={bCar.gamesPlayed} />
+                    <StatBar label="Wins"              a={aCar.wins} b={bCar.wins} />
+                    <StatBar label="Losses"            a={aCar.losses} b={bCar.losses} higherBetter={false} />
+                    <StatBar label="Save %"            a={aCar.savePercentage != null ? +(aCar.savePercentage * 100).toFixed(2) : null}
+                                                       b={bCar.savePercentage != null ? +(bCar.savePercentage * 100).toFixed(2) : null}
+                                                       fmt={(v) => `${v}%`} />
+                    <StatBar label="Goals Against Avg" a={aCar.goalsAgainstAverage} b={bCar.goalsAgainstAverage} higherBetter={false}
+                                                       fmt={(v) => v?.toFixed?.(2) ?? v} />
+                    <StatBar label="Shutouts"          a={aCar.shutouts} b={bCar.shutouts} />
                   </>
                 )}
               </div>

@@ -85,7 +85,7 @@ export const ShiftChart = ({ gameId, isPlayoff = false }) => {
         : PERIOD_LEN * 3 + OT_REG_LEN * (maxP - 3);
 
     return { teams: byTeam, totalSec: total, maxPeriod: maxP };
-  }, [data, isPlayoff]);
+  }, [shifts, isPlayoff]);
 
   if (!gameId) return null;
   if (loading) {

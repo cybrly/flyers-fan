@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { ChevronDown } from 'lucide-react';
 import { OPP_FULL, cx } from '../config.js';
 import { FlyersMark, TeamLogo } from './Logo.jsx';
@@ -126,7 +127,10 @@ export const TeamSwitcherPrank = () => {
 
 const PrankModal = ({ abbr, onClose }) => {
   const teamName = OPP_FULL[abbr] || abbr;
-  return (
+  // Render via portal because the Sidebar drawer uses CSS transforms,
+  // which create a containing block that traps position:fixed children.
+  // Without the portal the backdrop ends up clipped to the 244px sidebar.
+  return createPortal(
     <div
       role="dialog"
       aria-modal="true"
@@ -176,6 +180,7 @@ const PrankModal = ({ abbr, onClose }) => {
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 };

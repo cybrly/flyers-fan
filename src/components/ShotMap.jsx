@@ -284,8 +284,73 @@ const ShotTooltip = ({ hover, oppAbbr, containerW }) => {
   );
 };
 
+// Shot density layer — buckets shots into a coarse hex-style grid (rectangular
+// for simplicity), then renders each non-empty cell as a soft-edged orange
+// glow. Uses a Gaussian-blur SVG filter so overlapping cells blend together
+// into a clean heatmap. Goals get a brighter pop to keep them visible.
+const ShotHeat = ({ shots }) => {
+  // 18 cols × 12 rows over the offensive half = ~5.5 ft per cell, dense
+  // enough to show neighborhood patterns without aliasing.
+  const COLS = 18;
+  const ROWS = 12;
+  const cellW = SVG_W / COLS;
+  const cellH = SVG_H / ROWS;
+
+  // Build counts per cell.
+  const grid = new Map();
+  for (const s of shots) {
+    const cx_ = ftToX(s.x);
+    const cy_ = ftToY(s.y);
+    const col = Math.min(COLS - 1, Math.max(0, Math.floor(cx_ / cellW)));
+    const row = Math.min(ROWS - 1, Math.max(0, Math.floor(cy_ / cellH)));
+    const key = `${col}:${row}`;
+    grid.set(key, (grid.get(key) || 0) + 1);
+  }
+  if (grid.size === 0) return null;
+  const max = Math.max(...grid.values());
+
+  const cells = [];
+  for (const [key, count] of grid) {
+    const [col, row] = key.split(':').map(Number);
+    // Power curve so a few hot cells stand out without washing out cold ones.
+    const t = Math.pow(count / max, 0.65);
+    const opacity = 0.18 + t * 0.72;
+    cells.push(
+      <rect
+        key={key}
+        x={col * cellW}
+        y={row * cellH}
+        width={cellW}
+        height={cellH}
+        fill="#F74902"
+        fillOpacity={opacity}
+      />
+    );
+  }
+  // Goals overlay — small filled dots on top so they remain visible.
+  const goals = shots.filter((s) => s.kind === 'goal');
+
+  return (
+    <>
+      <defs>
+        <filter id="heatBlur" x="-10%" y="-10%" width="120%" height="120%">
+          <feGaussianBlur stdDeviation="9" />
+        </filter>
+      </defs>
+      <g filter="url(#heatBlur)">{cells}</g>
+      {goals.map((s) => (
+        <g key={s.id}>
+          <circle cx={ftToX(s.x)} cy={ftToY(s.y)} r="5" fill="#FFFFFF" opacity="0.95" />
+          <circle cx={ftToX(s.x)} cy={ftToY(s.y)} r="3" fill="#F74902" />
+        </g>
+      ))}
+    </>
+  );
+};
+
 export const ShotMap = ({ pbpData, oppAbbr }) => {
   const [filter, setFilter] = useState('all'); // 'all' | 'us' | 'them'
+  const [mode, setMode] = useState('dots');    // 'dots' | 'heat'
   const [hover, setHover] = useState(null);    // { shot, mx, my }
   const [containerW, setContainerW] = useState(0);
 
@@ -344,40 +409,72 @@ export const ShotMap = ({ pbpData, oppAbbr }) => {
           <span className="text-white/15">|</span>
           <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-white" /><span className="text-white/65">{oppAbbr}</span><span className="text-white/65 tabular-nums">{themCounts.g}G · {themCounts.sog}SOG · {themCounts.miss}M</span></span>
         </div>
-        <div className="flex items-center gap-0.5 p-0.5 border border-white/[0.08] rounded-md bg-white/[0.02]">
-          {[
-            { id: 'all',  l: 'Both' },
-            { id: 'us',   l: 'PHI' },
-            { id: 'them', l: oppAbbr || 'Opp' },
-          ].map((t) => (
-            <button key={t.id} onClick={() => setFilter(t.id)}
-              className={cx('px-2.5 h-6 text-[11px] font-medium rounded-[4px] transition-colors',
-                filter === t.id ? 'bg-white/[0.08] text-white' : 'text-white/50 hover:text-white'
-              )}>{t.l}</button>
-          ))}
+        <div className="flex items-center gap-2">
+          {/* Dots vs Heat mode toggle — Dots are interactive (hover for shot
+              detail), Heat shows shot density via blurred-circle KDE. */}
+          <div className="flex items-center gap-0.5 p-0.5 border border-white/[0.08] rounded-md bg-white/[0.02]">
+            {[
+              { id: 'dots', l: 'Dots' },
+              { id: 'heat', l: 'Heat' },
+            ].map((t) => (
+              <button key={t.id} onClick={() => { setMode(t.id); setHover(null); }}
+                className={cx('px-2.5 h-6 text-[11px] font-medium rounded-[4px] transition-colors',
+                  mode === t.id ? 'bg-white/[0.08] text-white' : 'text-white/50 hover:text-white'
+                )}>{t.l}</button>
+            ))}
+          </div>
+          <div className="flex items-center gap-0.5 p-0.5 border border-white/[0.08] rounded-md bg-white/[0.02]">
+            {[
+              { id: 'all',  l: 'Both' },
+              { id: 'us',   l: 'PHI' },
+              { id: 'them', l: oppAbbr || 'Opp' },
+            ].map((t) => (
+              <button key={t.id} onClick={() => setFilter(t.id)}
+                className={cx('px-2.5 h-6 text-[11px] font-medium rounded-[4px] transition-colors',
+                  filter === t.id ? 'bg-white/[0.08] text-white' : 'text-white/50 hover:text-white'
+                )}>{t.l}</button>
+            ))}
+          </div>
         </div>
       </div>
 
       <div className="shotmap-wrap relative">
         <RinkSVG ariaLabel="Shot map">
-          {filtered.map((s) => (
-            <ShotDot
-              key={s.id}
-              s={s}
-              hover={hover}
-              onHover={onHover}
-              onLeave={onLeave}
-            />
-          ))}
+          {mode === 'heat' ? (
+            <ShotHeat shots={filtered} />
+          ) : (
+            filtered.map((s) => (
+              <ShotDot
+                key={s.id}
+                s={s}
+                hover={hover}
+                onHover={onHover}
+                onLeave={onLeave}
+              />
+            ))
+          )}
         </RinkSVG>
-        <ShotTooltip hover={hover} oppAbbr={oppAbbr} containerW={containerW} />
+        {mode === 'dots' && <ShotTooltip hover={hover} oppAbbr={oppAbbr} containerW={containerW} />}
       </div>
 
-      <div className="flex items-center justify-center gap-4 mt-3 text-[10px] font-mono text-white/40 uppercase tracking-wider">
-        <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-white/85 inline-block" />SOG</span>
-        <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full border border-white/65 inline-block" />Miss/Block</span>
-        <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-full bg-[#F74902] inline-block" />Goal</span>
-      </div>
+      {mode === 'dots' ? (
+        <div className="flex items-center justify-center gap-4 mt-3 text-[10px] font-mono text-white/40 uppercase tracking-wider">
+          <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-white/85 inline-block" />SOG</span>
+          <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full border border-white/65 inline-block" />Miss/Block</span>
+          <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-full bg-[#F74902] inline-block" />Goal</span>
+        </div>
+      ) : (
+        <div className="flex items-center justify-center gap-3 mt-3 text-[10px] font-mono text-white/40 uppercase tracking-wider">
+          <span>Density</span>
+          <div className="flex items-center gap-0.5">
+            <span className="w-3 h-3 rounded-sm" style={{ background: 'rgba(247,73,2,0.15)' }} />
+            <span className="w-3 h-3 rounded-sm" style={{ background: 'rgba(247,73,2,0.4)' }} />
+            <span className="w-3 h-3 rounded-sm" style={{ background: 'rgba(247,73,2,0.7)' }} />
+            <span className="w-3 h-3 rounded-sm" style={{ background: 'rgba(247,73,2,1)' }} />
+          </div>
+          <span className="text-white/30">low → high</span>
+        </div>
+      )}
     </div>
   );
 };

@@ -99,3 +99,37 @@ export function useClockTick(ms = 1000) {
     return () => clearInterval(t);
   }, [ms]);
 }
+
+// Smoothly interpolates a numeric value from its previous render to its new
+// value over `durationMs` using an ease-out-cubic curve. Strings or `null`
+// pass through unchanged. Used for KPI tiles so updated season totals tick
+// up instead of jumping. requestAnimationFrame so it tracks display refresh.
+export function useCountUp(value, durationMs = 600) {
+  const [display, setDisplay] = useState(value);
+  const fromRef = useRef(value);
+  useEffect(() => {
+    const from = fromRef.current;
+    const to = value;
+    if (from === to) return;
+    if (typeof from !== 'number' || typeof to !== 'number') {
+      fromRef.current = to;
+      setDisplay(to);
+      return;
+    }
+    const start = performance.now();
+    let frame;
+    const tick = (now) => {
+      const p = Math.min(1, (now - start) / durationMs);
+      const eased = 1 - Math.pow(1 - p, 3);
+      setDisplay(Math.round(from + (to - from) * eased));
+      if (p < 1) {
+        frame = requestAnimationFrame(tick);
+      } else {
+        fromRef.current = to;
+      }
+    };
+    frame = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(frame);
+  }, [value, durationMs]);
+  return display;
+}

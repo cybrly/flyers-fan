@@ -9,6 +9,7 @@ import { Scoreboard } from '../components/Scoreboard.jsx';
 import { Headshot } from '../components/Headshot.jsx';
 import { PlayerLink } from '../components/PlayerLink.jsx';
 import { SeriesTracker } from '../components/SeriesTracker.jsx';
+import { HeadToHead } from '../components/HeadToHead.jsx';
 
 export const Dashboard = ({ schedule, standings, scoreboard, clubStats, roster, liveDetail, lastGame, loading, onOpenGame }) => {
   const games = schedule?.games?.slice(0, 20) || [];
@@ -351,6 +352,8 @@ export const Dashboard = ({ schedule, standings, scoreboard, clubStats, roster, 
               </div>
             </Section>
           )}
+
+          <HeadToHead schedule={schedule} onOpenGame={onOpenGame} />
 
           <Section title="Metro Standings" action={<ChevronRight size={12} className="text-white/30" />}>
             <div className="divide-y divide-white/[0.04]">

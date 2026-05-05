@@ -4,6 +4,7 @@ import { Chip } from './primitives.jsx';
 import { FlyersMark, TeamLogo } from './Logo.jsx';
 
 const PHI_LOGO = 'https://assets.nhle.com/logos/nhl/svg/PHI_dark.svg';
+const teamLogoUrl = (abbr) => abbr ? `https://assets.nhle.com/logos/nhl/svg/${abbr}_dark.svg` : null;
 
 function useCountdown(startUTC) {
   const [now, setNow] = useState(() => Date.now());
@@ -201,16 +202,24 @@ export const Hero = ({ liveGame, liveDetail, nextGame, lastResult, us }) => {
   const oppFull = opp ? OPP_FULL[opp] : null;
 
   return (
-    <div
-      className="relative overflow-hidden rounded-md border border-white/[0.06] bg-gradient-to-br from-[#141414] via-[#101010] to-[#0A0A0A] px-5 sm:px-8 py-6 sm:py-8"
-      // Watermark Flyers logo sits on the LEFT, behind the Flyers block in the
-      // hero content (which is also left-aligned). Putting it on the right
-      // would float it behind the opponent — visually wrong.
-      style={{ backgroundImage: `url(${PHI_LOGO})`, backgroundRepeat: 'no-repeat', backgroundPosition: 'left -40px center', backgroundSize: 'auto 200%' }}
-    >
-      {/* Neutral veil so the watermark logo doesn't fight content. Gradient
-          goes left → right (opaque on the right where the opponent lives). */}
-      <div className="absolute inset-0 pointer-events-none bg-gradient-to-l from-[#0A0A0A] via-[#0A0A0A]/85 to-[#0A0A0A]/55" />
+    <div className="relative overflow-hidden rounded-md border border-white/[0.06] bg-gradient-to-br from-[#141414] via-[#101010] to-[#0A0A0A] px-5 sm:px-8 py-6 sm:py-8">
+      {/* Two watermark logos — Flyers tucks behind the left side of the hero,
+          opponent behind the right. Each one occupies its own half so they
+          don't bleed into each other behind the score. */}
+      <div
+        className="absolute inset-y-0 left-0 w-1/2 pointer-events-none opacity-90"
+        style={{ backgroundImage: `url(${PHI_LOGO})`, backgroundRepeat: 'no-repeat', backgroundPosition: 'left -40px center', backgroundSize: 'auto 200%' }}
+      />
+      {opp && (
+        <div
+          className="absolute inset-y-0 right-0 w-1/2 pointer-events-none opacity-90"
+          style={{ backgroundImage: `url(${teamLogoUrl(opp)})`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right -40px center', backgroundSize: 'auto 200%' }}
+        />
+      )}
+      {/* Center veil — opaque in the middle so the score reads cleanly, fades
+          out at both edges so each team's watermark stays visible. */}
+      <div className="absolute inset-0 pointer-events-none bg-gradient-to-r from-[#0A0A0A]/55 via-[#0A0A0A]/95 to-[#0A0A0A]/55" />
+      {/* Flyers-orange glow on the PHI side. */}
       <div className="absolute -top-40 -left-40 w-[500px] h-[500px] rounded-full pointer-events-none"
         style={{ background: 'radial-gradient(circle, rgba(247,73,2,0.18), transparent 60%)' }} />
 

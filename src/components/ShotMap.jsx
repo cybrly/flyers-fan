@@ -18,7 +18,39 @@ const ftToY = (ft) => ((ft + RINK_H / 2) / RINK_H) * SVG_H;
 
 const SHOT_KINDS = new Set(['goal', 'shot-on-goal', 'missed-shot', 'blocked-shot']);
 
-function normalizeShots(plays, teamIds, usTeamId) {
+// Pretty-print a shot type. NHL uses short codes like 'wrist', 'snap', etc.
+const SHOT_TYPE_LABEL = {
+  'wrist': 'Wrist',
+  'snap': 'Snap',
+  'slap': 'Slap',
+  'backhand': 'Backhand',
+  'tip-in': 'Tip-in',
+  'deflected': 'Deflected',
+  'wrap-around': 'Wrap-around',
+  'poke': 'Poke',
+  'bat': 'Bat',
+  'between-legs': 'Between legs',
+  'cradle': 'Cradle',
+};
+
+// Build a name lookup from the pbp roster — { [playerId]: { name, teamId } }.
+function buildPlayerMap(rosterSpots) {
+  const out = {};
+  for (const p of rosterSpots || []) {
+    out[p.playerId] = {
+      name: p.firstName?.default && p.lastName?.default
+        ? `${p.firstName.default[0]}. ${p.lastName.default}`
+        : p.name?.default || '—',
+      fullName: p.firstName?.default && p.lastName?.default
+        ? `${p.firstName.default} ${p.lastName.default}`
+        : p.name?.default || '—',
+      teamId: p.teamId,
+    };
+  }
+  return out;
+}
+
+function normalizeShots(plays, teamIds, usTeamId, players) {
   const out = [];
   for (const p of plays || []) {
     if (!SHOT_KINDS.has(p.typeDescKey)) continue;
@@ -41,13 +73,36 @@ function normalizeShots(plays, teamIds, usTeamId) {
     if (!ownerAttacksRight) { x = -x; y = -y; }
     if (x < 0) continue; // defensive-zone events make the chart noisy
 
+    // Pick the right player ID per kind. Goals carry scoringPlayerId, regular
+    // shots use shootingPlayerId, blocked shots track both shooter + blocker.
+    const shooterId =
+      det.scoringPlayerId ??
+      det.shootingPlayerId ??
+      null;
+    const goalieId = det.goalieInNetId ?? null;
+    const blockerId = p.typeDescKey === 'blocked-shot' ? det.blockingPlayerId : null;
+
+    // Distance from the goal mouth (89, 0). NHL coords are in feet.
+    const dx = 89 - x;
+    const dy = y;
+    const distFt = Math.round(Math.sqrt(dx * dx + dy * dy));
+
     out.push({
       id: p.eventId,
       kind: p.typeDescKey,
       x, y,
       isUs: teamId === usTeamId,
       period: p.periodDescriptor?.number,
+      periodType: p.periodDescriptor?.periodType,
       time: p.timeInPeriod,
+      shotType: det.shotType || null,
+      shooter: shooterId ? players[shooterId] : null,
+      goalie: goalieId ? players[goalieId] : null,
+      blocker: blockerId ? players[blockerId] : null,
+      assist1: det.assist1PlayerId ? players[det.assist1PlayerId] : null,
+      assist2: det.assist2PlayerId ? players[det.assist2PlayerId] : null,
+      goalsToDate: det.scoringPlayerTotal ?? null,
+      distFt,
     });
   }
   return out;
@@ -105,7 +160,7 @@ const RinkSVG = ({ children, ariaLabel }) => (
   </svg>
 );
 
-const ShotDot = ({ s, hover, setHover }) => {
+const ShotDot = ({ s, hover, onHover, onLeave }) => {
   const usColor = '#F74902';
   const themColor = '#FFFFFF';
   const cx_ = ftToX(s.x);
@@ -113,16 +168,18 @@ const ShotDot = ({ s, hover, setHover }) => {
   const baseColor = s.isUs ? usColor : themColor;
   const isGoal = s.kind === 'goal';
   const isMiss = s.kind === 'missed-shot' || s.kind === 'blocked-shot';
+  const active = hover?.shot?.id === s.id;
 
   if (isGoal) {
     return (
       <g
-        onMouseEnter={() => setHover(s)}
-        onMouseLeave={() => setHover(null)}
+        onMouseEnter={(e) => onHover(s, e)}
+        onMouseMove={(e) => onHover(s, e)}
+        onMouseLeave={onLeave}
         style={{ cursor: 'pointer' }}
       >
-        <circle cx={cx_} cy={cy_} r="9" fill={baseColor} opacity="0.25" />
-        <circle cx={cx_} cy={cy_} r="6" fill={baseColor} opacity={hover?.id === s.id ? 1 : 0.95} stroke="#000" strokeWidth="1.2" />
+        <circle cx={cx_} cy={cy_} r={active ? 12 : 9} fill={baseColor} opacity="0.25" />
+        <circle cx={cx_} cy={cy_} r={active ? 7 : 6} fill={baseColor} opacity="1" stroke="#000" strokeWidth="1.2" />
       </g>
     );
   }
@@ -130,27 +187,114 @@ const ShotDot = ({ s, hover, setHover }) => {
     <circle
       cx={cx_}
       cy={cy_}
-      r={isMiss ? 2.5 : 4}
+      r={isMiss ? (active ? 4 : 2.5) : (active ? 6 : 4)}
       fill={isMiss ? 'transparent' : baseColor}
       stroke={baseColor}
-      strokeWidth="1.4"
-      opacity={isMiss ? 0.45 : 0.75}
-      onMouseEnter={() => setHover(s)}
-      onMouseLeave={() => setHover(null)}
+      strokeWidth={active ? '2' : '1.4'}
+      opacity={active ? 1 : (isMiss ? 0.45 : 0.75)}
+      onMouseEnter={(e) => onHover(s, e)}
+      onMouseMove={(e) => onHover(s, e)}
+      onMouseLeave={onLeave}
       style={{ cursor: 'pointer' }}
     />
   );
 };
 
+const KIND_BADGE = {
+  goal: { label: 'GOAL', tone: 'orange' },
+  'shot-on-goal': { label: 'SHOT ON GOAL', tone: 'default' },
+  'missed-shot': { label: 'MISS', tone: 'muted' },
+  'blocked-shot': { label: 'BLOCKED', tone: 'muted' },
+};
+
+// Tooltip card — positioned absolutely within the rink wrapper, follows the
+// cursor with a small offset so the dot stays uncovered. Right-edge clamp so
+// it doesn't overflow the container.
+const ShotTooltip = ({ hover, oppAbbr, containerW }) => {
+  if (!hover) return null;
+  const { shot: s, mx, my } = hover;
+  const cfg = KIND_BADGE[s.kind] || { label: s.kind, tone: 'default' };
+  const isGoal = s.kind === 'goal';
+  const isBlock = s.kind === 'blocked-shot';
+  const teamLabel = s.isUs ? 'PHI' : (oppAbbr || 'OPP');
+
+  // Best-effort position: 14px right of cursor, 8px above. If the tooltip
+  // would overflow the right edge, flip it to the left of the cursor.
+  const TOOLTIP_W = 240;
+  const flip = mx + 14 + TOOLTIP_W > (containerW || Infinity);
+  const left = flip ? Math.max(8, mx - 14 - TOOLTIP_W) : mx + 14;
+  const top = Math.max(8, my - 8);
+
+  return (
+    <div
+      className="absolute pointer-events-none rounded-md border border-white/[0.12] bg-[#0C0D11]/96 backdrop-blur-md shadow-2xl"
+      style={{ left, top, width: TOOLTIP_W, zIndex: 5 }}
+    >
+      <div className="px-3 py-2 border-b border-white/[0.06] flex items-center justify-between">
+        <span className={cx('text-[10px] font-mono uppercase tracking-wider font-semibold',
+          cfg.tone === 'orange' ? 'text-[#FF8A4C]' : cfg.tone === 'muted' ? 'text-white/45' : 'text-white/85'
+        )}>{cfg.label}</span>
+        <span className={cx('text-[10px] font-mono',
+          s.isUs ? 'text-[#FF8A4C]' : 'text-white/65'
+        )}>{teamLabel}</span>
+      </div>
+
+      <div className="px-3 py-2 space-y-1">
+        {s.shooter && (
+          <div className="text-[12px] font-medium text-white">
+            {s.shooter.fullName}
+            {isGoal && s.goalsToDate ? <span className="text-[10px] font-mono text-white/45 ml-1.5">(#{s.goalsToDate})</span> : null}
+          </div>
+        )}
+        {(s.shotType || s.distFt != null) && (
+          <div className="text-[10px] font-mono text-white/55">
+            {s.shotType ? (SHOT_TYPE_LABEL[s.shotType] || s.shotType) : '—'}
+            {s.distFt != null && <span className="text-white/35"> · {s.distFt} ft</span>}
+          </div>
+        )}
+        <div className="text-[10px] font-mono text-white/50 tabular-nums">
+          P{s.period}{s.periodType === 'OT' ? ' OT' : s.periodType === 'SO' ? ' SO' : ''} · {s.time}
+        </div>
+
+        {isGoal && (s.assist1 || s.assist2) && (
+          <div className="pt-1 mt-1 border-t border-white/[0.05]">
+            <div className="text-[9px] font-mono text-white/40 uppercase tracking-wider">Assists</div>
+            <div className="text-[11px] text-white/75">
+              {s.assist1?.fullName}
+              {s.assist2 && <>, {s.assist2.fullName}</>}
+            </div>
+          </div>
+        )}
+
+        {isBlock && s.blocker && (
+          <div className="pt-1 mt-1 border-t border-white/[0.05]">
+            <div className="text-[9px] font-mono text-white/40 uppercase tracking-wider">Blocked by</div>
+            <div className="text-[11px] text-white/75">{s.blocker.fullName}</div>
+          </div>
+        )}
+
+        {!isBlock && s.goalie && (
+          <div className="pt-1 mt-1 border-t border-white/[0.05]">
+            <div className="text-[9px] font-mono text-white/40 uppercase tracking-wider">Goalie</div>
+            <div className="text-[11px] text-white/75">{s.goalie.fullName}</div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
 export const ShotMap = ({ pbpData, oppAbbr }) => {
   const [filter, setFilter] = useState('all'); // 'all' | 'us' | 'them'
-  const [hover, setHover] = useState(null);
+  const [hover, setHover] = useState(null);    // { shot, mx, my }
+  const [containerW, setContainerW] = useState(0);
 
   const shots = useMemo(() => {
     if (!pbpData) return [];
     const teamIds = { home: pbpData.homeTeam?.id, away: pbpData.awayTeam?.id };
     const usTeamId = pbpData.homeTeam?.abbrev === TEAM_ABBR ? pbpData.homeTeam.id : pbpData.awayTeam?.id;
-    return normalizeShots(pbpData.plays, teamIds, usTeamId);
+    const players = buildPlayerMap(pbpData.rosterSpots);
+    return normalizeShots(pbpData.plays, teamIds, usTeamId, players);
   }, [pbpData]);
 
   const filtered = useMemo(() => {
@@ -178,6 +322,20 @@ export const ShotMap = ({ pbpData, oppAbbr }) => {
     );
   }
 
+  // Capture cursor position relative to the SVG wrapper for tooltip placement.
+  const onHover = (shot, e) => {
+    const wrap = e.currentTarget.closest('.shotmap-wrap');
+    if (!wrap) return;
+    const rect = wrap.getBoundingClientRect();
+    setContainerW(rect.width);
+    setHover({
+      shot,
+      mx: e.clientX - rect.left,
+      my: e.clientY - rect.top,
+    });
+  };
+  const onLeave = () => setHover(null);
+
   return (
     <div className="p-3 sm:p-4">
       <div className="flex items-center justify-between flex-wrap gap-2 mb-3">
@@ -200,18 +358,19 @@ export const ShotMap = ({ pbpData, oppAbbr }) => {
         </div>
       </div>
 
-      <div className="relative">
+      <div className="shotmap-wrap relative">
         <RinkSVG ariaLabel="Shot map">
-          {filtered.map((s) => <ShotDot key={s.id} s={s} hover={hover} setHover={setHover} />)}
+          {filtered.map((s) => (
+            <ShotDot
+              key={s.id}
+              s={s}
+              hover={hover}
+              onHover={onHover}
+              onLeave={onLeave}
+            />
+          ))}
         </RinkSVG>
-        {hover && (
-          <div className="absolute top-2 left-2 px-2 py-1 rounded-md border border-white/[0.1] bg-[#0C0D11]/95 backdrop-blur-sm text-[11px] font-mono pointer-events-none">
-            <span className={hover.isUs ? 'text-[#FF8A4C]' : 'text-white/85'}>
-              {hover.isUs ? 'PHI' : oppAbbr} · {hover.kind === 'goal' ? 'GOAL' : hover.kind === 'shot-on-goal' ? 'SOG' : hover.kind === 'missed-shot' ? 'MISS' : 'BLOCK'}
-            </span>
-            <span className="text-white/45 ml-2">P{hover.period} · {hover.time}</span>
-          </div>
-        )}
+        <ShotTooltip hover={hover} oppAbbr={oppAbbr} containerW={containerW} />
       </div>
 
       <div className="flex items-center justify-center gap-4 mt-3 text-[10px] font-mono text-white/40 uppercase tracking-wider">

@@ -9,41 +9,131 @@ import { TeamLogo } from '../components/Logo.jsx';
 
 const HEIGHT = (inches) => inches ? `${Math.floor(inches / 12)}'${inches % 12}"` : '—';
 
-const RosterTable = ({ players, showSaves = false }) => (
-  <table className="w-full">
-    <thead>
-      <tr className="text-[10px] font-mono text-white/35 uppercase tracking-wider border-b border-white/[0.05]">
-        <th className="font-normal text-left px-4 h-8 w-[36px]">#</th>
-        <th className="font-normal text-left px-2 h-8">Player</th>
-        <th className="font-normal text-center px-2 h-8 w-[40px]">Pos</th>
-        <th className="font-normal text-center px-2 h-8 w-[40px]">{showSaves ? 'C' : 'S'}</th>
-        <th className="font-normal text-right px-2 h-8 w-[44px]">HT</th>
-        <th className="font-normal text-right px-2 h-8 w-[44px]">WT</th>
-        <th className="font-normal text-right px-2 h-8 w-[44px]">Age</th>
-        <th className="font-normal text-right px-4 h-8 w-[60px]">Birth</th>
-      </tr>
-    </thead>
-    <tbody className="divide-y divide-white/[0.04]">
-      {players.map((p) => (
-        <tr key={p.id} className="hover:bg-white/[0.02]">
-          <td className="px-4 text-right text-[10px] font-mono tabular-nums text-white/30 h-11">{p.num || '—'}</td>
-          <td className="px-2 text-[12px] text-white/85">
-            <span className="flex items-center gap-2">
-              <Headshot src={p.headshot} num={p.num} size={26} />
-              <PlayerLink playerId={p.id}>{p.name}</PlayerLink>
-            </span>
-          </td>
-          <td className="px-2 text-center text-[10px] font-mono text-white/45">{p.pos}</td>
-          <td className="px-2 text-center text-[10px] font-mono text-white/45">{p.shoots || '—'}</td>
-          <td className="px-2 text-right text-[11px] font-mono text-white/65 tabular-nums">{HEIGHT(p.heightIn)}</td>
-          <td className="px-2 text-right text-[11px] font-mono text-white/65 tabular-nums">{p.weightLb || '—'}</td>
-          <td className="px-2 text-right text-[11px] font-mono tabular-nums text-white/65">{p.age ?? '—'}</td>
-          <td className="px-4 text-right text-[10px] font-mono text-white/40 truncate max-w-[100px]">{p.birthCountry || '—'}</td>
+// Build sorted-by-stat lists once per render so we can rank a player in
+// constant-time below. Returns null when stats haven't loaded yet.
+const buildSkaterRanks = (skaters) => {
+  if (!skaters?.length) return null;
+  const sortBy = (k) => [...skaters].sort((a, b) => (b[k] ?? -Infinity) - (a[k] ?? -Infinity));
+  return {
+    pts: sortBy('pts'),
+    g:   sortBy('g'),
+    a:   sortBy('a'),
+    pm:  sortBy('pm'),
+    hits:   sortBy('hits'),
+    blocks: sortBy('blocks'),
+    sog:    sortBy('sog'),
+    ppg:    sortBy('ppg'),
+    toi:    sortBy('toiPerGame'),
+  };
+};
+
+const rankOf = (arr, id) => {
+  if (!arr) return null;
+  const i = arr.findIndex((p) => p.id === id);
+  return i === -1 ? null : i + 1;
+};
+
+// Pick the most distinctive thing about a skater — leader board, top-N
+// finish, or notable raw stats — and return a single short sentence. Falls
+// through to a generic "N games this season" line when nothing stands out
+// so every row gets *something* in the gap.
+const skaterBlurb = (p, ranks, statRow) => {
+  if (!ranks || !statRow) return null;
+  const id = statRow.id;
+
+  if (rankOf(ranks.pts,    id) === 1) return `Team scoring leader · ${statRow.pts} pts`;
+  if (rankOf(ranks.g,      id) === 1) return `Team goal-scoring leader · ${statRow.g} G`;
+  if (rankOf(ranks.a,      id) === 1) return `Team assists leader · ${statRow.a} A`;
+  if (rankOf(ranks.hits,   id) === 1) return `Team hits leader · ${statRow.hits} hits`;
+  if (rankOf(ranks.blocks, id) === 1) return `Team blocks leader · ${statRow.blocks} blocks`;
+  if (rankOf(ranks.toi,    id) === 1) return `Most ice time on the team · ${statRow.toiPerGame || '—'}/g`;
+
+  const ptsRank = rankOf(ranks.pts, id);
+  if (ptsRank && ptsRank <= 3) return `Top-3 scorer · ${statRow.pts} pts (#${ptsRank})`;
+  if (ptsRank && ptsRank <= 5) return `Top-5 scorer · ${statRow.pts} pts (#${ptsRank})`;
+
+  const gRank = rankOf(ranks.g, id);
+  if (gRank && gRank <= 3) return `${statRow.g} goals · #${gRank} on the team`;
+
+  if ((statRow.ppg ?? 0) >= 5) return `Power-play threat · ${statRow.ppg} PPG`;
+  if ((statRow.pm ?? 0) >= 10) return `+${statRow.pm} on the season · steady two-way play`;
+  if ((statRow.pm ?? 0) <= -10) return `${statRow.pm} on the season · tough usage`;
+  if ((statRow.hits ?? 0) >= 100) return `Physical presence · ${statRow.hits} hits`;
+  if ((statRow.blocks ?? 0) >= 50) return `Shot blocker · ${statRow.blocks} blocks`;
+  if ((statRow.sog ?? 0) >= 150) return `Shot volume · ${statRow.sog} SOG`;
+
+  if ((statRow.gp ?? 0) >= 50 && (statRow.pts ?? 0) > 0) return `${statRow.pts} pts in ${statRow.gp} games`;
+  if ((statRow.gp ?? 0) > 0) return `${statRow.gp} games played this season`;
+  return null;
+};
+
+const goalieBlurb = (statRow) => {
+  if (!statRow || statRow.gp == null) return null;
+  const sv = statRow.savePct != null ? `${statRow.savePct}%` : null;
+  const gaa = statRow.gaa != null ? statRow.gaa.toFixed(2) : null;
+  if (statRow.gp >= 30) return `Starter · ${statRow.w}W · ${sv ?? '—'} SV% · ${gaa ?? '—'} GAA`;
+  if (statRow.gp >= 5)  return `${statRow.gp} GP · ${statRow.w}W · ${sv ?? '—'} SV%`;
+  if (statRow.gp > 0)   return `Limited duty · ${statRow.gp} GP this season`;
+  return 'Yet to appear this season';
+};
+
+const RosterTable = ({ players, showSaves = false, clubStats }) => {
+  const skaterRanks = !showSaves ? buildSkaterRanks(clubStats?.skaters) : null;
+  const statById = (() => {
+    const m = new Map();
+    if (showSaves) (clubStats?.goalies || []).forEach((g) => m.set(g.id, g));
+    else (clubStats?.skaters || []).forEach((s) => m.set(s.id, s));
+    return m;
+  })();
+  return (
+    <table className="w-full">
+      <thead>
+        <tr className="text-[10px] font-mono text-white/35 uppercase tracking-wider border-b border-white/[0.05]">
+          <th className="font-normal text-left px-4 h-8 w-[36px]">#</th>
+          <th className="font-normal text-left px-2 h-8">Player</th>
+          <th className="font-normal text-center px-2 h-8 w-[40px]">Pos</th>
+          <th className="font-normal text-center px-2 h-8 w-[40px]">{showSaves ? 'C' : 'S'}</th>
+          <th className="font-normal text-right px-2 h-8 w-[44px]">HT</th>
+          <th className="font-normal text-right px-2 h-8 w-[44px]">WT</th>
+          <th className="font-normal text-right px-2 h-8 w-[44px]">Age</th>
+          <th className="font-normal text-right px-4 h-8 w-[60px]">Birth</th>
         </tr>
-      ))}
-    </tbody>
-  </table>
-);
+      </thead>
+      <tbody className="divide-y divide-white/[0.04]">
+        {players.map((p) => {
+          const statRow = statById.get(p.id);
+          const note = showSaves ? goalieBlurb(statRow) : skaterBlurb(p, skaterRanks, statRow);
+          return (
+            <tr key={p.id} className="hover:bg-white/[0.02]">
+              <td className="px-4 text-right text-[10px] font-mono tabular-nums text-white/30 h-14 align-middle">{p.num || '—'}</td>
+              <td className="px-2 align-middle">
+                <div className="flex items-center gap-2.5">
+                  <Headshot src={p.headshot} num={p.num} size={32} />
+                  <div className="min-w-0 flex-1">
+                    <div className="text-[13px] text-white/90 leading-tight">
+                      <PlayerLink playerId={p.id}>{p.name}</PlayerLink>
+                    </div>
+                    {note && (
+                      <div className="text-[11px] font-mono text-white/40 mt-0.5 truncate" title={note}>
+                        {note}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </td>
+              <td className="px-2 text-center text-[10px] font-mono text-white/45 align-middle">{p.pos}</td>
+              <td className="px-2 text-center text-[10px] font-mono text-white/45 align-middle">{p.shoots || '—'}</td>
+              <td className="px-2 text-right text-[11px] font-mono text-white/65 tabular-nums align-middle">{HEIGHT(p.heightIn)}</td>
+              <td className="px-2 text-right text-[11px] font-mono text-white/65 tabular-nums align-middle">{p.weightLb || '—'}</td>
+              <td className="px-2 text-right text-[11px] font-mono tabular-nums text-white/65 align-middle">{p.age ?? '—'}</td>
+              <td className="px-4 text-right text-[10px] font-mono text-white/40 truncate max-w-[100px] align-middle">{p.birthCountry || '—'}</td>
+            </tr>
+          );
+        })}
+      </tbody>
+    </table>
+  );
+};
 
 // Tiny G/A split bar — visualizes a scorer's points composition relative to
 // the leader's total. Cheap to render and adds visual depth to the row
@@ -184,7 +274,7 @@ export const Roster = ({ roster, clubStats, prospects, draftPicks }) => {
 
       <Section title={view === 'forwards' ? 'Forwards' : view === 'defense' ? 'Defense' : 'Goalies'}>
         <div className="overflow-x-auto">
-          <RosterTable players={list} showSaves={view === 'goalies'} />
+          <RosterTable players={list} showSaves={view === 'goalies'} clubStats={clubStats} />
         </div>
       </Section>
 

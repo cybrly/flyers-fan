@@ -123,8 +123,15 @@ const RinkSVG = ({ children, ariaLabel }) => (
       </pattern>
     </defs>
 
-    {/* Ice */}
-    <rect x={0} y={0} width={SVG_W} height={SVG_H} rx={ftToX(28) - ftToX(0)} fill="url(#rinkPaint)" stroke="rgba(255,255,255,0.08)" strokeWidth="1.2" />
+    {/* Ice — offensive half. Left edge is the center ice line (flat), only
+        the right side gets the NHL 28-ft corner radius for the end boards. */}
+    {(() => {
+      const r = ftToX(28) - ftToX(0);
+      const d = `M 0 0 L ${SVG_W - r} 0 A ${r} ${r} 0 0 1 ${SVG_W} ${r} L ${SVG_W} ${SVG_H - r} A ${r} ${r} 0 0 1 ${SVG_W - r} ${SVG_H} L 0 ${SVG_H} Z`;
+      return (
+        <path d={d} fill="url(#rinkPaint)" stroke="rgba(255,255,255,0.08)" strokeWidth="1.2" />
+      );
+    })()}
 
     {/* Blue line (defensive blue line is at x=25 from center; in our half mapping it's at x=25 of 100) */}
     <line x1={ftToX(25)} y1={0} x2={ftToX(25)} y2={SVG_H} stroke="#3A6BD9" strokeWidth="3" opacity="0.7" />

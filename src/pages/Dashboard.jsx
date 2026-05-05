@@ -1,4 +1,5 @@
-import { ChevronRight, Home, Plane } from 'lucide-react';
+import { useState } from 'react';
+import { Home, Plane } from 'lucide-react';
 import { cx, OPP_FULL, fmtDate, fmtDateFull, fmtTime } from '../config.js';
 import { Chip, Section, SectionBand, Skeleton } from '../components/primitives.jsx';
 import { GoalDiffBars, FormDots, MiniBar } from '../components/charts.jsx';
@@ -417,32 +418,7 @@ export const Dashboard = ({ schedule, standings, scoreboard, clubStats, roster, 
       <SectionBand label="Reference" color="sky" sub="standings · upcoming" />
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <Section title="Metro Standings" action={<ChevronRight size={12} className="text-white/30" />}>
-          <div className="divide-y divide-white/[0.04]">
-            {!standings?.metro?.length && Array.from({ length: 6 }).map((_, i) => (
-              <div key={i} className="px-3.5 h-7 flex items-center"><Skeleton className="w-full" height={10} /></div>
-            ))}
-            {standings?.metro?.slice(0, 8).map((t, i) => (
-              <div key={t.abbr} className={cx(
-                'grid grid-cols-[18px_32px_1fr_auto] gap-2 items-center px-3.5 h-7',
-                t.us ? 'bg-[#F74902]/[0.06]' : 'hover:bg-white/[0.02]',
-              )}>
-                <span className={cx('text-[10px] font-mono tabular-nums',
-                  t.us ? 'text-[#FF8A4C] font-semibold' : i < 3 ? 'text-emerald-400/80' : i >= 6 ? 'text-red-400/70' : 'text-white/45'
-                )}>{i + 1}</span>
-                <span className="text-[12px] font-mono font-medium text-white/75">{t.abbr}</span>
-                <MiniBar
-                  value={t.w}
-                  max={standings.metro[0].w}
-                  color={t.us ? '#F74902' : i < 3 ? '#10B981' : i >= 6 ? '#EF4444' : '#666'}
-                  h={3}
-                />
-                <span className="text-[12px] font-mono tabular-nums text-white/60 shrink-0">{t.w}–{t.l}</span>
-              </div>
-            ))}
-          </div>
-        </Section>
-
+        <StandingsPanel standings={standings} />
         <UpcomingPanel upcoming={schedule?.upcoming || []} />
       </div>
 
@@ -752,6 +728,83 @@ const SplitsPanel = ({ games, us }) => {
           </div>
         ))}
       </div>
+    </Section>
+  );
+};
+
+// Mini-standings on the dashboard with Metro / East / League tabs. Each view
+// pulls a different slice from the adapted standings ({ metro, east, all }).
+// Metro shows top 8 with a 3/3 playoff-line color split (top 3 emerald,
+// bottom 2 red, middle amber). East/League just show top 10 with no color
+// split since "playoff line" is more nuanced beyond the division.
+const StandingsPanel = ({ standings }) => {
+  const [tab, setTab] = useState('metro');
+  const tabs = [
+    { id: 'metro', l: 'Metro' },
+    { id: 'east',  l: 'East' },
+    { id: 'all',   l: 'NHL' },
+  ];
+  const rows = (() => {
+    if (tab === 'metro') return (standings?.metro || []).slice(0, 8);
+    if (tab === 'east')  return (standings?.east  || []).slice(0, 10);
+    return (standings?.all || []).slice(0, 10);
+  })();
+  const usIdx = rows.findIndex((t) => t.us);
+  const max = rows[0]?.w || 1;
+
+  return (
+    <Section
+      title={tab === 'metro' ? 'Metro Standings' : tab === 'east' ? 'Eastern Conference' : 'NHL · League'}
+      action={
+        <div className="flex items-center gap-0.5 p-0.5 border border-white/[0.08] rounded-md bg-white/[0.02]">
+          {tabs.map((t) => (
+            <button key={t.id} onClick={() => setTab(t.id)}
+              className={cx('px-2.5 h-6 text-[10px] font-mono font-medium rounded-[3px] transition-colors',
+                tab === t.id ? 'bg-white/[0.08] text-white' : 'text-white/45 hover:text-white/85'
+              )}>{t.l}</button>
+          ))}
+        </div>
+      }
+    >
+      <div className="divide-y divide-white/[0.04]">
+        {!rows.length && Array.from({ length: 6 }).map((_, i) => (
+          <div key={i} className="px-3.5 h-7 flex items-center"><Skeleton className="w-full" height={10} /></div>
+        ))}
+        {rows.map((t, i) => {
+          const isMetro = tab === 'metro';
+          const inPlayoffs = isMetro ? i < 3 : false;
+          const outOfPlayoffs = isMetro ? i >= 6 : false;
+          return (
+            <div key={t.abbr} className={cx(
+              'grid grid-cols-[20px_36px_1fr_auto] gap-2 items-center px-3.5 h-7',
+              t.us ? 'bg-[#F74902]/[0.06]' : 'hover:bg-white/[0.02]',
+            )}>
+              <span className={cx('text-[10px] font-mono tabular-nums',
+                t.us ? 'text-[#FF8A4C] font-semibold'
+                  : inPlayoffs ? 'text-emerald-400/80'
+                  : outOfPlayoffs ? 'text-red-400/70'
+                  : 'text-white/45'
+              )}>{i + 1}</span>
+              <span className="text-[12px] font-mono font-medium text-white/75">{t.abbr}</span>
+              <MiniBar
+                value={t.w}
+                max={max}
+                color={t.us ? '#F74902' : inPlayoffs ? '#10B981' : outOfPlayoffs ? '#EF4444' : '#666'}
+                h={3}
+              />
+              <span className="text-[12px] font-mono tabular-nums text-white/60 shrink-0">{t.w}–{t.l}</span>
+            </div>
+          );
+        })}
+      </div>
+      {tab !== 'metro' && usIdx === -1 && (standings?.us) && (
+        <div className="px-3.5 py-2 border-t border-white/[0.04] text-[10px] font-mono text-white/40 flex items-center justify-between">
+          <span>PHI rank</span>
+          <span className="text-white/65 tabular-nums">
+            #{tab === 'east' ? standings.us.confRank : (standings.all?.findIndex((t) => t.us) ?? -1) + 1 || '—'}
+          </span>
+        </div>
+      )}
     </Section>
   );
 };

@@ -10,8 +10,8 @@ import { navigate, gameHref } from '../router.js';
 // dashboard. SVG, no chart library.
 
 const W = 1000;
-const H = 300;
-const PAD = { top: 16, right: 36, bottom: 44, left: 36 }; // bottom expanded for W/L strip + axis
+const H = 320;
+const PAD = { top: 16, right: 36, bottom: 64, left: 36 }; // bottom: strip + month band + tick band
 const STRIP_H = 8; // W/L color strip height
 const PLOT_W = W - PAD.left - PAD.right;
 const PLOT_H = H - PAD.top - PAD.bottom;
@@ -477,27 +477,27 @@ export const Trends = ({ schedule, roster }) => {
               );
             })}
 
-            {/* Month boundary marks */}
+            {/* Month boundary marks — ~14px below the W/L strip */}
             {monthMarks.map((m) => {
               const x = xForIndex(m.idx, N);
               return (
                 <g key={`m-${m.idx}`}>
                   <line x1={x} y1={PAD.top} x2={x} y2={PAD.top + PLOT_H}
                     stroke="rgba(255,255,255,0.05)" strokeDasharray="1 4" />
-                  <text x={x} y={PAD.top + PLOT_H + STRIP_H + 18} textAnchor="middle"
-                    fontSize="9" fill="rgba(255,255,255,0.5)" fontFamily="ui-monospace, SF Mono, monospace">
+                  <text x={x} y={PAD.top + PLOT_H + STRIP_H + 16} textAnchor="middle"
+                    fontSize="10" fill="rgba(255,255,255,0.55)" fontFamily="ui-monospace, SF Mono, monospace">
                     {m.label}
                   </text>
                 </g>
               );
             })}
 
-            {/* X-axis tick labels (game number) */}
+            {/* X-axis tick labels (game number) — separate row, ~16px below months */}
             {xTicks.map((i) => {
               const x = xForIndex(i, N);
               return (
-                <text key={`g-${i}`} x={x} y={PAD.top + PLOT_H + STRIP_H + 30} textAnchor="middle"
-                  fontSize="8" fill="rgba(255,255,255,0.3)" fontFamily="ui-monospace, SF Mono, monospace">
+                <text key={`g-${i}`} x={x} y={PAD.top + PLOT_H + STRIP_H + 32} textAnchor="middle"
+                  fontSize="9" fill="rgba(255,255,255,0.32)" fontFamily="ui-monospace, SF Mono, monospace">
                   #{i + 1}
                 </text>
               );
@@ -573,11 +573,10 @@ export const Trends = ({ schedule, roster }) => {
               );
             })()}
 
-            <text x={PAD.left + PLOT_W / 2} y={H - 4} textAnchor="middle"
-              fontSize="9" fill="rgba(255,255,255,0.3)" fontFamily="ui-monospace, SF Mono, monospace">
-              GAME # · click any point to open game tape
-            </text>
           </svg>
+          <div className="mt-1.5 text-center text-[10px] font-mono text-white/35">
+            click any point to open the game tape
+          </div>
         </div>
       </Section>
 

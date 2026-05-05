@@ -312,7 +312,7 @@ const HeroLive = ({ liveGame, liveDetail, oppFull, recentGames, oppRow }) => {
       <div className="relative grid grid-cols-[1fr_auto_1fr] items-center gap-4 sm:gap-8 mt-5">
         {goalBurst && <GoalCelebration />}
         <TeamSide
-          logo={<FlyersMark size={64} />}
+          logo={<FlyersMark size={88} />}
           abbr="PHI"
           side="left"
           sub={<FormDots games={recentGames} />}
@@ -332,7 +332,7 @@ const HeroLive = ({ liveGame, liveDetail, oppFull, recentGames, oppRow }) => {
           >{liveGame.them}</span>
         </div>
         <TeamSide
-          logo={<TeamLogo abbr={liveGame.opp} size={64} />}
+          logo={<TeamLogo abbr={liveGame.opp} size={88} />}
           abbr={liveGame.opp}
           side="right"
           tone="muted"
@@ -421,7 +421,7 @@ const HeroNext = ({ nextGame, oppFull, recentGames, oppRow }) => {
       </div>
       <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-4 sm:gap-8 mt-5">
         <TeamSide
-          logo={<FlyersMark size={64} />}
+          logo={<FlyersMark size={88} />}
           abbr="PHI"
           side="left"
           sub={<FormDots games={recentGames} />}
@@ -453,7 +453,7 @@ const HeroNext = ({ nextGame, oppFull, recentGames, oppRow }) => {
           </div>
         )}
         <TeamSide
-          logo={<TeamLogo abbr={nextGame.opp} size={64} />}
+          logo={<TeamLogo abbr={nextGame.opp} size={88} />}
           abbr={nextGame.opp}
           side="right"
           tone="muted"
@@ -476,7 +476,7 @@ const HeroLatest = ({ lastResult, oppFull, recentGames, oppRow }) => (
     </div>
     <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-4 sm:gap-8 mt-5">
       <TeamSide
-        logo={<FlyersMark size={64} />}
+        logo={<FlyersMark size={88} />}
         abbr="PHI"
         side="left"
         sub={<FormDots games={recentGames} />}
@@ -501,7 +501,7 @@ const HeroLatest = ({ lastResult, oppFull, recentGames, oppRow }) => (
         >{lastResult.them}</span>
       </div>
       <TeamSide
-        logo={<TeamLogo abbr={lastResult.opp} size={64} />}
+        logo={<TeamLogo abbr={lastResult.opp} size={88} />}
         abbr={lastResult.opp}
         side="right"
         tone="muted"
@@ -612,7 +612,11 @@ const Watermark = ({ url, side }) => {
     <div
       aria-hidden
       className={cx(
-        'pointer-events-none absolute top-1/2 -translate-y-1/2 hidden md:block select-none',
+        // Anchored to the top third of the Hero rather than the dead center —
+        // that way the watermark's vertical center sits in the same band as
+        // the matchup row (logos + score / countdown / abbreviations) instead
+        // of drifting halfway down the panel under the HeroStats tiles.
+        'pointer-events-none absolute top-[32%] -translate-y-1/2 hidden md:block select-none',
         isLeft ? '-left-[40px]' : '-right-[40px]',
       )}
       style={{ width: 360, height: 360 }}

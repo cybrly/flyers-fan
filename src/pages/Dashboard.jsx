@@ -111,7 +111,7 @@ export const Dashboard = ({ schedule, standings, scoreboard, clubStats, roster, 
           nextGame={nextGame}
           onOpenGame={onOpenGame}
         />
-        <LatestResultCard lastResult={lastResult} />
+        <LatestResultCard lastResult={lastResult} lastGame={lastGame} onOpenGame={onOpenGame} />
         <HeadToHead schedule={schedule} onOpenGame={onOpenGame} />
       </div>
 
@@ -125,9 +125,9 @@ export const Dashboard = ({ schedule, standings, scoreboard, clubStats, roster, 
           {us?.clinched === 'z' && <Chip tone="amber">● Clinched Conference</Chip>}
           {us?.clinched === 'p' && <Chip tone="orange">● Playoff Bound</Chip>}
           {us?.clinched === 'e' && <Chip tone="red">● Eliminated</Chip>}
-          {us && <span className="text-[12px] text-white/45 font-mono">{us.gp} of 82 games · 2025–26</span>}
+          {us && <span className="text-[13px] text-white/45 font-mono">{us.gp} of 82 games · 2025–26</span>}
         </div>
-        <div className="flex items-center gap-2 text-[11px] font-mono text-white/40">
+        <div className="flex items-center gap-2 text-[12px] font-mono text-white/40">
           <span>good</span><span className="w-2 h-2 bg-emerald-400 rounded-full" />
           <span className="ml-2">brand</span><span className="w-2 h-2 bg-[#F74902] rounded-full" />
           <span className="ml-2">caution</span><span className="w-2 h-2 bg-amber-400 rounded-full" />
@@ -230,19 +230,19 @@ export const Dashboard = ({ schedule, standings, scoreboard, clubStats, roster, 
                   g.w ? 'bg-emerald-500/15 text-emerald-300 border border-emerald-500/30'
                       : 'bg-red-500/10 text-red-300 border border-red-500/25'
                 )}>{g.w ? 'W' : 'L'}</span>
-                <span className="text-[11px] font-mono text-white/50 tabular-nums">{g.label}</span>
+                <span className="text-[12px] font-mono text-white/50 tabular-nums">{g.label}</span>
                 <div className="flex items-center gap-2 min-w-0">
                   <span className="text-[10px] font-mono text-white/35 uppercase shrink-0">{g.home ? 'vs' : '@'}</span>
                   <TeamLogo abbr={g.opp} size={16} />
-                  <span className="text-[12px] text-white/85 truncate">{OPP_FULL[g.opp] || g.oppName}</span>
+                  <span className="text-[13px] text-white/85 truncate">{OPP_FULL[g.opp] || g.oppName}</span>
                   <span className="text-[10px] font-mono text-white/35">{g.opp}</span>
                 </div>
-                <div className="text-right font-mono tabular-nums text-[13px]">
+                <div className="text-right font-mono tabular-nums text-[14px]">
                   <span className={g.w ? 'text-[#FF8A4C] font-medium' : 'text-white/80'}>{g.us}</span>
                   <span className="text-white/30 mx-1">–</span>
                   <span className={g.w ? 'text-white/50' : 'text-white/80 font-medium'}>{g.them}</span>
                 </div>
-                <span className={cx('text-right text-[11px] font-mono tabular-nums',
+                <span className={cx('text-right text-[12px] font-mono tabular-nums',
                   diff > 0 ? 'text-emerald-400' : diff < 0 ? 'text-red-400' : 'text-white/40'
                 )}>{diff > 0 ? '+' : ''}{diff}</span>
                 <span className="flex items-center justify-center text-[10px] font-mono text-white/45">
@@ -283,7 +283,7 @@ export const Dashboard = ({ schedule, standings, scoreboard, clubStats, roster, 
                 </div>
                 <div className="text-[10px] font-mono text-white/40 mt-0.5 uppercase">running total</div>
               </div>
-              <div className="flex gap-4 text-[11px] font-mono">
+              <div className="flex gap-4 text-[12px] font-mono">
                 <div><div className="text-[9px] text-white/35 uppercase">GF</div><div className="text-emerald-400 tabular-nums">{gf}</div></div>
                 <div><div className="text-[9px] text-white/35 uppercase">GA</div><div className="text-red-300 tabular-nums">{ga}</div></div>
               </div>
@@ -337,14 +337,14 @@ export const Dashboard = ({ schedule, standings, scoreboard, clubStats, roster, 
                   <span className="flex items-center gap-2 min-w-0">
                     <Headshot src={p.headshot} num={p.num} size={20} />
                     <PlayerLink playerId={p.id}>
-                      <span className="text-[12px] truncate">{p.name}</span>
+                      <span className="text-[13px] truncate">{p.name}</span>
                     </PlayerLink>
                     {p.pos && <span className="text-[9px] font-mono text-white/30">{p.pos}</span>}
                   </span>
                   <span className="flex items-center gap-2 text-[10px] font-mono tabular-nums shrink-0">
                     <span className="text-emerald-400/80">{p.g}<span className="text-white/30">G</span></span>
                     <span className="text-sky-300/80">{p.a}<span className="text-white/30">A</span></span>
-                    <span className="text-[12px] font-medium text-[#FF8A4C]">{p.pts}</span>
+                    <span className="text-[13px] font-medium text-[#FF8A4C]">{p.pts}</span>
                   </span>
                 </div>
               ))}
@@ -367,7 +367,7 @@ export const Dashboard = ({ schedule, standings, scoreboard, clubStats, roster, 
                   <span className="flex items-center gap-1.5 min-w-0">
                     <Headshot playerId={g.scorerId} teamAbbrev={g.team} size={20} />
                     <PlayerLink playerId={g.scorerId}>
-                      <span className={cx('text-[11px] truncate',
+                      <span className={cx('text-[12px] truncate',
                         g.us ? 'text-[#FF8A4C] font-medium' : 'text-white/75'
                       )}>{g.scorer}</span>
                     </PlayerLink>
@@ -430,14 +430,14 @@ export const Dashboard = ({ schedule, standings, scoreboard, clubStats, roster, 
                 <span className={cx('text-[10px] font-mono tabular-nums',
                   t.us ? 'text-[#FF8A4C] font-semibold' : i < 3 ? 'text-emerald-400/80' : i >= 6 ? 'text-red-400/70' : 'text-white/45'
                 )}>{i + 1}</span>
-                <span className="text-[11px] font-mono font-medium text-white/75">{t.abbr}</span>
+                <span className="text-[12px] font-mono font-medium text-white/75">{t.abbr}</span>
                 <MiniBar
                   value={t.w}
                   max={standings.metro[0].w}
                   color={t.us ? '#F74902' : i < 3 ? '#10B981' : i >= 6 ? '#EF4444' : '#666'}
                   h={3}
                 />
-                <span className="text-[11px] font-mono tabular-nums text-white/60 shrink-0">{t.w}–{t.l}</span>
+                <span className="text-[12px] font-mono tabular-nums text-white/60 shrink-0">{t.w}–{t.l}</span>
               </div>
             ))}
           </div>
@@ -479,14 +479,14 @@ const LiveOrNextCard = ({ liveGame, liveDetail, nextGame, onOpenGame }) => {
           <div className="flex items-center justify-between py-1">
             <div className="flex items-center gap-2">
               <FlyersMark size={18} />
-              <span className="text-[13px] font-medium">PHI</span>
+              <span className="text-[14px] font-medium">PHI</span>
             </div>
             <span className="text-[28px] font-semibold tabular-nums text-[#FF8A4C]">{liveGame.us}</span>
           </div>
           <div className="flex items-center justify-between py-1">
             <div className="flex items-center gap-2">
               <TeamLogo abbr={liveGame.opp} size={18} />
-              <span className="text-[13px] text-white/70">{liveGame.oppName}</span>
+              <span className="text-[14px] text-white/70">{liveGame.oppName}</span>
             </div>
             <span className="text-[28px] font-semibold tabular-nums text-white/70">{liveGame.them}</span>
           </div>
@@ -495,7 +495,7 @@ const LiveOrNextCard = ({ liveGame, liveDetail, nextGame, onOpenGame }) => {
               {liveDetail.stats.shots?.us != null && (
                 <div>
                   <div className="text-[9px] font-mono text-white/40 uppercase tracking-wider">SOG</div>
-                  <div className="text-[12px] font-mono tabular-nums mt-0.5">
+                  <div className="text-[13px] font-mono tabular-nums mt-0.5">
                     <span className="text-[#FF8A4C]">{liveDetail.stats.shots.us}</span>
                     <span className="text-white/25 mx-1">·</span>
                     <span className="text-white/70">{liveDetail.stats.shots.them}</span>
@@ -505,7 +505,7 @@ const LiveOrNextCard = ({ liveGame, liveDetail, nextGame, onOpenGame }) => {
               {liveDetail.stats.powerPlay?.us != null && (
                 <div>
                   <div className="text-[9px] font-mono text-white/40 uppercase tracking-wider">PP</div>
-                  <div className="text-[12px] font-mono tabular-nums mt-0.5">
+                  <div className="text-[13px] font-mono tabular-nums mt-0.5">
                     <span className="text-[#FF8A4C]">{liveDetail.stats.powerPlay.us}</span>
                     <span className="text-white/25 mx-1">·</span>
                     <span className="text-white/70">{liveDetail.stats.powerPlay.them}</span>
@@ -515,7 +515,7 @@ const LiveOrNextCard = ({ liveGame, liveDetail, nextGame, onOpenGame }) => {
               {liveDetail.stats.faceoffPct?.us != null && (
                 <div>
                   <div className="text-[9px] font-mono text-white/40 uppercase tracking-wider">FO%</div>
-                  <div className="text-[12px] font-mono tabular-nums mt-0.5 text-white/85">
+                  <div className="text-[13px] font-mono tabular-nums mt-0.5 text-white/85">
                     {liveDetail.stats.faceoffPct.us}%
                   </div>
                 </div>
@@ -539,20 +539,20 @@ const LiveOrNextCard = ({ liveGame, liveDetail, nextGame, onOpenGame }) => {
     return (
       <Section title="Next Game">
         <div className="p-4 space-y-3">
-          <div className="text-[11px] font-mono text-white/50">
+          <div className="text-[12px] font-mono text-white/50">
             {fmtDateFull(nextGame.startUTC)} · {fmtTime(nextGame.startUTC)}
           </div>
           <div className="flex items-center justify-between py-1">
             <div className="flex items-center gap-2">
               <FlyersMark size={18} />
-              <span className="text-[13px] font-medium">PHI</span>
+              <span className="text-[14px] font-medium">PHI</span>
             </div>
-            <span className="text-[11px] font-mono text-white/40">{nextGame.home ? 'HOME' : 'AWAY'}</span>
+            <span className="text-[12px] font-mono text-white/40">{nextGame.home ? 'HOME' : 'AWAY'}</span>
           </div>
           <div className="flex items-center justify-between py-1">
             <div className="flex items-center gap-2">
               <TeamLogo abbr={nextGame.opp} size={18} />
-              <span className="text-[13px] text-white/70">{OPP_FULL[nextGame.opp] || nextGame.oppName}</span>
+              <span className="text-[14px] text-white/70">{OPP_FULL[nextGame.opp] || nextGame.oppName}</span>
             </div>
           </div>
           <div className="pt-3 border-t border-white/[0.05] text-[10px] font-mono text-white/45 flex items-center justify-between">
@@ -563,32 +563,108 @@ const LiveOrNextCard = ({ liveGame, liveDetail, nextGame, onOpenGame }) => {
       </Section>
     );
   }
+  // No live, no scheduled next — offseason or scheduling gap. Fill the card
+  // with countdowns to the next league milestones so it's not dead space.
+  return <NoGameCard />;
+};
+
+// Static league milestones for offseason / scheduling-gap fallback. Dates
+// are best-effort approximations for the 2025–26 → 2026–27 cycle; if the
+// schedule resumes before any of these, the regular Live/Next card takes
+// over and this is never shown.
+const LEAGUE_MILESTONES = [
+  { date: '2026-06-26', label: 'NHL Draft · Round 1' },
+  { date: '2026-07-01', label: 'Free Agency Opens' },
+  { date: '2026-09-21', label: 'Training Camp Opens' },
+  { date: '2026-09-26', label: 'Preseason Begins' },
+  { date: '2026-10-07', label: 'Regular Season Starts' },
+];
+
+const NoGameCard = () => {
+  const now = Date.now();
+  const upcoming = LEAGUE_MILESTONES
+    .map((m) => ({ ...m, ms: new Date(m.date + 'T12:00:00Z').getTime() - now }))
+    .filter((m) => m.ms > 0)
+    .slice(0, 3);
   return (
-    <Section title="No Live or Upcoming Game">
-      <div className="px-4 py-8 text-center text-[11px] font-mono text-white/30">Off day.</div>
+    <Section title="Off Day · Looking Ahead">
+      <div className="p-4 space-y-3">
+        <div className="text-[12px] font-mono text-white/55">
+          No live game and no scheduled next game right now. Catching breath.
+        </div>
+        {upcoming.length > 0 && (
+          <div className="space-y-1.5 pt-2 border-t border-white/[0.05]">
+            <div className="text-[10px] font-mono text-white/40 uppercase tracking-wider">Next league events</div>
+            {upcoming.map((m) => {
+              const days = Math.ceil(m.ms / 86400000);
+              return (
+                <div key={m.date} className="flex items-center justify-between gap-2">
+                  <span className="text-[12px] text-white/75 truncate">{m.label}</span>
+                  <span className="text-[11px] font-mono tabular-nums shrink-0">
+                    <span className="text-[#FF8A4C]">{days}</span>
+                    <span className="text-white/35"> day{days === 1 ? '' : 's'}</span>
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
     </Section>
   );
 };
 
-const LatestResultCard = ({ lastResult }) => {
+const LatestResultCard = ({ lastResult, lastGame, onOpenGame }) => {
   if (!lastResult) {
     return (
       <Section title="Latest Result">
-        <div className="px-4 py-8 text-center text-[11px] font-mono text-white/30">Season hasn't started yet.</div>
+        <div className="px-4 py-8 text-center text-[12px] font-mono text-white/30">Season hasn't started yet.</div>
       </Section>
     );
   }
+  // PHI scorers from the timeline — unique names, in score order, capped at 4.
+  const phiScorers = (() => {
+    const tl = lastGame?.timeline || [];
+    const seen = new Set();
+    const out = [];
+    for (const g of tl) {
+      if (!g.us) continue;
+      if (seen.has(g.scorerId)) continue;
+      seen.add(g.scorerId);
+      out.push(g);
+      if (out.length >= 4) break;
+    }
+    return out;
+  })();
+
+  // Period scoring breakdown (e.g., "1–0, 2–1, 1–2") — pulled from the
+  // adapted lastGame.periods map { 1: [us, them], 2: [...], ... }
+  const periodLine = (() => {
+    if (!lastGame?.periods) return null;
+    const parts = [];
+    for (const k of Object.keys(lastGame.periods).sort((a, b) => a - b)) {
+      const [u, t] = lastGame.periods[k];
+      parts.push(`${u}–${t}`);
+    }
+    return parts.length ? parts.join(' · ') : null;
+  })();
+
+  const endTag =
+    lastResult.lastPeriodType === 'OT' ? 'OT' :
+    lastResult.lastPeriodType === 'SO' ? 'SO' :
+    null;
+
   return (
     <Section title="Latest Result">
       <div className="p-4 space-y-3">
         <div className="flex items-center justify-between">
-          <Chip tone={lastResult.w ? 'green' : 'red'}>● Final · {lastResult.w ? 'WIN' : 'LOSS'}</Chip>
+          <Chip tone={lastResult.w ? 'green' : 'red'}>● Final{endTag ? ` · ${endTag}` : ''} · {lastResult.w ? 'WIN' : 'LOSS'}</Chip>
           <span className="text-[10px] font-mono text-white/40">{lastResult.label}</span>
         </div>
         <div className="flex items-center justify-between py-1">
           <div className="flex items-center gap-2">
             <FlyersMark size={18} />
-            <span className="text-[13px] font-medium">PHI</span>
+            <span className="text-[14px] font-medium">PHI</span>
           </div>
           <span className={cx('text-[22px] font-semibold tabular-nums',
             lastResult.w ? 'text-emerald-400' : 'text-white/55'
@@ -597,11 +673,46 @@ const LatestResultCard = ({ lastResult }) => {
         <div className="flex items-center justify-between py-1">
           <div className="flex items-center gap-2">
             <TeamLogo abbr={lastResult.opp} size={18} />
-            <span className="text-[13px] text-white/70">{OPP_FULL[lastResult.opp] || lastResult.oppName}</span>
+            <span className="text-[14px] text-white/70">{OPP_FULL[lastResult.opp] || lastResult.oppName}</span>
           </div>
           <span className={cx('text-[22px] font-semibold tabular-nums',
             !lastResult.w ? 'text-red-400' : 'text-white/55'
           )}>{lastResult.them}</span>
+        </div>
+
+        {/* Venue + per-period line score */}
+        {(lastResult.venue || periodLine) && (
+          <div className="pt-2 border-t border-white/[0.05] flex items-center justify-between text-[11px] font-mono text-white/50">
+            <span className="truncate">{lastResult.home ? '' : '@ '}{lastResult.venue || ''}</span>
+            {periodLine && <span className="tabular-nums text-white/65">{periodLine}</span>}
+          </div>
+        )}
+
+        {/* PHI scorers */}
+        {phiScorers.length > 0 && (
+          <div className="pt-2 border-t border-white/[0.05]">
+            <div className="text-[10px] font-mono text-white/40 uppercase tracking-wider mb-1.5">PHI Goals</div>
+            <div className="flex flex-wrap gap-1.5">
+              {phiScorers.map((g) => (
+                <span key={`${g.scorerId}-${g.time}`}
+                  className="inline-flex items-center gap-1 px-2 h-6 rounded-md bg-[#F74902]/10 border border-[#F74902]/25 text-[11px] font-mono text-[#FF8A4C]">
+                  <span className="text-[#F74902]">●</span>
+                  <span className="truncate max-w-[120px]">{g.scorer}</span>
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Open game tape link */}
+        <div className="pt-2 border-t border-white/[0.05] flex items-center justify-between text-[11px] font-mono">
+          <span className="text-white/40">{lastResult.home ? 'HOME' : 'AWAY'}</span>
+          <button
+            onClick={() => onOpenGame?.(lastResult.id)}
+            className="text-[#FF8A4C] hover:text-white transition-colors"
+          >
+            open game tape →
+          </button>
         </div>
       </div>
     </Section>
@@ -631,8 +742,8 @@ const SplitsPanel = ({ games, us }) => {
       <div className="divide-y divide-white/[0.04]">
         {rows.map((r) => (
           <div key={r.l} className="grid grid-cols-[1fr_auto_60px] items-center gap-2 px-3.5 h-8">
-            <span className="text-[11px] text-white/55">{r.l}</span>
-            <span className={cx('text-[12px] font-mono tabular-nums',
+            <span className="text-[12px] text-white/55">{r.l}</span>
+            <span className={cx('text-[13px] font-mono tabular-nums',
               r.highlight === 'good' ? 'text-emerald-400'
               : r.highlight === 'bad' ? 'text-red-400'
               : toneFor(r.pct)
@@ -649,7 +760,7 @@ const UpcomingPanel = ({ upcoming }) => {
   if (!upcoming?.length) {
     return (
       <Section title="Upcoming">
-        <div className="px-4 py-6 text-center text-[11px] font-mono text-white/30">
+        <div className="px-4 py-6 text-center text-[12px] font-mono text-white/30">
           No scheduled games.
         </div>
       </Section>
@@ -664,7 +775,7 @@ const UpcomingPanel = ({ upcoming }) => {
             <span className="flex items-center gap-2 min-w-0">
               <span className="text-[10px] font-mono text-white/35 shrink-0">{g.home ? 'vs' : '@'}</span>
               <TeamLogo abbr={g.opp} size={14} />
-              <span className="text-[11px] text-white/80 truncate">{OPP_FULL[g.opp] || g.oppName}</span>
+              <span className="text-[12px] text-white/80 truncate">{OPP_FULL[g.opp] || g.oppName}</span>
             </span>
             <span className="text-[10px] font-mono text-white/45 tabular-nums">{fmtTime(g.startUTC)}</span>
           </div>
@@ -728,7 +839,7 @@ const OutcomeSplitsPanel = ({ games }) => {
           : accent === 'bad' ? 'text-red-400'
           : 'text-white'
         )}>{w}</span>
-        <span className="text-[12px] font-mono text-white/30">–</span>
+        <span className="text-[13px] font-mono text-white/30">–</span>
         <span className="text-[14px] font-mono tabular-nums text-white/55">{l_}</span>
       </div>
       {sub && <div className="text-[9px] font-mono text-white/30 mt-0.5">{sub}</div>}
@@ -847,7 +958,7 @@ const MilestoneWatch = ({ clubStats }) => {
   if (!list.length) {
     return (
       <Section title="Milestone Watch" action={<span className="text-[10px] font-mono text-white/40">approaching</span>}>
-        <div className="px-4 py-6 text-center text-[11px] font-mono text-white/30">No close milestones.</div>
+        <div className="px-4 py-6 text-center text-[12px] font-mono text-white/30">No close milestones.</div>
       </Section>
     );
   }
@@ -859,7 +970,7 @@ const MilestoneWatch = ({ clubStats }) => {
             <span className="flex items-center gap-2 min-w-0">
               <Headshot src={m.headshot} num={m.num} size={20} />
               <PlayerLink playerId={m.id}>
-                <span className="text-[12px] truncate">{m.name}</span>
+                <span className="text-[13px] truncate">{m.name}</span>
               </PlayerLink>
             </span>
             <span className="flex items-baseline gap-1 text-[10px] font-mono tabular-nums shrink-0">
@@ -902,7 +1013,7 @@ const YoungGunsPanel = ({ roster, clubStats }) => {
             <span className="flex items-center gap-2 min-w-0">
               <Headshot src={p.headshot} num={p.num} size={20} />
               <PlayerLink playerId={p.id}>
-                <span className="text-[12px] truncate">{p.name}</span>
+                <span className="text-[13px] truncate">{p.name}</span>
               </PlayerLink>
               <span className="text-[9px] font-mono text-amber-300/70 shrink-0">{p.pos} · {p.age}</span>
             </span>
@@ -912,7 +1023,7 @@ const YoungGunsPanel = ({ roster, clubStats }) => {
                   <span className="text-white/55">{p.sk.gp ?? 0}<span className="text-white/30">GP</span></span>
                   <span className="text-emerald-400/80 ml-1">{p.sk.g ?? 0}<span className="text-white/30">G</span></span>
                   <span className="text-sky-300/80 ml-1">{p.sk.a ?? 0}<span className="text-white/30">A</span></span>
-                  <span className="text-[12px] text-[#FF8A4C] font-medium ml-1">{p.sk.pts ?? 0}</span>
+                  <span className="text-[13px] text-[#FF8A4C] font-medium ml-1">{p.sk.pts ?? 0}</span>
                 </>
               ) : p.g ? (
                 <>

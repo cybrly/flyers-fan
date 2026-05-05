@@ -53,8 +53,8 @@ export const HeadToHead = ({ schedule, onOpenGame }) => {
           <div className="flex items-center gap-2.5 min-w-0">
             <TeamLogo abbr={oppAbbr} size={28} />
             <div className="min-w-0">
-              <div className="text-[11px] font-mono text-white/45 uppercase tracking-wider">vs</div>
-              <div className="text-[13px] font-medium truncate">{oppFull}</div>
+              <div className="text-[12px] font-mono text-white/45 uppercase tracking-wider">vs</div>
+              <div className="text-[14px] font-medium truncate">{oppFull}</div>
             </div>
           </div>
           <div className="text-right">
@@ -107,7 +107,7 @@ export const HeadToHead = ({ schedule, onOpenGame }) => {
             onClick={() => onOpenGame?.(last.id)}
             className="w-full flex items-center justify-between hover:bg-white/[0.02] -mx-2 px-2 py-1.5 rounded transition-colors"
           >
-            <span className="flex items-center gap-2 text-[11px] font-mono">
+            <span className="flex items-center gap-2 text-[12px] font-mono">
               <span className={cx(
                 'inline-flex items-center justify-center w-[20px] h-[16px] text-[9px] font-mono font-semibold rounded-[3px]',
                 last.w ? 'bg-[#F74902]/15 text-[#FF8A4C] border border-[#F74902]/30'
@@ -121,7 +121,7 @@ export const HeadToHead = ({ schedule, onOpenGame }) => {
                 <span className="text-[9px] text-amber-400">{last.lastPeriodType}</span>
               )}
             </span>
-            <span className="text-[12px] font-mono tabular-nums text-white/85">
+            <span className="text-[13px] font-mono tabular-nums text-white/85">
               <span className={last.w ? 'text-[#FF8A4C] font-medium' : ''}>{last.us}</span>
               <span className="text-white/25 mx-1">–</span>
               <span className={!last.w ? 'text-white font-medium' : ''}>{last.them}</span>

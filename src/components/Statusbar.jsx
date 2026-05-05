@@ -33,7 +33,7 @@ export const Statusbar = ({ lastFetch, error, refresh }) => {
         </span>
         <span className="lg:hidden text-white/35">Unofficial · not NHL</span>
         <span className="hidden md:inline">{SEASON_LABEL} Season</span>
-        <span>v2.8</span>
+        <span>v2.9</span>
       </div>
     </div>
   );

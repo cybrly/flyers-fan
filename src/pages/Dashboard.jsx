@@ -544,23 +544,30 @@ const LiveOrNextCard = ({ liveGame, liveDetail, nextGame, onOpenGame }) => {
   return <NoGameCard />;
 };
 
-// Static league milestones for offseason / scheduling-gap fallback. Dates
-// are best-effort approximations for the 2025–26 → 2026–27 cycle; if the
-// schedule resumes before any of these, the regular Live/Next card takes
-// over and this is never shown.
-const LEAGUE_MILESTONES = [
-  { date: '2026-06-26', label: 'NHL Draft · Round 1' },
-  { date: '2026-07-01', label: 'Free Agency Opens' },
-  { date: '2026-09-21', label: 'Training Camp Opens' },
-  { date: '2026-09-26', label: 'Preseason Begins' },
-  { date: '2026-10-07', label: 'Regular Season Starts' },
+// League milestone calendar — annual NHL events stored as MM-DD so the
+// next occurrence rolls forward each year automatically. Dates are
+// best-effort approximations; if the schedule resumes before any of
+// these, the regular Live/Next card takes over and this is never shown.
+const LEAGUE_MILESTONE_DAYS = [
+  { md: '06-26', label: 'NHL Draft · Round 1' },
+  { md: '07-01', label: 'Free Agency Opens' },
+  { md: '09-21', label: 'Training Camp Opens' },
+  { md: '09-26', label: 'Preseason Begins' },
+  { md: '10-07', label: 'Regular Season Starts' },
 ];
 
 const NoGameCard = () => {
   const now = Date.now();
-  const upcoming = LEAGUE_MILESTONES
-    .map((m) => ({ ...m, ms: new Date(m.date + 'T12:00:00Z').getTime() - now }))
-    .filter((m) => m.ms > 0)
+  const thisYear = new Date().getFullYear();
+  const upcoming = LEAGUE_MILESTONE_DAYS
+    .map((m) => {
+      // Pick whichever calendar year places the event in the future.
+      const candidate = new Date(`${thisYear}-${m.md}T12:00:00Z`).getTime();
+      const ms = candidate > now ? candidate - now : new Date(`${thisYear + 1}-${m.md}T12:00:00Z`).getTime() - now;
+      const dateMs = candidate > now ? candidate : new Date(`${thisYear + 1}-${m.md}T12:00:00Z`).getTime();
+      return { ...m, date: new Date(dateMs).toISOString().slice(0, 10), ms };
+    })
+    .sort((a, b) => a.ms - b.ms)
     .slice(0, 3);
   return (
     <Section title="Off Day · Looking Ahead">

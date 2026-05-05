@@ -209,6 +209,29 @@ export function adaptGame(boxscore, rightRail, landing) {
     });
   }
 
+  // Officials + coaches + scratches from /right-rail's gameInfo block.
+  // The right-rail payload nests these under `gameInfo`; each entry is a
+  // localized name struct ({ default: 'Name' }) which we flatten to strings.
+  const gi = rightRail?.gameInfo || {};
+  const flatten = (n) => (typeof n === 'string' ? n : n?.default || '');
+  const officials = {
+    referees: (gi.referees || []).map(flatten).filter(Boolean),
+    linesmen: (gi.linesmen || []).map(flatten).filter(Boolean),
+  };
+  const coaches = {
+    us:   flatten((isHome ? gi.homeTeam : gi.awayTeam)?.headCoach),
+    them: flatten((isHome ? gi.awayTeam : gi.homeTeam)?.headCoach),
+  };
+  const scratchesOf = (sideObj) => (sideObj?.scratches || []).map((p) => ({
+    id: p.id,
+    name: `${flatten(p.firstName)} ${flatten(p.lastName)}`.trim() || '—',
+    num: p.sweaterNumber,
+  }));
+  const scratches = {
+    us:   scratchesOf(isHome ? gi.homeTeam : gi.awayTeam),
+    them: scratchesOf(isHome ? gi.awayTeam : gi.homeTeam),
+  };
+
   // Three stars — flatten { name: { default } } shapes into plain strings
   const stars = (landing?.summary?.threeStars || []).map((s) => ({
     star: s.star,
@@ -258,6 +281,9 @@ export function adaptGame(boxscore, rightRail, landing) {
     goalies,
     timeline,
     stars,
+    officials,
+    coaches,
+    scratches,
   };
 }
 

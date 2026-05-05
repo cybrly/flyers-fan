@@ -334,6 +334,8 @@ export const GameTape = ({ game, loading, pbp, pbpRaw, customGameId, onClearCust
           </Section>
         </div>
 
+        <GameInfoPanel game={game} />
+
         {pbpRaw && (
           <Section title="Shot Map" action={<span className="text-[10px] font-mono text-white/40">offensive zone · all periods</span>}>
             <ShotMap pbpData={pbpRaw} oppAbbr={game.oppAbbr} />
@@ -505,5 +507,103 @@ export const GameTape = ({ game, loading, pbp, pbpRaw, customGameId, onClearCust
           )}
       </div>
     </div>
+  );
+};
+
+// Game Info — officials (referees + linesmen), head coaches, and scratches.
+// All sourced from the right-rail payload's gameInfo block (see adaptGame).
+// Renders only when at least one of the fields is populated; useful for
+// retroactive games where right-rail data is filled in after final.
+const GameInfoPanel = ({ game }) => {
+  const o = game.officials || {};
+  const c = game.coaches || {};
+  const sc = game.scratches || {};
+  const hasOfficials = (o.referees?.length || 0) + (o.linesmen?.length || 0) > 0;
+  const hasCoaches = c.us || c.them;
+  const hasScratches = (sc.us?.length || 0) + (sc.them?.length || 0) > 0;
+  if (!hasOfficials && !hasCoaches && !hasScratches) return null;
+
+  return (
+    <Section title="Game Info" action={<span className="text-[10px] font-mono text-white/40">officials · coaches · scratches</span>}>
+      <div className="p-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {hasOfficials && (
+          <div>
+            <div className="text-[10px] font-mono text-white/40 uppercase tracking-wider mb-2">Officials</div>
+            {o.referees.length > 0 && (
+              <div className="space-y-1 mb-2">
+                <div className="text-[10px] font-mono text-[#FF8A4C]/70">Referees</div>
+                {o.referees.map((n, i) => (
+                  <div key={i} className="text-[12px] text-white/85 flex items-center gap-2">
+                    <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-[#F74902]/15 border border-[#F74902]/30 text-[9px] font-mono text-[#FF8A4C]">R</span>
+                    <span>{n}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+            {o.linesmen.length > 0 && (
+              <div className="space-y-1">
+                <div className="text-[10px] font-mono text-white/40">Linesmen</div>
+                {o.linesmen.map((n, i) => (
+                  <div key={i} className="text-[12px] text-white/85 flex items-center gap-2">
+                    <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-white/[0.06] border border-white/15 text-[9px] font-mono text-white/55">L</span>
+                    <span>{n}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {hasCoaches && (
+          <div>
+            <div className="text-[10px] font-mono text-white/40 uppercase tracking-wider mb-2">Head Coaches</div>
+            {c.us && (
+              <div className="text-[12px] text-white/85 mb-1">
+                <span className="text-[#FF8A4C] font-mono text-[10px] mr-2">PHI</span>
+                {c.us}
+              </div>
+            )}
+            {c.them && (
+              <div className="text-[12px] text-white/85">
+                <span className="text-white/45 font-mono text-[10px] mr-2">{game.oppAbbr}</span>
+                {c.them}
+              </div>
+            )}
+          </div>
+        )}
+
+        {hasScratches && (
+          <div>
+            <div className="text-[10px] font-mono text-white/40 uppercase tracking-wider mb-2">Scratches</div>
+            {sc.us?.length > 0 && (
+              <div className="mb-2">
+                <div className="text-[10px] font-mono text-[#FF8A4C]/70 mb-1">PHI · {sc.us.length}</div>
+                <div className="flex flex-wrap gap-1">
+                  {sc.us.map((p) => (
+                    <span key={p.id} className="inline-flex items-center gap-1 text-[11px] font-mono px-2 h-5 rounded-sm bg-white/[0.04] text-white/70">
+                      {p.num != null && <span className="text-white/35">#{p.num}</span>}
+                      <span>{p.name}</span>
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+            {sc.them?.length > 0 && (
+              <div>
+                <div className="text-[10px] font-mono text-white/45 mb-1">{game.oppAbbr} · {sc.them.length}</div>
+                <div className="flex flex-wrap gap-1">
+                  {sc.them.map((p) => (
+                    <span key={p.id} className="inline-flex items-center gap-1 text-[11px] font-mono px-2 h-5 rounded-sm bg-white/[0.04] text-white/65">
+                      {p.num != null && <span className="text-white/35">#{p.num}</span>}
+                      <span>{p.name}</span>
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    </Section>
   );
 };

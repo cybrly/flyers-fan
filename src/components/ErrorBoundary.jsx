@@ -8,20 +8,35 @@ export class ErrorBoundary extends React.Component {
   componentDidUpdate(prev) { if (prev.resetKey !== this.props.resetKey) this.setState({ error: null }); }
   render() {
     if (this.state.error) {
+      const msg = String(this.state.error?.message || this.state.error);
+      const isStaleChunk = /Failed to fetch dynamically imported module|Importing a module script failed|ChunkLoadError/i.test(msg);
       return (
         <div className="p-6">
           <div className="border border-red-500/30 bg-red-500/[0.05] rounded-md p-5">
             <div className="flex items-center gap-2 mb-3">
               <AlertCircle size={16} className="text-red-400" />
-              <span className="text-[13px] font-medium text-red-300">Render error</span>
+              <span className="text-[13px] font-medium text-red-300">
+                {isStaleChunk ? 'New version available' : 'Render error'}
+              </span>
             </div>
             <div className="text-[12px] font-mono text-white/70 whitespace-pre-wrap break-words">
-              {String(this.state.error?.message || this.state.error)}
+              {isStaleChunk
+                ? 'A newer build has been deployed since you opened this page. Reload to pick it up.'
+                : msg}
             </div>
-            <div className="text-[11px] font-mono text-white/40 mt-3">
-              The data source likely returned an unexpected shape. Try refreshing.
-              If it persists, the NHL API endpoint may have changed.
-            </div>
+            {isStaleChunk ? (
+              <button
+                onClick={() => window.location.reload()}
+                className="mt-3 px-3 h-8 rounded-md text-[12px] font-mono bg-[#F74902] hover:bg-[#FF8A4C] text-white transition-colors"
+              >
+                Reload page
+              </button>
+            ) : (
+              <div className="text-[11px] font-mono text-white/40 mt-3">
+                The data source likely returned an unexpected shape. Try refreshing.
+                If it persists, the NHL API endpoint may have changed.
+              </div>
+            )}
           </div>
         </div>
       );

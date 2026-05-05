@@ -83,7 +83,15 @@ export const Dashboard = ({ schedule, standings, scoreboard, clubStats, roster, 
   return (
     <div className="p-3 md:p-5 space-y-4">
       {/* ─── HERO ─────────────────────────────────────────────────────────── */}
-      <Hero liveGame={liveGame} liveDetail={liveDetail} nextGame={nextGame} lastResult={lastResult} us={us} />
+      <Hero
+        liveGame={liveGame}
+        liveDetail={liveDetail}
+        nextGame={nextGame}
+        lastResult={lastResult}
+        us={us}
+        recentGames={games}
+        standings={standings}
+      />
 
       {/* ─── BAND · TONIGHT ───────────────────────────────────────────────── */}
       <SectionBand

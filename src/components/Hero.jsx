@@ -5,6 +5,177 @@ import { Chip } from './primitives.jsx';
 import { FlyersMark, TeamLogo } from './Logo.jsx';
 import { WinProbability, PaceProjection, GoalCelebration } from './LiveTiles.jsx';
 
+// Inline keyframes for the slow rink rotation + puck pulse. Kept here rather
+// than in a global stylesheet because they're only used by the Hero centerpiece.
+const HERO_KEYFRAMES = `
+@keyframes flyersHeroSpin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+@keyframes flyersHeroPuckPulse {
+  0%, 100% { opacity: 0.55; transform: scale(1); }
+  50%      { opacity: 1;    transform: scale(1.18); }
+}
+@keyframes flyersHeroSweep {
+  0%   { transform: translateX(-30%); opacity: 0; }
+  50%  { opacity: 0.6; }
+  100% { transform: translateX(130%); opacity: 0; }
+}
+`;
+
+// Full-rink overhead graphic. Spans the entire Hero width as a stylized
+// hockey rink — rounded boards, two blue lines, red center line, goal lines,
+// center face-off circle, four end-zone face-off circles, and goal creases.
+// Positioned in the upper band so the bottom HeroStats strip stays uncovered.
+// Glowing orange puck at center ice pulses to keep the panel feeling alive.
+const FullRinkMark = () => (
+  <div
+    aria-hidden
+    className="pointer-events-none absolute inset-x-0 top-2 sm:top-3 hidden sm:block select-none"
+    style={{ height: 'calc(100% - 110px)', minHeight: 200 }}
+  >
+    <style>{HERO_KEYFRAMES}</style>
+    <svg
+      viewBox="0 0 1000 240"
+      width="100%"
+      height="100%"
+      preserveAspectRatio="xMidYMid meet"
+      style={{ opacity: 0.18 }}
+    >
+      <defs>
+        {/* A subtle radial fade so the rink edges don't visually fight the
+            Hero card border. Brightest at center ice. */}
+        <radialGradient id="rinkFade" cx="50%" cy="50%" r="55%">
+          <stop offset="0%"   stopColor="white" stopOpacity="1" />
+          <stop offset="80%"  stopColor="white" stopOpacity="0.5" />
+          <stop offset="100%" stopColor="white" stopOpacity="0.05" />
+        </radialGradient>
+        <mask id="rinkMask">
+          <rect x="0" y="0" width="1000" height="240" fill="url(#rinkFade)" />
+        </mask>
+      </defs>
+
+      <g mask="url(#rinkMask)">
+        {/* Boards — rounded rectangle with rink-style ends (ry = half height) */}
+        <rect
+          x="14" y="14" width="972" height="212"
+          rx="106" ry="106"
+          fill="none" stroke="white" strokeWidth="1.6"
+        />
+
+        {/* Goal lines (red, near each end) */}
+        <line x1="92"  y1="40" x2="92"  y2="200" stroke="#F87171" strokeWidth="1.4" opacity="0.85" />
+        <line x1="908" y1="40" x2="908" y2="200" stroke="#F87171" strokeWidth="1.4" opacity="0.85" />
+
+        {/* Blue lines */}
+        <line x1="380" y1="14" x2="380" y2="226" stroke="#60A5FA" strokeWidth="2.4" opacity="0.85" />
+        <line x1="620" y1="14" x2="620" y2="226" stroke="#60A5FA" strokeWidth="2.4" opacity="0.85" />
+
+        {/* Center red line */}
+        <line x1="500" y1="14" x2="500" y2="226" stroke="#F87171" strokeWidth="2.4" opacity="0.85" />
+
+        {/* Center face-off circle */}
+        <circle cx="500" cy="120" r="58" fill="none" stroke="white" strokeWidth="1.4" />
+        <circle cx="500" cy="120" r="2.5" fill="#F74902" />
+
+        {/* End-zone face-off circles — four corners */}
+        {[
+          { cx: 200, cy: 78  },
+          { cx: 200, cy: 162 },
+          { cx: 800, cy: 78  },
+          { cx: 800, cy: 162 },
+        ].map((c, i) => (
+          <g key={i}>
+            <circle cx={c.cx} cy={c.cy} r="32" fill="none" stroke="white" strokeWidth="1.3" />
+            <circle cx={c.cx} cy={c.cy} r="2.4" fill="#F87171" opacity="0.9" />
+            {/* Hash marks (the small lines outside each circle) */}
+            <line x1={c.cx - 32} y1={c.cy - 14} x2={c.cx - 36} y2={c.cy - 14} stroke="white" strokeWidth="1.2" />
+            <line x1={c.cx + 32} y1={c.cy - 14} x2={c.cx + 36} y2={c.cy - 14} stroke="white" strokeWidth="1.2" />
+            <line x1={c.cx - 32} y1={c.cy + 14} x2={c.cx - 36} y2={c.cy + 14} stroke="white" strokeWidth="1.2" />
+            <line x1={c.cx + 32} y1={c.cy + 14} x2={c.cx + 36} y2={c.cy + 14} stroke="white" strokeWidth="1.2" />
+          </g>
+        ))}
+
+        {/* Neutral-zone face-off dots */}
+        <circle cx="430" cy="78"  r="2.4" fill="#F87171" opacity="0.85" />
+        <circle cx="430" cy="162" r="2.4" fill="#F87171" opacity="0.85" />
+        <circle cx="570" cy="78"  r="2.4" fill="#F87171" opacity="0.85" />
+        <circle cx="570" cy="162" r="2.4" fill="#F87171" opacity="0.85" />
+
+        {/* Goal creases — half ellipses opening toward center */}
+        <path
+          d="M 92 108 A 18 12 0 0 1 92 132"
+          fill="rgba(96,165,250,0.18)"
+          stroke="#60A5FA" strokeWidth="1.2" opacity="0.7"
+        />
+        <path
+          d="M 908 108 A 18 12 0 0 0 908 132"
+          fill="rgba(96,165,250,0.18)"
+          stroke="#60A5FA" strokeWidth="1.2" opacity="0.7"
+        />
+
+        {/* Goal nets (small rectangles behind the goal line) */}
+        <rect x="84" y="112" width="6" height="16" fill="none" stroke="white" strokeWidth="1" opacity="0.7" />
+        <rect x="910" y="112" width="6" height="16" fill="none" stroke="white" strokeWidth="1" opacity="0.7" />
+
+        {/* Trapezoid behind each net (NHL goalie restricted area) */}
+        <path d="M 92 108 L 78 92 L 78 148 L 92 132 Z" fill="none" stroke="white" strokeWidth="0.9" opacity="0.5" />
+        <path d="M 908 108 L 922 92 L 922 148 L 908 132 Z" fill="none" stroke="white" strokeWidth="0.9" opacity="0.5" />
+      </g>
+    </svg>
+
+    {/* Glowing center-ice puck — separate DOM so we can give it a real CSS
+        glow + pulse animation that wouldn't render the same inside SVG. */}
+    <div
+      className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full"
+      style={{
+        width: 22, height: 22,
+        background: 'radial-gradient(circle at 35% 35%, #FFB47A 0%, #F74902 60%, #8A2A00 100%)',
+        boxShadow: '0 0 32px 6px rgba(247,73,2,0.55), 0 0 0 1.5px rgba(255,255,255,0.18) inset',
+        animation: 'flyersHeroPuckPulse 2.6s ease-in-out infinite',
+      }}
+    />
+  </div>
+);
+
+// A slim "skating sweep" highlight that periodically arcs across the Hero
+// to suggest motion. Single horizontal soft gradient, slow loop.
+const HeroSweep = () => (
+  <div
+    aria-hidden
+    className="pointer-events-none absolute inset-x-0 top-1/2 -translate-y-1/2 h-32 hidden md:block overflow-hidden"
+  >
+    <div
+      style={{
+        width: '40%',
+        height: '100%',
+        background: 'linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.06) 50%, transparent 100%)',
+        animation: 'flyersHeroSweep 9s ease-in-out infinite',
+      }}
+    />
+  </div>
+);
+
+// Five-dot W/L recap. Shown under each team's name to give the matchup a
+// visual "form check" without burning extra space.
+const FormDots = ({ games, mutedColors = false }) => {
+  const last5 = (games || []).slice(0, 5);
+  if (!last5.length) return null;
+  return (
+    <div className="flex gap-1 mt-1.5" aria-label="recent form">
+      {last5.map((g, i) => (
+        <span
+          key={`${g.id || i}`}
+          title={`${g.w ? 'W' : 'L'} ${g.us}–${g.them} ${g.home ? 'vs' : '@'} ${g.opp}`}
+          className={cx(
+            'w-1.5 h-1.5 rounded-full',
+            g.w
+              ? (mutedColors ? 'bg-emerald-400/55' : 'bg-emerald-400/85')
+              : (mutedColors ? 'bg-red-400/45' : 'bg-red-400/75'),
+          )}
+        />
+      ))}
+    </div>
+  );
+};
+
 const PHI_LOGO = 'https://assets.nhle.com/logos/nhl/svg/PHI_dark.svg';
 const teamLogoUrl = (abbr) => abbr ? `https://assets.nhle.com/logos/nhl/svg/${abbr}_dark.svg` : null;
 
@@ -32,7 +203,7 @@ function useCountdown(startUTC) {
 // is the adapted boxscore object — when present we show period, clock, SOG,
 // power play, and intermission state. Without it we fall back to the schedule
 // snapshot (just scores).
-const HeroLive = ({ liveGame, liveDetail, oppFull }) => {
+const HeroLive = ({ liveGame, liveDetail, oppFull, recentGames, oppRow }) => {
   const period = liveDetail?.periodDescriptor;
   const clock = liveDetail?.clock;
   const inIntermission = clock?.inIntermission;
@@ -73,6 +244,7 @@ const HeroLive = ({ liveGame, liveDetail, oppFull }) => {
           <div className="min-w-0">
             <div className="text-[10px] font-mono text-white/45 uppercase tracking-wider">Philadelphia</div>
             <div className="text-[18px] font-semibold tracking-tight">Flyers</div>
+            <FormDots games={recentGames} />
           </div>
         </div>
         <div className="flex items-baseline gap-3 px-4 sm:px-6 py-2 rounded-md bg-black/40 border border-white/[0.06] shadow-[0_8px_24px_-8px_rgba(0,0,0,0.6),0_1px_0_rgba(255,255,255,0.04)_inset]">
@@ -93,6 +265,11 @@ const HeroLive = ({ liveGame, liveDetail, oppFull }) => {
           <div className="text-right min-w-0">
             <div className="text-[10px] font-mono text-white/45 uppercase tracking-wider">{oppFull?.split(' ').slice(0, -1).join(' ') || liveGame.opp}</div>
             <div className="text-[18px] font-semibold tracking-tight text-white/85">{oppFull?.split(' ').slice(-1) || ''}</div>
+            {oppRow && (
+              <div className="flex justify-end mt-1.5 text-[10px] font-mono text-white/45 tabular-nums">
+                {oppRow.w}–{oppRow.l}{oppRow.ot ? `–${oppRow.ot}` : ''}
+              </div>
+            )}
           </div>
           <TeamLogo abbr={liveGame.opp} size={48} />
         </div>
@@ -162,7 +339,7 @@ const LiveStat = ({ label, us, them }) => (
   </div>
 );
 
-const HeroNext = ({ nextGame, oppFull }) => {
+const HeroNext = ({ nextGame, oppFull, recentGames, oppRow }) => {
   const cd = useCountdown(nextGame?.startUTC);
   return (
     <>
@@ -179,12 +356,17 @@ const HeroNext = ({ nextGame, oppFull }) => {
           <div className="min-w-0">
             <div className="text-[10px] font-mono text-white/45 uppercase tracking-wider">Philadelphia</div>
             <div className="text-[18px] font-semibold tracking-tight">Flyers</div>
+            <FormDots games={recentGames} />
           </div>
         </div>
         {cd && !cd.past ? (
-          <div className="text-center">
-            <div className="text-[10px] font-mono text-white/40 uppercase tracking-wider mb-1">Puck drops in</div>
-            <div className="flex items-baseline gap-2 justify-center font-semibold tabular-nums tracking-tight text-[#FF8A4C]">
+          <div className="text-center px-4 sm:px-6 py-2.5 rounded-md bg-black/40 border border-white/[0.06] shadow-[0_8px_24px_-8px_rgba(0,0,0,0.6),0_1px_0_rgba(255,255,255,0.04)_inset]">
+            <div className="text-[10px] font-mono text-white/40 uppercase tracking-wider mb-1 flex items-center justify-center gap-1.5">
+              <PuckIcon size={9} />
+              Puck drops in
+            </div>
+            <div className="flex items-baseline gap-2 justify-center font-semibold tabular-nums tracking-tight text-[#FF8A4C]"
+              style={{ textShadow: '0 0 18px rgba(247,73,2,0.35), 0 2px 4px rgba(0,0,0,0.6)' }}>
               {cd.d > 0 && <><span className="text-[36px] sm:text-[44px] leading-none">{cd.d}</span><span className="text-[14px] text-white/40 font-mono">d</span></>}
               <span className="text-[36px] sm:text-[44px] leading-none">{String(cd.h).padStart(2, '0')}</span>
               <span className="text-[14px] text-white/40 font-mono">h</span>
@@ -203,6 +385,11 @@ const HeroNext = ({ nextGame, oppFull }) => {
           <div className="text-right min-w-0">
             <div className="text-[10px] font-mono text-white/45 uppercase tracking-wider">{oppFull?.split(' ').slice(0, -1).join(' ') || nextGame.opp}</div>
             <div className="text-[18px] font-semibold tracking-tight text-white/85">{oppFull?.split(' ').slice(-1) || ''}</div>
+            {oppRow && (
+              <div className="flex justify-end mt-1.5 text-[10px] font-mono text-white/45 tabular-nums">
+                {oppRow.w}–{oppRow.l}{oppRow.ot ? `–${oppRow.ot}` : ''}
+              </div>
+            )}
           </div>
           <TeamLogo abbr={nextGame.opp} size={48} />
         </div>
@@ -211,7 +398,7 @@ const HeroNext = ({ nextGame, oppFull }) => {
   );
 };
 
-const HeroLatest = ({ lastResult, oppFull }) => (
+const HeroLatest = ({ lastResult, oppFull, recentGames, oppRow }) => (
   <>
     <div className="flex items-center gap-2">
       <Chip tone={lastResult.w ? 'orange' : 'muted'}>{lastResult.w ? '● WIN' : '● LOSS'}</Chip>
@@ -223,6 +410,7 @@ const HeroLatest = ({ lastResult, oppFull }) => (
         <div className="min-w-0">
           <div className="text-[10px] font-mono text-white/45 uppercase tracking-wider">Philadelphia</div>
           <div className="text-[18px] font-semibold tracking-tight">Flyers</div>
+          <FormDots games={recentGames} />
         </div>
       </div>
       <div className="flex items-baseline gap-3 px-4 sm:px-6 py-2 rounded-md bg-black/40 border border-white/[0.06] shadow-[0_8px_24px_-8px_rgba(0,0,0,0.6),0_1px_0_rgba(255,255,255,0.04)_inset]">
@@ -248,6 +436,11 @@ const HeroLatest = ({ lastResult, oppFull }) => (
         <div className="text-right min-w-0">
           <div className="text-[10px] font-mono text-white/45 uppercase tracking-wider">{oppFull?.split(' ').slice(0, -1).join(' ') || lastResult.opp}</div>
           <div className="text-[18px] font-semibold tracking-tight text-white/85">{oppFull?.split(' ').slice(-1) || ''}</div>
+          {oppRow && (
+            <div className="flex justify-end mt-1.5 text-[10px] font-mono text-white/45 tabular-nums">
+              {oppRow.w}–{oppRow.l}{oppRow.ot ? `–${oppRow.ot}` : ''}
+            </div>
+          )}
         </div>
         <TeamLogo abbr={lastResult.opp} size={48} />
       </div>
@@ -255,9 +448,12 @@ const HeroLatest = ({ lastResult, oppFull }) => (
   </>
 );
 
-export const Hero = ({ liveGame, liveDetail, nextGame, lastResult, us }) => {
+export const Hero = ({ liveGame, liveDetail, nextGame, lastResult, us, recentGames, standings }) => {
   const opp = liveGame?.opp || nextGame?.opp || lastResult?.opp;
   const oppFull = opp ? OPP_FULL[opp] : null;
+  // Find the opponent's full standings row so we can show their record next
+  // to their name. league has every team; us is just PHI so we skip it.
+  const oppRow = opp && standings?.league ? standings.league.find((t) => t.abbr === opp) : null;
 
   return (
     <div className="relative overflow-hidden rounded-lg border border-white/[0.08] bg-[#0A0A0A] px-5 sm:px-8 py-6 sm:py-8 shadow-[0_0_0_1px_rgba(255,255,255,0.02)_inset,0_24px_48px_-24px_rgba(0,0,0,0.9),0_2px_0_rgba(255,255,255,0.04)_inset]">
@@ -295,14 +491,20 @@ export const Hero = ({ liveGame, liveDetail, nextGame, lastResult, us }) => {
             watermarks always cause on a dark panel. */}
         <Watermark url={PHI_LOGO} side="left" />
         <Watermark url={teamLogoUrl(opp)} side="right" />
+        {/* Page-width hockey-rink graphic + skating sweep — adds motion and a
+            hockey-themed centerpiece to the otherwise empty middle band. The
+            rink is clipped to the upper portion so the bottom HeroStats row
+            stays clean. */}
+        <FullRinkMark />
+        <HeroSweep />
         {/* Top edge highlight + bottom shadow for the "raised card" feel. */}
         <div aria-hidden className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/15 to-transparent" />
         <div aria-hidden className="pointer-events-none absolute inset-x-8 bottom-0 h-12 bg-gradient-to-t from-black/60 to-transparent" />
 
       <div className="relative">
-        {liveGame ? <HeroLive liveGame={liveGame} liveDetail={liveDetail} oppFull={oppFull} /> :
-          nextGame ? <HeroNext nextGame={nextGame} oppFull={oppFull} /> :
-          lastResult ? <HeroLatest lastResult={lastResult} oppFull={oppFull} /> :
+        {liveGame ? <HeroLive liveGame={liveGame} liveDetail={liveDetail} oppFull={oppFull} recentGames={recentGames} oppRow={oppRow} /> :
+          nextGame ? <HeroNext nextGame={nextGame} oppFull={oppFull} recentGames={recentGames} oppRow={oppRow} /> :
+          lastResult ? <HeroLatest lastResult={lastResult} oppFull={oppFull} recentGames={recentGames} oppRow={oppRow} /> :
           (
             <div className="flex items-center gap-3">
               <FlyersMark size={48} />
@@ -361,6 +563,14 @@ const Watermark = ({ url, side }) => {
     </div>
   );
 };
+
+// Tiny puck glyph for label decoration.
+const PuckIcon = ({ size = 10 }) => (
+  <svg width={size} height={size * 0.55} viewBox="0 0 20 11" aria-hidden>
+    <ellipse cx="10" cy="5.5" rx="9" ry="4" fill="#F74902" opacity="0.85" />
+    <ellipse cx="10" cy="4" rx="9" ry="4" fill="none" stroke="#FF8A4C" strokeWidth="1" opacity="0.9" />
+  </svg>
+);
 
 const HeroStat = ({ label, value, accent }) => {
   const valueClass =

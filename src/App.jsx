@@ -24,17 +24,41 @@ import { useGoalNotifications, useGoalNotificationsEnabled } from './components/
 
 // Page-level code splitting — each route ships in its own chunk so the first
 // paint only includes the Dashboard. Named exports get unwrapped via .then.
-const Dashboard = lazy(() => import('./pages/Dashboard.jsx').then((m) => ({ default: m.Dashboard })));
-const Schedule  = lazy(() => import('./pages/Schedule.jsx').then((m) => ({ default: m.Schedule })));
-const Standings = lazy(() => import('./pages/Standings.jsx').then((m) => ({ default: m.Standings })));
-const GameTape  = lazy(() => import('./pages/GameTape.jsx').then((m) => ({ default: m.GameTape })));
-const Playoffs  = lazy(() => import('./pages/Playoffs.jsx').then((m) => ({ default: m.Playoffs })));
-const Roster    = lazy(() => import('./pages/Roster.jsx').then((m) => ({ default: m.Roster })));
-const PlayerProfile = lazy(() => import('./pages/PlayerProfile.jsx').then((m) => ({ default: m.PlayerProfile })));
-const PlayerCompare = lazy(() => import('./pages/PlayerCompare.jsx').then((m) => ({ default: m.PlayerCompare })));
-const Trends = lazy(() => import('./pages/Trends.jsx').then((m) => ({ default: m.Trends })));
-const Coaches = lazy(() => import('./pages/Coaches.jsx').then((m) => ({ default: m.Coaches })));
-const Draft = lazy(() => import('./pages/Draft.jsx').then((m) => ({ default: m.Draft })));
+//
+// `lazyPage` wraps React.lazy so a chunk-fetch failure (stale index.html
+// pointing at a hashed JS file the CDN no longer serves after a redeploy)
+// triggers a one-time hard reload instead of crashing into the ErrorBoundary.
+const lazyPage = (importer, name) => lazy(async () => {
+  try {
+    const m = await importer();
+    return { default: m[name] };
+  } catch (err) {
+    const msg = String(err?.message || err || '');
+    const stale = /Failed to fetch dynamically imported module|Importing a module script failed|ChunkLoadError|error loading dynamically imported module/i.test(msg);
+    if (stale && typeof window !== 'undefined') {
+      const FLAG = 'flyersfan.chunk-reload-at';
+      const last = Number(sessionStorage.getItem(FLAG) || 0);
+      if (Date.now() - last > 10_000) {
+        sessionStorage.setItem(FLAG, String(Date.now()));
+        window.location.reload();
+        return { default: () => null }; // placeholder during reload
+      }
+    }
+    throw err;
+  }
+});
+
+const Dashboard = lazyPage(() => import('./pages/Dashboard.jsx'), 'Dashboard');
+const Schedule  = lazyPage(() => import('./pages/Schedule.jsx'),  'Schedule');
+const Standings = lazyPage(() => import('./pages/Standings.jsx'), 'Standings');
+const GameTape  = lazyPage(() => import('./pages/GameTape.jsx'),  'GameTape');
+const Playoffs  = lazyPage(() => import('./pages/Playoffs.jsx'),  'Playoffs');
+const Roster    = lazyPage(() => import('./pages/Roster.jsx'),    'Roster');
+const PlayerProfile = lazyPage(() => import('./pages/PlayerProfile.jsx'), 'PlayerProfile');
+const PlayerCompare = lazyPage(() => import('./pages/PlayerCompare.jsx'), 'PlayerCompare');
+const Trends   = lazyPage(() => import('./pages/Trends.jsx'),   'Trends');
+const Coaches  = lazyPage(() => import('./pages/Coaches.jsx'),  'Coaches');
+const Draft    = lazyPage(() => import('./pages/Draft.jsx'),    'Draft');
 
 export default function App() {
   // Route-derived state — URL is the source of truth. /game/123, ?player=8478,
@@ -371,7 +395,7 @@ export default function App() {
                 {page === 'roster'    && <Roster roster={roster} clubStats={clubStats} prospects={prospects} draftPicks={draftPicks} />}
                 {page === 'player'    && <PlayerProfile playerId={profileId} />}
                 {page === 'compare'   && <PlayerCompare schedule={schedule} />}
-                {page === 'trends'    && <Trends schedule={schedule} standings={standings} />}
+                {page === 'trends'    && <Trends schedule={schedule} standings={standings} roster={roster} />}
                 {page === 'coaches'   && <Coaches />}
                 {page === 'draft'     && <Draft rankings={draftRankings} loading={drNAS.loading} />}
               </Suspense>

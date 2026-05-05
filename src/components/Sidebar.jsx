@@ -3,8 +3,9 @@ import { cx, fmtRelative, connStatus } from '../config.js';
 import { Kbd, Chip, Label, Skeleton } from './primitives.jsx';
 import { FlyersMark, TeamLogo } from './Logo.jsx';
 import { NAV_ITEMS } from './nav.js';
+import { navigate, playerHref } from '../router.js';
 
-export const Sidebar = ({ page, setPage, team, liveGame, metro, lastFetch, error, refresh }) => {
+export const Sidebar = ({ page, setPage, team, liveGame, metro, roster, lastFetch, error, refresh }) => {
   const status = connStatus(lastFetch, error);
   const streak = team?.streak;
 
@@ -103,6 +104,8 @@ export const Sidebar = ({ page, setPage, team, liveGame, metro, lastFetch, error
             )}
           </div>
         </div>
+
+        <SidebarRoster roster={roster} />
       </nav>
 
       <div className="border-t border-white/[0.05] p-3 space-y-2">
@@ -132,5 +135,71 @@ export const Sidebar = ({ page, setPage, team, liveGame, metro, lastFetch, error
         )}
       </div>
     </aside>
+  );
+};
+
+// Roster section in the left sidebar — full team list grouped F/D/G,
+// jersey-number ordered. Click a name to jump straight to the player's
+// profile page. Designed to slot under "Metro · Top 4" without bloating
+// the sidebar: each row is 24px tall and the whole list flows in the
+// already-scrollable nav area.
+const SidebarRoster = ({ roster }) => {
+  if (!roster) {
+    return (
+      <div className="mt-6 px-2">
+        <div className="flex items-center justify-between mb-2">
+          <Label>Roster</Label>
+        </div>
+        <div className="space-y-[2px]">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <div key={i} className="px-2 h-6 flex items-center">
+              <Skeleton className="w-full" height={10} />
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+  const groups = [
+    { label: 'Forwards', list: roster.forwards },
+    { label: 'Defense',  list: roster.defense  },
+    { label: 'Goalies',  list: roster.goalies  },
+  ];
+  const total = roster.forwards.length + roster.defense.length + roster.goalies.length;
+
+  return (
+    <div className="mt-6 px-2">
+      <div className="flex items-center justify-between mb-2">
+        <Label>Roster</Label>
+        <span className="text-[9px] font-mono text-white/30">{total}</span>
+      </div>
+      <div className="space-y-2">
+        {groups.map((g) => (
+          <div key={g.label}>
+            <div className="px-2 mb-1 text-[8px] font-mono uppercase tracking-[0.18em] text-white/30">
+              {g.label} · {g.list.length}
+            </div>
+            <div className="space-y-[1px]">
+              {g.list.map((p) => (
+                <button
+                  key={p.id}
+                  onClick={() => navigate(playerHref(p.id))}
+                  title={`${p.name} · #${p.num || '—'} · ${p.pos}`}
+                  className="w-full flex items-center gap-2 px-2 h-6 rounded-sm hover:bg-white/[0.04] transition-colors text-left group"
+                >
+                  <span className="text-[10px] font-mono tabular-nums text-white/30 w-5 group-hover:text-[#FF8A4C]">
+                    {p.num != null ? p.num : '—'}
+                  </span>
+                  <span className="text-[11px] text-white/70 group-hover:text-white truncate flex-1">
+                    {p.name}
+                  </span>
+                  <span className="text-[9px] font-mono text-white/30">{p.pos}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
   );
 };

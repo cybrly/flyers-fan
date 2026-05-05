@@ -93,8 +93,6 @@ export const Dashboard = ({ schedule, standings, scoreboard, clubStats, roster, 
 
       <SeriesTracker scoreboard={scoreboard} schedule={schedule} onOpenGame={onOpenGame} />
 
-      {scoreboard?.games?.length > 0 && <Scoreboard data={scoreboard} />}
-
       {/* Live / Next / Latest result side-by-side */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         <LiveOrNextCard
@@ -415,6 +413,14 @@ export const Dashboard = ({ schedule, standings, scoreboard, clubStats, roster, 
 
         <UpcomingPanel upcoming={schedule?.upcoming || []} />
       </div>
+
+      {/* League ticker — relegated to the bottom so league-wide scores don't
+          crowd Flyers content at the top of the dashboard. */}
+      {scoreboard?.games?.length > 0 && (
+        <div className="pt-2">
+          <Scoreboard data={scoreboard} />
+        </div>
+      )}
     </div>
   );
 };

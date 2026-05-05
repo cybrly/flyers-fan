@@ -30,6 +30,7 @@ const Roster    = lazy(() => import('./pages/Roster.jsx').then((m) => ({ default
 const PlayerProfile = lazy(() => import('./pages/PlayerProfile.jsx').then((m) => ({ default: m.PlayerProfile })));
 const PlayerCompare = lazy(() => import('./pages/PlayerCompare.jsx').then((m) => ({ default: m.PlayerCompare })));
 const Trends = lazy(() => import('./pages/Trends.jsx').then((m) => ({ default: m.Trends })));
+const Coaches = lazy(() => import('./pages/Coaches.jsx').then((m) => ({ default: m.Coaches })));
 
 export default function App() {
   // Route-derived state — URL is the source of truth. /game/123, ?player=8478,
@@ -57,6 +58,7 @@ export default function App() {
       player: 'Player · flyers.fan',
       compare: 'Compare · flyers.fan',
       trends: 'Trends · flyers.fan',
+      coaches: 'Coaches · flyers.fan',
     };
     document.title = titles[page] || 'flyers.fan';
   }, [page]);
@@ -74,7 +76,7 @@ export default function App() {
       const map = {
         '1': 'dashboard', '2': 'schedule', '3': 'standings',
         '4': 'game', '5': 'playoffs', '6': 'roster',
-        '7': 'trends', '8': 'compare',
+        '7': 'trends', '8': 'compare', '9': 'coaches',
       };
       if (map[e.key]) navigate(pageHref(map[e.key]));
     };
@@ -140,9 +142,10 @@ export default function App() {
   const bracketRaw = useNHL(bracketPath, POLL.standings);
   const bracket = useMemo(() => adaptBracket(bracketRaw.data), [bracketRaw.data]);
 
-  // Roster + club stats — fetched on Roster (full table) and Dashboard (Young
-  // Guns + Top Scorers panels). Roster has a 1h CDN TTL so this is cheap.
-  const rosterPath = (page === 'roster' || page === 'dashboard') ? `v1/roster/${TEAM_ABBR}/current` : null;
+  // Roster — fetched on every page so the sidebar can render the full team
+  // list (cheap with 1h CDN TTL). Club stats stay scoped to pages that
+  // actually surface them.
+  const rosterPath = `v1/roster/${TEAM_ABBR}/current`;
   const rosterRaw = useNHL(rosterPath, POLL.standings);
   const roster = useMemo(() => adaptRoster(rosterRaw.data), [rosterRaw.data]);
   const clubStatsPath = (page === 'roster' || page === 'dashboard') ? `v1/club-stats/${TEAM_ABBR}/now` : null;
@@ -240,6 +243,7 @@ export default function App() {
           team={teamCombined}
           liveGame={schedule.liveGame}
           metro={standings.metro}
+          roster={roster}
           lastFetch={lastFetch}
           error={anyError}
           refresh={refresh}
@@ -280,6 +284,7 @@ export default function App() {
                 {page === 'player'    && <PlayerProfile playerId={profileId} />}
                 {page === 'compare'   && <PlayerCompare schedule={schedule} />}
                 {page === 'trends'    && <Trends schedule={schedule} standings={standings} />}
+                {page === 'coaches'   && <Coaches />}
               </Suspense>
             </ErrorBoundary>
           </main>

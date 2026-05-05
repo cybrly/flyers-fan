@@ -1,4 +1,4 @@
-import { LayoutDashboard, Calendar, Trophy, Clipboard, Award, Users, TrendingUp, ArrowLeftRight } from 'lucide-react';
+import { LayoutDashboard, Calendar, Trophy, Clipboard, Award, Users, TrendingUp, ArrowLeftRight, UserCog } from 'lucide-react';
 
 export const NAV_ITEMS = [
   { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, kbd: '1' },
@@ -9,4 +9,5 @@ export const NAV_ITEMS = [
   { id: 'roster',    label: 'Roster',    icon: Users,           kbd: '6' },
   { id: 'trends',    label: 'Trends',    icon: TrendingUp,      kbd: '7' },
   { id: 'compare',   label: 'Compare',   icon: ArrowLeftRight,  kbd: '8' },
+  { id: 'coaches',   label: 'Coaches',   icon: UserCog,         kbd: '9' },
 ];

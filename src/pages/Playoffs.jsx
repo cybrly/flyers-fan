@@ -1,5 +1,5 @@
 import { Trophy } from 'lucide-react';
-import { cx, TEAM_ABBR } from '../config.js';
+import { cx, TEAM_ABBR, PLAYOFF_YEAR } from '../config.js';
 import { Chip, Section, Skeleton } from '../components/primitives.jsx';
 import { TeamLogo } from '../components/Logo.jsx';
 
@@ -238,7 +238,7 @@ export const Playoffs = ({ bracket, onOpenSeries }) => {
         <div>
           <h1 className="text-[20px] font-semibold tracking-tight">Playoffs</h1>
           <p className="text-[12px] text-white/45 mt-1 font-mono">
-            {bracket.title || '2026 Stanley Cup Playoffs'} · live
+            {bracket.title || `${PLAYOFF_YEAR} Stanley Cup Playoffs`} · live
           </p>
         </div>
         <div className="flex items-center gap-3 text-[10px] font-mono text-white/40">

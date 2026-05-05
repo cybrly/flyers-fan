@@ -16,6 +16,13 @@ export const SEASON = `${_seasonStartYear}${_seasonStartYear + 1}`;
 export const SEASON_LABEL = `${String(_seasonStartYear).slice(2)}–${String(_seasonStartYear + 1).slice(2)}`;
 export const SEASON_LABEL_FULL = `${_seasonStartYear}–${String(_seasonStartYear + 1).slice(2)}`;
 
+// Playoff year is the second calendar year of the season (e.g. 2025–26
+// season → 2026 playoffs). NHL Entry Draft happens in late June, so the
+// upcoming draft and the playoff year are the same number.
+export const PLAYOFF_YEAR = String(_seasonStartYear + 1);
+export const UPCOMING_DRAFT_YEAR = String(_seasonStartYear + 1);
+export const PRIOR_DRAFT_YEAR = String(_seasonStartYear);
+
 // Poll intervals (ms). Adjust if you want more or less chatter.
 export const POLL = {
   live: 10_000,       // when a game is in progress

@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo, useCallback, lazy, Suspense } from 'react';
 import { SpeedInsights } from '@vercel/speed-insights/react';
 
-import { TEAM_ABBR, SEASON, POLL, isLive, isFuture } from './config.js';
+import { TEAM_ABBR, SEASON, POLL, PLAYOFF_YEAR, UPCOMING_DRAFT_YEAR, PRIOR_DRAFT_YEAR, isLive, isFuture } from './config.js';
 import { useNHL, useClockTick } from './api.js';
 import { PlayerCtx } from './context.js';
 import { useRoute, navigate, setOverlay, pageHref, gameHref } from './router.js';
@@ -176,7 +176,7 @@ export default function App() {
   const pbp = useMemo(() => adaptPlayByPlay(pbpRaw.data), [pbpRaw.data]);
 
   // Playoff bracket — only fetched when on Playoffs page.
-  const bracketPath = page === 'playoffs' ? 'v1/playoff-bracket/2026' : null;
+  const bracketPath = page === 'playoffs' ? `v1/playoff-bracket/${PLAYOFF_YEAR}` : null;
   const bracketRaw = useNHL(bracketPath, POLL.standings);
   const bracket = useMemo(() => adaptBracket(bracketRaw.data), [bracketRaw.data]);
 
@@ -213,7 +213,7 @@ export default function App() {
 
   // Recent draft (current year R1 + R2). Light enough to grab on Roster page
   // for a "Recent draft picks" panel. Filtered down to PHI selections.
-  const draftYear = '2025';
+  const draftYear = PRIOR_DRAFT_YEAR;
   const draftR1 = useNHL(page === 'roster' ? `v1/draft/picks/${draftYear}/1` : null, POLL.standings);
   const draftR2 = useNHL(page === 'roster' ? `v1/draft/picks/${draftYear}/2` : null, POLL.standings);
   const draftPicks = useMemo(() => {
@@ -226,7 +226,7 @@ export default function App() {
   // fetched only when the Draft tab is active. Cheap CDN cache (rankings
   // refresh midterm + final per year).
   const onDraft = page === 'draft';
-  const drYear = '2026';
+  const drYear = UPCOMING_DRAFT_YEAR;
   const drNAS = useNHL(onDraft ? `v1/draft/rankings/${drYear}/1` : null, POLL.standings);
   const drIS  = useNHL(onDraft ? `v1/draft/rankings/${drYear}/2` : null, POLL.standings);
   const drNAG = useNHL(onDraft ? `v1/draft/rankings/${drYear}/3` : null, POLL.standings);

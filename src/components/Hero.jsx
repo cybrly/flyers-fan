@@ -146,7 +146,7 @@ const CenterShield = () => {
           className="w-full h-full object-contain"
           onError={() => setErrored(true)}
           style={{
-            opacity: 0.13,
+            opacity: 0.07,
             filter: 'grayscale(1) brightness(1.7) contrast(0.9)',
           }}
         />
@@ -155,7 +155,7 @@ const CenterShield = () => {
           viewBox="0 0 260 180"
           width="100%"
           height="100%"
-          style={{ opacity: 0.13, filter: 'grayscale(1) brightness(1.7)' }}
+          style={{ opacity: 0.07, filter: 'grayscale(1) brightness(1.7)' }}
         >
           {/* Inline fallback — abstract NHL-style shield + wordmark */}
           <path
@@ -402,20 +402,20 @@ const HeroNext = ({ nextGame, oppFull, recentGames, oppRow }) => {
           </div>
         </div>
         {cd && !cd.past ? (
-          <div className="text-center px-4 sm:px-6 py-2.5 rounded-md bg-black/40 border border-white/[0.06] shadow-[0_8px_24px_-8px_rgba(0,0,0,0.6),0_1px_0_rgba(255,255,255,0.04)_inset]">
-            <div className="text-[10px] font-mono text-white/40 uppercase tracking-wider mb-1 flex items-center justify-center gap-1.5">
+          <div className="text-center px-5 sm:px-7 py-3 rounded-md bg-black/40 border border-white/[0.06] shadow-[0_8px_24px_-8px_rgba(0,0,0,0.6),0_1px_0_rgba(255,255,255,0.04)_inset]">
+            <div className="text-[10px] font-mono text-white/40 uppercase tracking-wider mb-1.5 flex items-center justify-center gap-1.5">
               <PuckIcon size={9} />
               Puck drops in
             </div>
             <div className="flex items-baseline gap-2 justify-center font-semibold tabular-nums tracking-tight text-[#FF8A4C]"
-              style={{ textShadow: '0 0 18px rgba(247,73,2,0.35), 0 2px 4px rgba(0,0,0,0.6)' }}>
-              {cd.d > 0 && <><span className="text-[36px] sm:text-[44px] leading-none">{cd.d}</span><span className="text-[14px] text-white/40 font-mono">d</span></>}
-              <span className="text-[36px] sm:text-[44px] leading-none">{String(cd.h).padStart(2, '0')}</span>
-              <span className="text-[14px] text-white/40 font-mono">h</span>
-              <span className="text-[36px] sm:text-[44px] leading-none">{String(cd.m).padStart(2, '0')}</span>
-              <span className="text-[14px] text-white/40 font-mono">m</span>
-              <span className="text-[36px] sm:text-[44px] leading-none">{String(cd.s).padStart(2, '0')}</span>
-              <span className="text-[14px] text-white/40 font-mono">s</span>
+              style={{ textShadow: '0 0 22px rgba(247,73,2,0.4), 0 2px 4px rgba(0,0,0,0.6)' }}>
+              {cd.d > 0 && <><span className="text-[56px] sm:text-[76px] leading-none">{cd.d}</span><span className="text-[16px] sm:text-[18px] text-white/40 font-mono">d</span></>}
+              <span className="text-[56px] sm:text-[76px] leading-none">{String(cd.h).padStart(2, '0')}</span>
+              <span className="text-[16px] sm:text-[18px] text-white/40 font-mono">h</span>
+              <span className="text-[56px] sm:text-[76px] leading-none">{String(cd.m).padStart(2, '0')}</span>
+              <span className="text-[16px] sm:text-[18px] text-white/40 font-mono">m</span>
+              <span className="text-[56px] sm:text-[76px] leading-none">{String(cd.s).padStart(2, '0')}</span>
+              <span className="text-[16px] sm:text-[18px] text-white/40 font-mono">s</span>
             </div>
           </div>
         ) : (

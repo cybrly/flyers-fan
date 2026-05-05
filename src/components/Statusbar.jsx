@@ -28,8 +28,12 @@ export const Statusbar = ({ lastFetch, error, refresh }) => {
         <GoalNotificationsToggle />
       </div>
       <div className="flex items-center gap-4">
+        <span className="hidden lg:inline text-white/35">
+          Unofficial · Not affiliated with the NHL or Philadelphia Flyers
+        </span>
+        <span className="lg:hidden text-white/35">Unofficial · not NHL</span>
         <span className="hidden md:inline">2025–26 Season</span>
-        <span>v0.7</span>
+        <span>v0.8</span>
       </div>
     </div>
   );

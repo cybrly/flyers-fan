@@ -406,7 +406,13 @@ export function adaptBracket(raw) {
   .filter((s) => s.top.abbr || s.bottom.abbr);
 
   const byRound = [1, 2, 3, 4].map((r) => series.filter((s) => s.round === r));
-  return { rounds: byRound, title: raw.bracketTitle, subtitle: raw.bracketSubTitle };
+  // bracketTitle/SubTitle come back as localized {default} objects from the
+  // API — extract the string so callers can render them directly.
+  return {
+    rounds: byRound,
+    title: raw.bracketTitle?.default || raw.bracketTitle || '',
+    subtitle: raw.bracketSubTitle?.default || raw.bracketSubTitle || '',
+  };
 }
 
 // playoff series detail (single series) → game-by-game with adapted Flyers

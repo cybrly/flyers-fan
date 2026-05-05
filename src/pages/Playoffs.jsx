@@ -146,7 +146,7 @@ const ScfCell = ({ s, onOpen }) => {
 export const Playoffs = ({ bracket, onOpenSeries }) => {
   if (!bracket) {
     return (
-      <div className="p-4 md:p-6 space-y-4">
+      <div className="p-3 md:p-5 space-y-3">
         <Skeleton height={28} className="w-48" />
         <div className="grid grid-cols-7 gap-3">
           {Array.from({ length: 7 }).map((_, i) => <Skeleton key={i} height={400} />)}
@@ -171,7 +171,7 @@ export const Playoffs = ({ bracket, onOpenSeries }) => {
   const hasAny = bracket.rounds.some((arr) => arr.length > 0);
 
   return (
-    <div className="p-4 md:p-6 space-y-4">
+    <div className="p-3 md:p-5 space-y-3">
       <div className="flex items-end justify-between flex-wrap gap-3">
         <div>
           <h1 className="text-[20px] font-semibold tracking-tight">Playoffs</h1>

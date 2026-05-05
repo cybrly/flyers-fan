@@ -39,7 +39,7 @@ export const Label = ({ children, className = '' }) => (
 export const Section = ({ title, action, children, className = '' }) => (
   <div className={cx('border border-white/[0.06] bg-[#0C0C0C]/60 rounded-md backdrop-blur-sm', className)}>
     {(title || action) && (
-      <div className="flex items-center justify-between px-4 h-10 border-b border-white/[0.05]">
+      <div className="flex items-center justify-between px-3.5 h-8 border-b border-white/[0.05]">
         <span className="text-[11px] font-medium text-white/80 tracking-tight">{title}</span>
         {action}
       </div>

@@ -6,8 +6,10 @@ import { FlyersMark, TeamLogo } from '../components/Logo.jsx';
 import { KPI } from '../components/KPI.jsx';
 import { Hero } from '../components/Hero.jsx';
 import { Scoreboard } from '../components/Scoreboard.jsx';
+import { Headshot } from '../components/Headshot.jsx';
+import { PlayerLink } from '../components/PlayerLink.jsx';
 
-export const Dashboard = ({ schedule, standings, scoreboard, liveDetail, loading, onOpenGame }) => {
+export const Dashboard = ({ schedule, standings, scoreboard, clubStats, liveDetail, lastGame, loading, onOpenGame }) => {
   const games = schedule?.games?.slice(0, 20) || [];
   const chronGames = [...games].reverse();
   const l10 = games.slice(0, 10);
@@ -45,8 +47,13 @@ export const Dashboard = ({ schedule, standings, scoreboard, liveDetail, loading
   const liveGame = schedule?.liveGame;
   const lastResult = games[0];
 
+  const topScorers = clubStats?.skaters
+    ? [...clubStats.skaters].sort((a, b) => b.pts - a.pts).slice(0, 6)
+    : [];
+  const lastGameGoals = lastGame?.timeline || [];
+
   return (
-    <div className="p-4 md:p-6 space-y-4">
+    <div className="p-3 md:p-5 space-y-3">
       <Hero liveGame={liveGame} liveDetail={liveDetail} nextGame={nextGame} lastResult={lastResult} us={us} />
 
       {scoreboard?.games?.length > 0 && <Scoreboard data={scoreboard} />}
@@ -314,11 +321,11 @@ export const Dashboard = ({ schedule, standings, scoreboard, liveDetail, loading
           <Section title="Metro Standings" action={<ChevronRight size={12} className="text-white/30" />}>
             <div className="divide-y divide-white/[0.04]">
               {!standings?.metro?.length && Array.from({ length: 6 }).map((_, i) => (
-                <div key={i} className="px-4 h-8 flex items-center"><Skeleton className="w-full" height={10} /></div>
+                <div key={i} className="px-3.5 h-7 flex items-center"><Skeleton className="w-full" height={10} /></div>
               ))}
               {standings?.metro?.slice(0, 6).map((t, i) => (
                 <div key={t.abbr} className={cx(
-                  'grid grid-cols-[18px_32px_1fr_auto] gap-2 items-center px-4 h-8',
+                  'grid grid-cols-[18px_32px_1fr_auto] gap-2 items-center px-3.5 h-7',
                   t.us ? 'bg-[#F74902]/[0.06]' : 'hover:bg-white/[0.02]',
                 )}>
                   <span className={cx('text-[10px] font-mono tabular-nums',
@@ -331,6 +338,61 @@ export const Dashboard = ({ schedule, standings, scoreboard, liveDetail, loading
               ))}
             </div>
           </Section>
+
+          {topScorers.length > 0 && (
+            <Section title="Top Scorers · PHI" action={<span className="text-[10px] font-mono text-white/40">season</span>}>
+              <div className="divide-y divide-white/[0.04]">
+                {topScorers.map((p, i) => (
+                  <div key={p.id} className="grid grid-cols-[18px_1fr_auto] gap-2 items-center px-3 h-9 hover:bg-white/[0.02]">
+                    <span className={cx('text-[10px] font-mono tabular-nums',
+                      i === 0 ? 'text-[#FF8A4C]' : i < 3 ? 'text-white/55' : 'text-white/25'
+                    )}>{i + 1}</span>
+                    <span className="flex items-center gap-2 min-w-0">
+                      <Headshot src={p.headshot} num={p.num} size={20} />
+                      <PlayerLink playerId={p.id}>
+                        <span className="text-[12px] truncate">{p.name}</span>
+                      </PlayerLink>
+                      {p.pos && <span className="text-[9px] font-mono text-white/30">{p.pos}</span>}
+                    </span>
+                    <span className="flex items-center gap-2 text-[10px] font-mono tabular-nums shrink-0">
+                      <span className="text-white/50">{p.g}<span className="text-white/30">G</span></span>
+                      <span className="text-white/50">{p.a}<span className="text-white/30">A</span></span>
+                      <span className="text-[12px] font-medium text-[#FF8A4C]">{p.pts}</span>
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </Section>
+          )}
+
+          {lastGameGoals.length > 0 && (
+            <Section title="Last Game · Goals" action={<span className="text-[10px] font-mono text-white/40">{lastGame?.dateLabel || ''}</span>}>
+              <div className="divide-y divide-white/[0.04]">
+                {lastGameGoals.slice(-6).reverse().map((g, i) => (
+                  <div key={i} className={cx(
+                    'grid grid-cols-[40px_1fr_auto] items-center gap-2 px-3 h-9',
+                    g.us ? 'bg-[#F74902]/[0.04]' : '',
+                  )}>
+                    <span className="text-[9px] font-mono text-white/40 tabular-nums">
+                      P{g.period}{g.periodType === 'OT' ? ' OT' : ''}<br />
+                      <span className="text-white/30">{g.time}</span>
+                    </span>
+                    <span className="flex items-center gap-1.5 min-w-0">
+                      <Headshot playerId={g.scorerId} teamAbbrev={g.team} size={20} />
+                      <PlayerLink playerId={g.scorerId}>
+                        <span className={cx('text-[11px] truncate',
+                          g.us ? 'text-white font-medium' : 'text-white/75'
+                        )}>{g.scorer}</span>
+                      </PlayerLink>
+                    </span>
+                    <span className="text-[10px] font-mono tabular-nums text-white/60 shrink-0">
+                      {g.awayScore}<span className="text-white/25 mx-0.5">–</span>{g.homeScore}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </Section>
+          )}
         </div>
       </div>
     </div>

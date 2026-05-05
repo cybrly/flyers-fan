@@ -147,7 +147,7 @@ export const GameTape = ({ game, loading, pbp, pbpRaw, customGameId, onClearCust
   const periods = Object.keys(game.periods).map(Number).sort((a, b) => a - b);
 
   return (
-    <div className="p-4 md:p-6 space-y-4">
+    <div className="p-3 md:p-5 space-y-3">
       <div className="flex items-end justify-between flex-wrap gap-3">
         <div>
           <div className="flex items-center gap-2">

@@ -27,7 +27,7 @@ export const Schedule = ({ schedule, onOpenGame }) => {
   ];
 
   return (
-    <div className="p-4 md:p-6 space-y-4">
+    <div className="p-3 md:p-5 space-y-3">
       <div className="flex items-end justify-between flex-wrap gap-3">
         <div>
           <h1 className="text-[20px] font-semibold tracking-tight">Schedule</h1>

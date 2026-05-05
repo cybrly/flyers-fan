@@ -8,6 +8,7 @@ import { Headshot } from '../components/Headshot.jsx';
 import { ShotMap } from '../components/ShotMap.jsx';
 import { ShiftChart } from '../components/ShiftChart.jsx';
 import { LinemateAnalysis } from '../components/LinemateAnalysis.jsx';
+import { FaceoffSplits } from '../components/FaceoffSplits.jsx';
 
 const CompareRow = ({ label, us, them, higherBetter = true, suffix = '' }) => {
   if (us == null || them == null) return null;
@@ -272,6 +273,8 @@ export const GameTape = ({ game, loading, pbp, pbpRaw, customGameId, onClearCust
               <ShotMap pbpData={pbpRaw} oppAbbr={game.oppAbbr} />
             </Section>
           )}
+
+          {pbpRaw && <FaceoffSplits pbpRaw={pbpRaw} />}
 
           {game.id && (
             <ShiftChart gameId={game.id} isPlayoff={game.gameType === 3} />

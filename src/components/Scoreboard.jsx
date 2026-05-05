@@ -21,7 +21,14 @@ export const Scoreboard = ({ data }) => {
         <span className="text-[11px] font-medium text-white/80 tracking-tight">Around the League · Tonight</span>
         <span className="text-[10px] font-mono text-white/40">{games.length} game{games.length === 1 ? '' : 's'}</span>
       </div>
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-px bg-white/[0.05]">
+      {/* auto-fit + minmax means each tile gets at least 240px and expands
+          to fill remaining track space, with empty tracks collapsing rather
+          than rendering as blank cells. So 1 game = 1 wide tile (no dead
+          rectangle to its right), 12 games wrap into rows of 4–5. */}
+      <div
+        className="grid gap-px bg-white/[0.05]"
+        style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))' }}
+      >
         {games.map((g) => <ScoreTile key={g.id} g={g} />)}
       </div>
     </div>

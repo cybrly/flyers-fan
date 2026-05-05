@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo, useCallback, lazy, Suspense } from 'react';
+import { SpeedInsights } from '@vercel/speed-insights/react';
 
 import { TEAM_ABBR, SEASON, POLL, isLive, isFuture } from './config.js';
 import { useNHL, useClockTick } from './api.js';
@@ -418,6 +419,10 @@ export default function App() {
         onOpenGame={openGame}
         onOpenPlayer={playerCtx.open}
       />
+      {/* Vercel Speed Insights — Core Web Vitals beacon. Renders nothing
+          visible; ships LCP/CLS/INP measurements to Vercel for the
+          performance dashboard once the deploy is live. */}
+      <SpeedInsights />
     </div>
     </PlayerCtx.Provider>
   );

@@ -1,0 +1,8 @@
+# Allow everyone to crawl everything.
+User-agent: *
+Allow: /
+
+# Don't waste crawler budget on the API proxy or other non-content paths.
+Disallow: /api/
+
+Sitemap: https://flyers.fan/sitemap.xml

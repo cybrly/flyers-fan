@@ -1,16 +1,59 @@
-import { ChevronRight, Flame, RefreshCw } from 'lucide-react';
+import { useEffect } from 'react';
+import { ChevronRight, Flame, RefreshCw, X } from 'lucide-react';
 import { cx, fmtRelative, connStatus } from '../config.js';
 import { Kbd, Chip, Label, Skeleton } from './primitives.jsx';
 import { FlyersMark, TeamLogo } from './Logo.jsx';
 import { NAV_ITEMS } from './nav.js';
 import { navigate, playerHref } from '../router.js';
 
-export const Sidebar = ({ page, setPage, team, liveGame, metro, roster, lastFetch, error, refresh }) => {
+export const Sidebar = ({ page, setPage, team, liveGame, metro, roster, lastFetch, error, refresh, mobileOpen = false, onCloseMobile }) => {
   const status = connStatus(lastFetch, error);
   const streak = team?.streak;
 
+  // Auto-close drawer on route change (mobile UX) and on ESC.
+  useEffect(() => {
+    if (mobileOpen) onCloseMobile?.();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [page]);
+
+  useEffect(() => {
+    if (!mobileOpen) return;
+    const onKey = (e) => { if (e.key === 'Escape') onCloseMobile?.(); };
+    document.addEventListener('keydown', onKey);
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.removeEventListener('keydown', onKey);
+      document.body.style.overflow = '';
+    };
+  }, [mobileOpen, onCloseMobile]);
+
+  // Wrap navigation handler so mobile users dismiss the drawer immediately
+  // on tap (the auto-close on `page` change kicks in *after* re-render, so
+  // doing both is fine — second close is a no-op).
+  const handleSetPage = (p) => {
+    setPage(p);
+    onCloseMobile?.();
+  };
+
   return (
-    <aside className="hidden lg:flex flex-col w-[244px] shrink-0 h-screen sticky top-0 border-r border-white/[0.06] bg-[#0A0A0A]/80 backdrop-blur-md">
+    <>
+      {/* Mobile backdrop */}
+      {mobileOpen && (
+        <div
+          aria-hidden
+          className="lg:hidden fixed inset-0 z-40 bg-black/60 backdrop-blur-sm"
+          onClick={onCloseMobile}
+        />
+      )}
+
+    <aside className={cx(
+      'flex flex-col w-[244px] shrink-0 border-r border-white/[0.06] bg-[#0A0A0A]/95 backdrop-blur-md',
+      // Desktop: standard sticky sidebar
+      'lg:sticky lg:top-0 lg:h-screen',
+      // Mobile: fixed-position drawer that slides in from the left
+      'fixed lg:relative inset-y-0 left-0 h-screen z-50 transition-transform duration-200 ease-out',
+      mobileOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0',
+    )}>
       <div className="h-12 px-4 flex items-center justify-between border-b border-white/[0.05]">
         <div className="flex items-center gap-2">
           <FlyersMark size={20} />
@@ -19,14 +62,23 @@ export const Sidebar = ({ page, setPage, team, liveGame, metro, roster, lastFetc
             <span className="text-[13px] text-[#F74902] font-semibold">.fan</span>
           </div>
         </div>
-        <button
-          onClick={refresh}
-          title="Refresh data"
-          aria-label="Refresh data"
-          className="text-white/30 hover:text-white/70 transition-colors"
-        >
-          <RefreshCw size={13} />
-        </button>
+        <div className="flex items-center gap-1">
+          <button
+            onClick={refresh}
+            title="Refresh data"
+            aria-label="Refresh data"
+            className="w-7 h-7 flex items-center justify-center text-white/30 hover:text-white/70 transition-colors"
+          >
+            <RefreshCw size={13} />
+          </button>
+          <button
+            onClick={onCloseMobile}
+            aria-label="Close navigation"
+            className="lg:hidden w-7 h-7 flex items-center justify-center text-white/40 hover:text-white transition-colors"
+          >
+            <X size={16} />
+          </button>
+        </div>
       </div>
 
       <div className="px-3 py-3 border-b border-white/[0.05]">
@@ -54,7 +106,7 @@ export const Sidebar = ({ page, setPage, team, liveGame, metro, roster, lastFetc
             return (
               <button
                 key={id}
-                onClick={() => setPage(id)}
+                onClick={() => handleSetPage(id)}
                 aria-current={active ? 'page' : undefined}
                 className={cx(
                   'w-full group flex items-center justify-between px-2 h-7 rounded-md transition-all',
@@ -146,6 +198,7 @@ export const Sidebar = ({ page, setPage, team, liveGame, metro, roster, lastFetc
         )}
       </div>
     </aside>
+    </>
   );
 };
 

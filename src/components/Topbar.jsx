@@ -1,10 +1,10 @@
-import { ChevronRight, Search, Command } from 'lucide-react';
+import { ChevronRight, Search, Command, Menu } from 'lucide-react';
 import { cx, connStatus } from '../config.js';
 import { Kbd, Chip } from './primitives.jsx';
 import { FlyersMark } from './Logo.jsx';
 import { NAV_ITEMS } from './nav.js';
 
-export const Topbar = ({ page, setPage, liveGame, lastFetch, error, onOpenPalette }) => {
+export const Topbar = ({ page, liveGame, lastFetch, error, onOpenPalette, onOpenNav }) => {
   const current = NAV_ITEMS.find((n) => n.id === page) || NAV_ITEMS[0];
   const Icon = current.icon;
   const status = connStatus(lastFetch, error);
@@ -13,7 +13,17 @@ export const Topbar = ({ page, setPage, liveGame, lastFetch, error, onOpenPalett
     <header className="h-12 border-b border-white/[0.06] bg-[#0A0A0A]/90 backdrop-blur-md sticky top-0 z-30">
       <div className="h-full px-4 md:px-6 flex items-center justify-between gap-4">
         <div className="flex items-center gap-2 min-w-0">
-          <div className="lg:hidden flex items-center gap-2 mr-2">
+          <button
+            onClick={onOpenNav}
+            aria-label="Open navigation menu"
+            className="lg:hidden w-9 h-9 -ml-2 flex items-center justify-center rounded-md text-white/70 hover:text-white hover:bg-white/[0.04] transition-colors relative"
+          >
+            <Menu size={18} strokeWidth={2} />
+            {liveGame && (
+              <span className="absolute top-2 right-2 w-1.5 h-1.5 rounded-full bg-red-400 animate-pulse" />
+            )}
+          </button>
+          <div className="lg:hidden flex items-center gap-2">
             <FlyersMark size={18} />
             <span className="text-[12px] font-semibold">flyers<span className="text-[#F74902]">.fan</span></span>
           </div>
@@ -25,26 +35,6 @@ export const Topbar = ({ page, setPage, liveGame, lastFetch, error, onOpenPalett
         </div>
 
         <div className="flex items-center gap-2">
-          <nav aria-label="Primary navigation" className="lg:hidden flex items-center gap-0.5">
-            {NAV_ITEMS.map(({ id, icon: I, label }) => (
-              <button
-                key={id}
-                onClick={() => setPage(id)}
-                aria-label={label}
-                aria-current={page === id ? 'page' : undefined}
-                className={cx(
-                  'w-8 h-8 flex items-center justify-center rounded-md transition-colors relative',
-                  page === id ? 'bg-white/[0.06] text-[#F74902]' : 'text-white/50 hover:text-white'
-                )}
-              >
-                <I size={14} strokeWidth={2} />
-                {id === 'game' && liveGame && (
-                  <span className="absolute top-1 right-1 w-1.5 h-1.5 rounded-full bg-red-400 animate-pulse" />
-                )}
-              </button>
-            ))}
-          </nav>
-
           <button
             onClick={onOpenPalette}
             aria-label="Open command palette"
@@ -58,10 +48,22 @@ export const Topbar = ({ page, setPage, liveGame, lastFetch, error, onOpenPalett
             </div>
           </button>
 
+          <button
+            onClick={onOpenPalette}
+            aria-label="Open command palette"
+            className="md:hidden w-8 h-8 flex items-center justify-center rounded-md text-white/55 hover:text-white hover:bg-white/[0.04] transition-colors"
+          >
+            <Search size={14} strokeWidth={2} />
+          </button>
+
           <div className="h-4 w-px bg-white/[0.08] hidden md:block" />
 
           {liveGame ? (
-            <Chip tone="live" pulse>LIVE · {liveGame.us}–{liveGame.them} {liveGame.home ? 'vs' : '@'} {liveGame.opp}</Chip>
+            <Chip tone="live" pulse>
+              <span className="hidden sm:inline">LIVE · </span>
+              {liveGame.us}–{liveGame.them}
+              <span className="hidden sm:inline"> {liveGame.home ? 'vs' : '@'} {liveGame.opp}</span>
+            </Chip>
           ) : (
             <div className="flex items-center gap-1.5">
               <span className="relative flex h-1.5 w-1.5">

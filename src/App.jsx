@@ -40,6 +40,7 @@ export default function App() {
   // ?series=A all survive refresh and become shareable links.
   const { page, gameId: routeGameId, profileId, playerId, seriesLetter } = useRoute();
   const [paletteOpen, setPaletteOpen] = useState(false);
+  const [navOpen, setNavOpen] = useState(false);
 
   const setPage = useCallback((p) => navigate(pageHref(p)), []);
   const playerCtx = useMemo(() => ({
@@ -319,16 +320,18 @@ export default function App() {
           lastFetch={lastFetch}
           error={anyError}
           refresh={refresh}
+          mobileOpen={navOpen}
+          onCloseMobile={() => setNavOpen(false)}
         />
 
         <div className="flex-1 min-w-0 flex flex-col min-h-screen">
           <Topbar
             page={page}
-            setPage={setPage}
             liveGame={schedule.liveGame}
             lastFetch={lastFetch}
             error={anyError}
             onOpenPalette={() => setPaletteOpen(true)}
+            onOpenNav={() => setNavOpen(true)}
           />
 
           <LiveRibbon

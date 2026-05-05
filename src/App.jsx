@@ -7,6 +7,7 @@ import { useRoute, navigate, setOverlay, pageHref, gameHref } from './router.js'
 import {
   adaptSchedule, adaptStandings, adaptGame,
   adaptPlayByPlay, adaptBracket, adaptRoster, adaptClubStats, adaptScoreboard,
+  adaptLeagueLeaders, adaptProspects, adaptDraftPicks,
 } from './adapters.js';
 
 import { Sidebar } from './components/Sidebar.jsx';
@@ -152,6 +153,38 @@ export default function App() {
   const clubStatsRaw = useNHL(clubStatsPath, POLL.standings);
   const clubStats = useMemo(() => adaptClubStats(clubStatsRaw.data), [clubStatsRaw.data]);
 
+  // League leaders — split across multiple categories so we paginate each
+  // and merge. Pulled on Dashboard only. Updates slowly, so the standings
+  // poll cadence is plenty.
+  const onDash = page === 'dashboard';
+  const llSkaterPts  = useNHL(onDash ? 'v1/skater-stats-leaders/current?categories=points&limit=5' : null, POLL.standings);
+  const llSkaterG    = useNHL(onDash ? 'v1/skater-stats-leaders/current?categories=goals&limit=5' : null, POLL.standings);
+  const llSkaterA    = useNHL(onDash ? 'v1/skater-stats-leaders/current?categories=assists&limit=5' : null, POLL.standings);
+  const llSkaterPM   = useNHL(onDash ? 'v1/skater-stats-leaders/current?categories=plusMinus&limit=5' : null, POLL.standings);
+  const llGoalieSV   = useNHL(onDash ? 'v1/goalie-stats-leaders/current?categories=savePctg&limit=5' : null, POLL.standings);
+  const llGoalieGAA  = useNHL(onDash ? 'v1/goalie-stats-leaders/current?categories=goalsAgainstAverage&limit=5' : null, POLL.standings);
+  const llGoalieWins = useNHL(onDash ? 'v1/goalie-stats-leaders/current?categories=wins&limit=5' : null, POLL.standings);
+  const leagueLeaders = useMemo(() => adaptLeagueLeaders([
+    llSkaterPts.data, llSkaterG.data, llSkaterA.data, llSkaterPM.data,
+    llGoalieSV.data, llGoalieGAA.data, llGoalieWins.data,
+  ]), [llSkaterPts.data, llSkaterG.data, llSkaterA.data, llSkaterPM.data, llGoalieSV.data, llGoalieGAA.data, llGoalieWins.data]);
+
+  // Prospects — only fetched on Roster page. Cached aggressively (1h TTL).
+  const prospectsPath = page === 'roster' ? `v1/prospects/${TEAM_ABBR}` : null;
+  const prospectsRaw = useNHL(prospectsPath, POLL.standings);
+  const prospects = useMemo(() => adaptProspects(prospectsRaw.data), [prospectsRaw.data]);
+
+  // Recent draft (current year R1 + R2). Light enough to grab on Roster page
+  // for a "Recent draft picks" panel. Filtered down to PHI selections.
+  const draftYear = '2025';
+  const draftR1 = useNHL(page === 'roster' ? `v1/draft/picks/${draftYear}/1` : null, POLL.standings);
+  const draftR2 = useNHL(page === 'roster' ? `v1/draft/picks/${draftYear}/2` : null, POLL.standings);
+  const draftPicks = useMemo(() => {
+    const r1 = adaptDraftPicks(draftR1.data, TEAM_ABBR) || [];
+    const r2 = adaptDraftPicks(draftR2.data, TEAM_ABBR) || [];
+    return [...r1, ...r2];
+  }, [draftR1.data, draftR2.data]);
+
   // Sidebar team summary (combines record + clinch + streak).
   const teamCombined = useMemo(() => {
     if (!standings.us) return null;
@@ -275,12 +308,12 @@ export default function App() {
               <Suspense fallback={
                 <div className="p-6 text-[12px] font-mono text-white/35">loading…</div>
               }>
-                {page === 'dashboard' && <Dashboard schedule={schedule} standings={standings} scoreboard={scoreboard} clubStats={clubStats} roster={roster} liveDetail={isLive(boxscore.data?.gameState) ? game : null} lastGame={game} loading={scheduleRaw.loading || standingsRaw.loading} onOpenGame={openGame} />}
+                {page === 'dashboard' && <Dashboard schedule={schedule} standings={standings} scoreboard={scoreboard} clubStats={clubStats} roster={roster} liveDetail={isLive(boxscore.data?.gameState) ? game : null} lastGame={game} leagueLeaders={leagueLeaders} loading={scheduleRaw.loading || standingsRaw.loading} onOpenGame={openGame} />}
                 {page === 'schedule'  && <Schedule schedule={schedule} onOpenGame={openGame} />}
                 {page === 'standings' && <Standings standings={standings} />}
                 {page === 'game'      && <GameTape game={game} loading={boxscore.loading} pbp={pbp} pbpRaw={pbpRaw.data} customGameId={routeGameId} onClearCustom={clearSelectedGame} />}
                 {page === 'playoffs'  && <Playoffs bracket={bracket} onOpenSeries={onOpenSeries} />}
-                {page === 'roster'    && <Roster roster={roster} clubStats={clubStats} />}
+                {page === 'roster'    && <Roster roster={roster} clubStats={clubStats} prospects={prospects} draftPicks={draftPicks} />}
                 {page === 'player'    && <PlayerProfile playerId={profileId} />}
                 {page === 'compare'   && <PlayerCompare schedule={schedule} />}
                 {page === 'trends'    && <Trends schedule={schedule} standings={standings} />}

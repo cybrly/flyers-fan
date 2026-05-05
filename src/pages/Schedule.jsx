@@ -104,12 +104,13 @@ export const Schedule = ({ schedule, onOpenGame }) => {
                 <th className="font-normal text-center px-2 h-9 w-[80px]">Rest</th>
                 <th className="font-normal text-right px-2 h-9 w-[70px]">Travel</th>
                 <th className="font-normal text-center px-2 h-9 w-[110px]">Goals</th>
+                <th className="font-normal text-center px-2 h-9 w-[100px]">Watch on</th>
                 <th className="font-normal text-right px-4 h-9 w-[50px]">Type</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-white/[0.04]">
               {!all.length && Array.from({ length: 8 }).map((_, i) => (
-                <tr key={i}><td colSpan={10} className="px-4 h-11"><Skeleton className="w-full" height={18} /></td></tr>
+                <tr key={i}><td colSpan={11} className="px-4 h-11"><Skeleton className="w-full" height={18} /></td></tr>
               ))}
               {filtered.map((g) => {
                 const diff = g.us - g.them;
@@ -180,6 +181,9 @@ export const Schedule = ({ schedule, onOpenGame }) => {
                         ))}
                       </div>
                     </td>
+                    <td className="px-2 text-center">
+                      <BroadcastCell broadcasts={g.tvBroadcasts} />
+                    </td>
                     <td className="px-4 text-right">
                       <span className="text-[10px] font-mono text-white/35">{g.gameType === 3 ? 'PO' : 'REG'}</span>
                     </td>
@@ -217,6 +221,46 @@ const TravelSummary = ({ games }) => {
         <Tile label="Long Travel (1.5k+)" value={longTravel.length} sub="cross-country" color="#F59E0B" />
       </div>
     </Section>
+  );
+};
+
+// Broadcast network pills with tone colors per network. National
+// broadcasts (TNT, ESPN, NHLN, SN, TVAS) get warm/cool emphasis; local
+// regional networks fade to neutral. Markets: 'H' home, 'A' away, 'N'
+// national. We dedupe networks so a national+regional combo doesn't
+// double-print the same logo.
+const NETWORK_TONE = {
+  TNT: 'text-amber-300', 'TBS': 'text-amber-300',
+  ESPN: 'text-red-300', 'ESPN+': 'text-red-300', 'ABC': 'text-red-300', 'HULU': 'text-red-300',
+  NHLN: 'text-sky-300', 'NHL.TV': 'text-sky-300',
+  SN: 'text-orange-300', 'SN1': 'text-orange-300', 'SN360': 'text-orange-300', 'SNNOW': 'text-orange-300',
+  TVAS: 'text-violet-300', 'TVAS2': 'text-violet-300',
+  CBC: 'text-red-300/80',
+};
+const BroadcastCell = ({ broadcasts }) => {
+  if (!broadcasts?.length) return <span className="text-[10px] font-mono text-white/25">—</span>;
+  const seen = new Set();
+  const networks = broadcasts.filter((b) => {
+    if (!b.network || seen.has(b.network)) return false;
+    seen.add(b.network);
+    return true;
+  });
+  return (
+    <span className="flex items-center justify-center gap-1 flex-wrap">
+      {networks.slice(0, 3).map((b) => (
+        <span
+          key={b.network}
+          className={cx(
+            'text-[9px] font-mono font-medium px-1 py-[1px] border rounded-[3px]',
+            NETWORK_TONE[b.network] || 'text-white/55',
+            'border-current/30 bg-white/[0.02]',
+          )}
+          title={`${b.market === 'N' ? 'National' : b.market === 'H' ? 'Home' : 'Away'} · ${b.country || ''}`}
+        >
+          {b.network}
+        </span>
+      ))}
+    </span>
   );
 };
 

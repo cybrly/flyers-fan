@@ -10,6 +10,7 @@ import { Headshot } from '../components/Headshot.jsx';
 import { PlayerLink } from '../components/PlayerLink.jsx';
 import { SeriesTracker } from '../components/SeriesTracker.jsx';
 import { HeadToHead } from '../components/HeadToHead.jsx';
+import { LeagueLeaders } from '../components/LeagueLeaders.jsx';
 
 // Dashboard is laid out as a single linear flow split into named bands
 // (Tonight / Season / Recent / Offense / Roster / Reference). Each band
@@ -34,7 +35,7 @@ const l10Tone = (w, l) => w >= 7 ? 'good' : w >= 5 ? 'warm' : l >= 7 ? 'bad' : '
 const divTone = (rank) => !rank ? 'default' : rank <= 3 ? 'good' : rank >= 6 ? 'bad' : 'amber';
 const ptsPctTone = (pct) => pct >= 0.6 ? 'good' : pct >= 0.5 ? 'warm' : pct <= 0.45 ? 'bad' : 'amber';
 
-export const Dashboard = ({ schedule, standings, scoreboard, clubStats, roster, liveDetail, lastGame, loading, onOpenGame }) => {
+export const Dashboard = ({ schedule, standings, scoreboard, clubStats, roster, liveDetail, lastGame, leagueLeaders, loading, onOpenGame }) => {
   const games = schedule?.games?.slice(0, 20) || [];
   const chronGames = [...games].reverse();
   const l10 = games.slice(0, 10);
@@ -372,6 +373,9 @@ export const Dashboard = ({ schedule, standings, scoreboard, clubStats, roster, 
 
         <MilestoneWatch clubStats={clubStats} />
       </div>
+
+      {/* League leaders panel — full-width pivot from PHI to NHL-wide. */}
+      <LeagueLeaders data={leagueLeaders} />
 
       {/* ─── BAND · ROSTER & FRANCHISE ────────────────────────────────────── */}
       <SectionBand label="Roster & Franchise" color="amber" sub="young guns · honors" />

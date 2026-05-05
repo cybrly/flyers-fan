@@ -5,6 +5,7 @@ import { PlayerLink } from '../components/PlayerLink.jsx';
 import { Headshot } from '../components/Headshot.jsx';
 import { Hometowns } from '../components/Hometowns.jsx';
 import { Birthdays } from '../components/Birthdays.jsx';
+import { TeamLogo } from '../components/Logo.jsx';
 
 const HEIGHT = (inches) => inches ? `${Math.floor(inches / 12)}'${inches % 12}"` : '—';
 
@@ -110,7 +111,7 @@ const Leaderboard = ({ rows, columns, title, withPtsBar = false }) => {
   );
 };
 
-export const Roster = ({ roster, clubStats }) => {
+export const Roster = ({ roster, clubStats, prospects, draftPicks }) => {
   const [view, setView] = useState('forwards');
   if (!roster) {
     return (
@@ -186,7 +187,96 @@ export const Roster = ({ roster, clubStats }) => {
           <RosterTable players={list} showSaves={view === 'goalies'} />
         </div>
       </Section>
+
+      {draftPicks?.length > 0 && <DraftPicksPanel picks={draftPicks} />}
+
+      {prospects && <ProspectsPanel prospects={prospects} />}
     </div>
+  );
+};
+
+// Recent draft picks for PHI — 1st + 2nd round of the most recent draft.
+// Source: /v1/draft/picks/{year}/{round}, filtered by team. Click name →
+// player profile. Each row shows pick number, position, and amateur club.
+const DraftPicksPanel = ({ picks }) => {
+  return (
+    <Section
+      title={`${picks[0].year} Draft · PHI Picks`}
+      action={<span className="text-[10px] font-mono text-white/40">{picks.length} selections shown</span>}
+    >
+      <div className="divide-y divide-white/[0.04]">
+        {picks.map((p) => (
+          <div key={`${p.round}-${p.pickInRound}`} className="grid grid-cols-[60px_28px_1fr_auto] items-center gap-3 px-4 h-12 hover:bg-white/[0.02]">
+            <div className="text-center">
+              <div className="text-[16px] font-semibold tabular-nums text-[#FF8A4C] leading-none">#{p.overall}</div>
+              <div className="text-[9px] font-mono text-white/35 mt-0.5">R{p.round} · {p.pickInRound}</div>
+            </div>
+            <span className="text-[10px] font-mono text-white/45 text-center">{p.pos}</span>
+            <div className="min-w-0">
+              <div className="text-[12px] text-white/85 truncate">
+                {p.playerId
+                  ? <PlayerLink playerId={p.playerId}>{p.name}</PlayerLink>
+                  : <span>{p.name || '—'}</span>}
+              </div>
+              <div className="text-[10px] font-mono text-white/45 truncate">
+                {[p.amateurClub, p.amateurLeague, p.birthCountry].filter(Boolean).join(' · ')}
+              </div>
+            </div>
+            <div className="text-right text-[10px] font-mono text-white/45 shrink-0">
+              {p.heightIn ? `${Math.floor(p.heightIn / 12)}'${p.heightIn % 12}"` : '—'}
+              {p.weightLb ? ` · ${p.weightLb} lb` : ''}
+            </div>
+          </div>
+        ))}
+      </div>
+    </Section>
+  );
+};
+
+// Prospects / pipeline view from /v1/prospects/PHI. Players from junior /
+// college / European leagues who are signed/drafted but not on the NHL roster.
+// Grouped F / D / G; click → player profile.
+const ProspectsPanel = ({ prospects }) => {
+  const total = prospects.forwards.length + prospects.defense.length + prospects.goalies.length;
+  if (!total) return null;
+
+  const Group = ({ label, list }) => list.length === 0 ? null : (
+    <div className="bg-[#0A0A0A] p-3">
+      <div className="flex items-center justify-between mb-2">
+        <span className="text-[10px] font-mono text-white/40 uppercase tracking-[0.18em]">{label}</span>
+        <span className="text-[10px] font-mono text-white/30 tabular-nums">{list.length}</span>
+      </div>
+      <div className="space-y-1">
+        {list.map((p) => (
+          <button
+            key={p.id}
+            onClick={() => window.location.assign(`/player/${p.id}`)}
+            className="w-full flex items-center gap-2 px-2 h-8 rounded-sm hover:bg-white/[0.04] transition-colors text-left"
+          >
+            <Headshot src={p.headshot} num={p.num} size={22} />
+            <span className="flex-1 min-w-0">
+              <span className="block text-[12px] text-white/85 truncate">{p.name}</span>
+              <span className="block text-[9px] font-mono text-white/40 truncate">
+                {p.pos}{p.age != null ? ` · ${p.age}y` : ''}{p.birthCountry ? ` · ${p.birthCountry}` : ''}
+              </span>
+            </span>
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+
+  return (
+    <Section
+      title="Prospects · Pipeline"
+      action={<span className="text-[10px] font-mono text-white/40">{total} players</span>}
+    >
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-px bg-white/[0.04]">
+        <Group label="Forwards" list={prospects.forwards} />
+        <Group label="Defense"  list={prospects.defense} />
+        <Group label="Goalies"  list={prospects.goalies} />
+      </div>
+    </Section>
   );
 };
 

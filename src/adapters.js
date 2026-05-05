@@ -24,8 +24,16 @@ export function adaptSchedule(raw) {
       opp: them.abbrev,
       oppName: them.placeName?.default ? `${them.placeName.default} ${them.commonName?.default || ''}`.trim() : them.abbrev,
       venue: g.venue?.default,
+      neutralSite: !!g.neutralSite,
       periodType: g.periodDescriptor?.periodType,
       lastPeriodType: g.gameOutcome?.lastPeriodType,
+      // Broadcast networks for the game. Each entry has { network, market,
+      // countryCode } where market is H (home), A (away), or N (national).
+      tvBroadcasts: (g.tvBroadcasts || []).map((b) => ({
+        network: b.network,
+        market: b.market,
+        country: b.countryCode,
+      })),
     };
 
     if (isLive(g.gameState)) {
@@ -553,4 +561,78 @@ export function adaptClubStats(raw) {
     headshot: p.headshot,
   }));
   return { skaters, goalies };
+}
+
+// League leaders — /v1/skater-stats-leaders/current and /goalie-stats-leaders/current.
+// We make multiple calls (one per category) and stitch them together; the
+// returned shape is { goals: [...], assists: [...], etc. } so we just merge
+// each fetch into a single object.
+export function adaptLeagueLeaders(payloads) {
+  if (!payloads || !payloads.length) return null;
+  const merged = {};
+  for (const p of payloads) {
+    if (!p) continue;
+    for (const [k, v] of Object.entries(p)) {
+      merged[k] = (v || []).map((x) => ({
+        id: x.id,
+        name: `${x.firstName?.default || ''} ${x.lastName?.default || ''}`.trim(),
+        num: x.sweaterNumber,
+        team: x.teamAbbrev,
+        pos: x.position,
+        headshot: x.headshot,
+        value: x.value,
+      }));
+    }
+  }
+  return merged;
+}
+
+// Prospects roster — /v1/prospects/{TEAM}. Same shape as the regular roster
+// adapter but for non-NHL prospects (juniors / NCAA / European leagues).
+export function adaptProspects(raw) {
+  if (!raw) return null;
+  const norm = (p) => ({
+    id: p.id,
+    name: `${p.firstName?.default || ''} ${p.lastName?.default || ''}`.trim(),
+    num: p.sweaterNumber,
+    pos: p.positionCode,
+    shoots: p.shootsCatches,
+    heightIn: p.heightInInches,
+    weightLb: p.weightInPounds,
+    age: p.birthDate ? Math.floor((Date.now() - new Date(p.birthDate).getTime()) / 31557600000) : null,
+    birthDate: p.birthDate,
+    birthCity: p.birthCity?.default,
+    birthCountry: p.birthCountry,
+    headshot: p.headshot,
+  });
+  return {
+    forwards: (raw.forwards || []).map(norm),
+    defense: (raw.defensemen || []).map(norm),
+    goalies: (raw.goalies || []).map(norm),
+  };
+}
+
+// Draft picks — /v1/draft/picks/{year}/{round}. Returns { picks: [...] }
+// with each pick's overall pick number, team, and selected player.
+export function adaptDraftPicks(raw, teamAbbr) {
+  if (!raw?.picks?.length) return null;
+  return raw.picks
+    .filter((p) => !teamAbbr || p.teamAbbrev === teamAbbr)
+    .map((p) => ({
+      year: raw.draftYear,
+      round: p.round,
+      pickInRound: p.pickInRound,
+      overall: p.overallPick,
+      team: p.teamAbbrev,
+      teamLogo: p.teamLogo,
+      playerId: p.playerId || null,
+      name: `${p.firstName?.default || ''} ${p.lastName?.default || ''}`.trim(),
+      pos: p.positionCode,
+      heightIn: p.heightInInches,
+      weightLb: p.weightInPounds,
+      birthCountry: p.birthCountry,
+      headshot: p.headshot,
+      amateurClub: p.amateurClubName?.default,
+      amateurLeague: p.amateurLeague?.default,
+    }));
 }

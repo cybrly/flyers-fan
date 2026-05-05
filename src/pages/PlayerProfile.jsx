@@ -6,6 +6,62 @@ import { Section, Skeleton, Chip, Label } from '../components/primitives.jsx';
 import { TeamLogo } from '../components/Logo.jsx';
 import { Sparkline } from '../components/charts.jsx';
 import { navigate, gameHref } from '../router.js';
+import { PLAYER_SOCIALS } from '../data/playerSocials.js';
+
+// Inline SVGs for Instagram + X. Drawn small and monochrome so they live
+// quietly in the player hero. Lucide-react v1.8 doesn't ship Instagram or
+// Twitter icons, hence the inline paths.
+const IGIcon = ({ size = 14 }) => (
+  <svg viewBox="0 0 24 24" width={size} height={size} fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+    <rect x="3" y="3" width="18" height="18" rx="5" ry="5" />
+    <circle cx="12" cy="12" r="4" />
+    <circle cx="17.5" cy="6.5" r="0.6" fill="currentColor" />
+  </svg>
+);
+const XIcon = ({ size = 14 }) => (
+  <svg viewBox="0 0 24 24" width={size} height={size} fill="currentColor" aria-hidden>
+    <path d="M17.53 3H21l-7.31 8.36L22 21h-6.71l-5.06-6.18L4.46 21H1l7.82-8.95L1.5 3h6.86l4.58 5.61L17.53 3zm-1.18 16h1.81L7.78 4.92H5.85L16.35 19z" />
+  </svg>
+);
+
+// Render a small social-link block for a player. If a curated handle exists
+// in PLAYER_SOCIALS the link goes directly to the profile; otherwise it
+// falls back to a platform search for the player's name so visitors can
+// still find the official account without leaving the site.
+const SocialLinks = ({ playerId, fullName }) => {
+  const curated = PLAYER_SOCIALS[playerId] || {};
+  const igHref = curated.instagram
+    ? `https://www.instagram.com/${curated.instagram}/`
+    : `https://www.instagram.com/explore/search/keyword/?q=${encodeURIComponent(fullName)}`;
+  const xHref = curated.x
+    ? `https://x.com/${curated.x}`
+    : `https://x.com/search?q=${encodeURIComponent(fullName + ' NHL')}&f=user`;
+  const link = (href, Icon, label, direct) => (
+    <a
+      href={href}
+      target="_blank"
+      rel="noopener noreferrer"
+      title={direct ? `${label} · @${direct}` : `Search ${label} for ${fullName}`}
+      className={cx(
+        'inline-flex items-center gap-1.5 h-7 px-2.5 rounded-md border text-[11px] font-mono transition-colors',
+        direct
+          ? 'border-[#F74902]/30 bg-[#F74902]/[0.06] text-[#FF8A4C] hover:bg-[#F74902]/[0.12]'
+          : 'border-white/[0.08] bg-white/[0.02] text-white/55 hover:text-white hover:border-white/20'
+      )}
+    >
+      <Icon size={12} />
+      <span>{label}</span>
+      {direct && <span className="text-white/45">·</span>}
+      {direct && <span className="text-white/85 truncate max-w-[120px]">@{direct}</span>}
+    </a>
+  );
+  return (
+    <div className="flex items-center gap-2 flex-wrap mt-3">
+      {link(igHref, IGIcon, 'Instagram', curated.instagram)}
+      {link(xHref,  XIcon,  'X',         curated.x)}
+    </div>
+  );
+};
 
 const HEIGHT = (inches) => inches ? `${Math.floor(inches / 12)}'${inches % 12}"` : '—';
 
@@ -150,6 +206,7 @@ export const PlayerProfile = ({ playerId }) => {
                 {draft.teamAbbrev && <> by <span className="text-white/65">{draft.teamAbbrev}</span></>}
               </div>
             )}
+            <SocialLinks playerId={playerId} fullName={fullName} />
           </div>
         </div>
       </div>

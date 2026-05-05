@@ -3,19 +3,62 @@ import { cx, TEAM_ABBR } from '../config.js';
 import { Chip, Section, Skeleton } from '../components/primitives.jsx';
 import { TeamLogo } from '../components/Logo.jsx';
 
-// Single series tile — two team rows with rank, logo, name, wins. The whole
-// tile is clickable and opens the SeriesModal for game-by-game detail.
+// Historical NHL best-of-7 series-win probability conditional on current
+// series score. Numbers come from publicly-cited NHL splits (3-0 leads have
+// almost never been blown, 2-2 series are coin flips, etc.). When the series
+// hasn't started, we fall through to a seed-based estimate. This is a
+// transparent heuristic — not a betting line — and labelled as such in the UI.
+const SERIES_PROB_TABLE = {
+  '0-0': 0.50,
+  '1-0': 0.66, '0-1': 0.34,
+  '2-0': 0.81, '0-2': 0.19,
+  '1-1': 0.50,
+  '2-1': 0.65, '1-2': 0.35,
+  '3-0': 0.96, '0-3': 0.04,
+  '3-1': 0.84, '1-3': 0.16,
+  '2-2': 0.50,
+  '3-2': 0.70, '2-3': 0.30,
+};
+
+// Returns { top, bottom } as integer percentages summing to 100.
+const seriesOdds = (s) => {
+  if (!s) return null;
+  if (s.complete) {
+    const topWon = s.top.wins > s.bottom.wins;
+    return { top: topWon ? 100 : 0, bottom: topWon ? 0 : 100 };
+  }
+  const tw = s.top.wins ?? 0;
+  const bw = s.bottom.wins ?? 0;
+  let topProb = SERIES_PROB_TABLE[`${tw}-${bw}`];
+  if (topProb == null) {
+    // Defensive fallback — shouldn't be reached for a real best-of-7.
+    topProb = tw === bw ? 0.5 : tw > bw ? 0.6 : 0.4;
+  }
+  // Seed adjustment only when the series hasn't started — once games are in,
+  // the score itself carries the information. Roughly 3 points per seed gap.
+  if (tw === 0 && bw === 0 && s.top.rank && s.bottom.rank) {
+    const seedDiff = s.bottom.rank - s.top.rank;
+    topProb = 0.5 + Math.max(-0.2, Math.min(0.2, seedDiff * 0.03));
+  }
+  const top = Math.round(topProb * 100);
+  return { top, bottom: 100 - top };
+};
+
+// Single series tile — two team rows with rank, logo, name, wins, plus a
+// derived series-win probability strip at the bottom. The whole tile is
+// clickable and opens the SeriesModal for game-by-game detail.
 const SeriesCell = ({ s, onOpen }) => {
   if (!s) {
     // Empty placeholder slot — keeps grid alignment when teams TBD.
     return (
-      <div className="border border-dashed border-white/[0.06] bg-white/[0.01] rounded-md h-[96px] flex items-center justify-center">
+      <div className="border border-dashed border-white/[0.06] bg-white/[0.01] rounded-md h-[120px] flex items-center justify-center">
         <span className="text-[10px] font-mono text-white/25">TBD</span>
       </div>
     );
   }
   const topWon = s.complete && s.top.wins > s.bottom.wins;
   const botWon = s.complete && !topWon;
+  const odds = seriesOdds(s);
   const teamRow = (t, won) => (
     <div className={cx(
       'flex items-center gap-2.5 px-3 h-[44px]',
@@ -48,6 +91,25 @@ const SeriesCell = ({ s, onOpen }) => {
         {teamRow(s.top, topWon)}
         {teamRow(s.bottom, botWon)}
       </div>
+      {odds && (
+        <div className="border-t border-white/[0.05] bg-black/20 px-3 py-1.5">
+          <div className="flex items-center justify-between text-[10px] font-mono uppercase tracking-wider mb-1">
+            <span className={cx('tabular-nums',
+              s.complete ? (topWon ? 'text-emerald-400' : 'text-white/35')
+                : odds.top >= 60 ? 'text-[#FF8A4C]' : odds.top <= 40 ? 'text-white/45' : 'text-white/65'
+            )}>{odds.top}%</span>
+            <span className="text-white/35">{s.complete ? 'final' : 'series odds'}</span>
+            <span className={cx('tabular-nums',
+              s.complete ? (botWon ? 'text-emerald-400' : 'text-white/35')
+                : odds.bottom >= 60 ? 'text-[#FF8A4C]' : odds.bottom <= 40 ? 'text-white/45' : 'text-white/65'
+            )}>{odds.bottom}%</span>
+          </div>
+          {/* Two-toned probability bar */}
+          <div className="h-1 w-full rounded-full overflow-hidden bg-white/[0.04]">
+            <div className="h-full bg-[#F74902]/70" style={{ width: `${odds.top}%` }} />
+          </div>
+        </div>
+      )}
     </button>
   );
 };

@@ -124,7 +124,7 @@ export const Schedule = ({ schedule, monthSchedule, onOpenGame }) => {
                 <th className="font-normal text-center px-2 h-9 w-[80px]">Rest</th>
                 <th className="font-normal text-right px-2 h-9 w-[70px]">Travel</th>
                 <th className="font-normal text-center px-2 h-9 w-[110px]">Goals</th>
-                <th className="font-normal text-center px-2 h-9 w-[100px]">Watch on</th>
+                <th className="font-normal text-center px-2 h-9 w-[140px]">Watch on</th>
                 <th className="font-normal text-right px-4 h-9 w-[50px]">Type</th>
               </tr>
             </thead>
@@ -369,37 +369,65 @@ const TravelSummary = ({ games }) => {
 // regional networks fade to neutral. Markets: 'H' home, 'A' away, 'N'
 // national. We dedupe networks so a national+regional combo doesn't
 // double-print the same logo.
-const NETWORK_TONE = {
-  TNT: 'text-amber-300', 'TBS': 'text-amber-300',
-  ESPN: 'text-red-300', 'ESPN+': 'text-red-300', 'ABC': 'text-red-300', 'HULU': 'text-red-300',
-  NHLN: 'text-sky-300', 'NHL.TV': 'text-sky-300',
-  SN: 'text-orange-300', 'SN1': 'text-orange-300', 'SN360': 'text-orange-300', 'SNNOW': 'text-orange-300',
-  TVAS: 'text-violet-300', 'TVAS2': 'text-violet-300',
-  CBC: 'text-red-300/80',
+//
+// Per-network classes give us text + bg in one shot so we don't need a
+// `border-current/30` (which Tailwind doesn't support — opacity modifiers
+// only work on named colors, not currentColor — and was rendering as a
+// fully-saturated border that visually overflowed adjacent pills).
+const NETWORK_PILL = {
+  TNT:    'text-amber-300 bg-amber-500/10',
+  TBS:    'text-amber-300 bg-amber-500/10',
+  ESPN:   'text-red-300 bg-red-500/10',
+  'ESPN+': 'text-red-300 bg-red-500/10',
+  ABC:    'text-red-300 bg-red-500/10',
+  HULU:   'text-red-300 bg-red-500/10',
+  NHLN:   'text-sky-300 bg-sky-500/10',
+  'NHL.TV': 'text-sky-300 bg-sky-500/10',
+  SN:     'text-orange-300 bg-orange-500/10',
+  SN1:    'text-orange-300 bg-orange-500/10',
+  SN360:  'text-orange-300 bg-orange-500/10',
+  SNNOW:  'text-orange-300 bg-orange-500/10',
+  TVAS:   'text-violet-300 bg-violet-500/10',
+  TVAS2:  'text-violet-300 bg-violet-500/10',
+  CBC:    'text-red-300/80 bg-red-500/[0.08]',
 };
 const BroadcastCell = ({ broadcasts }) => {
   if (!broadcasts?.length) return <span className="text-[10px] font-mono text-white/25">—</span>;
   const seen = new Set();
-  const networks = broadcasts.filter((b) => {
+  const all = broadcasts.filter((b) => {
     if (!b.network || seen.has(b.network)) return false;
     seen.add(b.network);
     return true;
   });
+  // Prefer national broadcasts over regional ones when we run out of room.
+  const sorted = [...all].sort((a, b) => {
+    const score = (m) => (m === 'N' ? 0 : m === 'H' ? 1 : 2);
+    return score(a.market) - score(b.market);
+  });
+  const visible = sorted.slice(0, 2);
+  const overflow = sorted.length - visible.length;
   return (
-    <span className="flex items-center justify-center gap-1 flex-wrap">
-      {networks.slice(0, 3).map((b) => (
+    <span className="flex items-center justify-center gap-1 flex-nowrap whitespace-nowrap">
+      {visible.map((b) => (
         <span
           key={b.network}
           className={cx(
-            'text-[9px] font-mono font-medium px-1 py-[1px] border rounded-[3px]',
-            NETWORK_TONE[b.network] || 'text-white/55',
-            'border-current/30 bg-white/[0.02]',
+            'text-[9px] font-mono font-medium px-1.5 py-[1px] rounded-[3px]',
+            NETWORK_PILL[b.network] || 'text-white/55 bg-white/[0.04]',
           )}
           title={`${b.market === 'N' ? 'National' : b.market === 'H' ? 'Home' : 'Away'} · ${b.country || ''}`}
         >
           {b.network}
         </span>
       ))}
+      {overflow > 0 && (
+        <span
+          className="text-[9px] font-mono text-white/35"
+          title={sorted.slice(2).map((b) => b.network).join(', ')}
+        >
+          +{overflow}
+        </span>
+      )}
     </span>
   );
 };

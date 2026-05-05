@@ -124,86 +124,98 @@ const FullRinkMark = () => (
   </div>
 );
 
-// Tightly-framed center face-off ring. Sits behind the score/countdown
-// centerpiece so the matchup feels like it's happening on the actual
-// face-off spot. Uses brand orange so it reads as a Flyers element rather
-// than a generic chart decoration. Two counter-rotating rings + a glowing
-// puck core. Crucially this is much bolder than the rink behind it (higher
-// opacity, brand-colored) — it's the visual focal point of the Hero.
-const CenterFaceoff = () => (
-  <div
-    aria-hidden
-    className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 select-none"
-    style={{ width: 360, height: 360 }}
-  >
-    <style>{HERO_KEYFRAMES}</style>
-    {/* Soft radial halo so the centerpiece feels lit from the rink */}
+// Tightly-framed center face-off ring framing the score/countdown box.
+// Two-tone: PHI orange on the left half, opponent's brand color on the right
+// half — so the graphic visually represents *this specific matchup* rather
+// than acting as generic decoration. Crossed hockey sticks fade in behind
+// the puck. Sized just large enough to hug the centerpiece without crowding
+// the team logos on either side. Aria-hidden, pointer-events-none.
+const CenterFaceoff = ({ oppAbbr }) => {
+  const oppColor = (oppAbbr && TEAM_PRIMARY[oppAbbr]) || '#8AB4FF';
+  const phiColor = '#F74902';
+  const SIZE = 240;
+  return (
     <div
-      className="absolute inset-0 rounded-full"
-      style={{
-        background: 'radial-gradient(circle at 50% 50%, rgba(247,73,2,0.16) 0%, rgba(247,73,2,0.05) 35%, transparent 70%)',
-      }}
-    />
-    {/* Outer brand ring */}
-    <svg
-      viewBox="0 0 360 360"
-      width="100%"
-      height="100%"
-      className="absolute inset-0"
-      style={{ opacity: 0.6 }}
+      aria-hidden
+      className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 select-none"
+      style={{ width: SIZE, height: SIZE }}
     >
-      <circle cx="180" cy="180" r="170" fill="none" stroke="#F74902" strokeWidth="1.6" opacity="0.7" />
-      <circle cx="180" cy="180" r="158" fill="none" stroke="#FF8A4C" strokeWidth="0.9" opacity="0.5" />
-    </svg>
-    {/* Slow-spinning dashed ring (clockwise) */}
-    <svg
-      viewBox="0 0 360 360"
-      width="100%"
-      height="100%"
-      className="absolute inset-0"
-      style={{
-        opacity: 0.6,
-        animation: 'flyersHeroSpin 60s linear infinite',
-        transformOrigin: '50% 50%',
-      }}
-    >
-      <circle cx="180" cy="180" r="140" fill="none" stroke="white" strokeWidth="1" strokeDasharray="2 8" opacity="0.55" />
-    </svg>
-    {/* Faster counter-rotating tick ring */}
-    <svg
-      viewBox="0 0 360 360"
-      width="100%"
-      height="100%"
-      className="absolute inset-0"
-      style={{
-        opacity: 0.55,
-        animation: 'flyersHeroSpin 28s linear infinite reverse',
-        transformOrigin: '50% 50%',
-      }}
-    >
-      {Array.from({ length: 24 }).map((_, i) => {
-        const a = (i / 24) * 2 * Math.PI;
-        const r1 = 118;
-        const r2 = 124;
-        const x1 = 180 + Math.cos(a) * r1;
-        const y1 = 180 + Math.sin(a) * r1;
-        const x2 = 180 + Math.cos(a) * r2;
-        const y2 = 180 + Math.sin(a) * r2;
-        return <line key={i} x1={x1} y1={y1} x2={x2} y2={y2} stroke="#FF8A4C" strokeWidth="1.2" opacity="0.6" />;
-      })}
-    </svg>
-    {/* Glowing center puck — large and dramatic */}
-    <div
-      className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full"
-      style={{
-        width: 36, height: 36,
-        background: 'radial-gradient(circle at 35% 35%, #FFB47A 0%, #F74902 55%, #8A2A00 100%)',
-        boxShadow: '0 0 56px 12px rgba(247,73,2,0.55), 0 0 0 2px rgba(255,255,255,0.22) inset, 0 4px 16px rgba(0,0,0,0.5)',
-        animation: 'flyersHeroPuckPulse 2.6s ease-in-out infinite',
-      }}
-    />
-  </div>
-);
+      <style>{HERO_KEYFRAMES}</style>
+      {/* Soft radial halo behind the ring — reads as ice-spotlighting. */}
+      <div
+        className="absolute inset-0 rounded-full"
+        style={{
+          background: `radial-gradient(circle at 50% 50%, rgba(247,73,2,0.14) 0%, ${oppColor}26 60%, transparent 75%)`,
+        }}
+      />
+      <svg
+        viewBox="0 0 240 240"
+        width="100%"
+        height="100%"
+        className="absolute inset-0"
+      >
+        <defs>
+          {/* Crossed hockey sticks as a reusable group — drawn vertically,
+              we rotate two copies symmetrically about the center. */}
+          <g id="phi-stick">
+            <rect x="-2" y="-95" width="4" height="180" rx="2" fill="rgba(255,255,255,0.55)" />
+            <rect x="-2" y="78"  width="22" height="6" rx="1.2" fill="rgba(255,255,255,0.45)" />
+          </g>
+        </defs>
+
+        {/* Crossed hockey sticks behind the puck — tilted ±28° from vertical. */}
+        <g style={{ opacity: 0.7 }}>
+          <use href="#phi-stick" transform="translate(120 120) rotate(-28)" />
+          <use href="#phi-stick" transform="translate(120 120) rotate(28) scale(-1 1)" />
+        </g>
+
+        {/* Two-tone outer ring — PHI orange on left half, opponent on right. */}
+        <path
+          d="M 120 14 A 106 106 0 0 0 120 226"
+          fill="none" stroke={phiColor} strokeWidth="2.2" opacity="0.85"
+        />
+        <path
+          d="M 120 14 A 106 106 0 0 1 120 226"
+          fill="none" stroke={oppColor} strokeWidth="2.2" opacity="0.85"
+        />
+
+        {/* Inner dashed accent rings — same split, narrower */}
+        <path
+          d="M 120 28 A 92 92 0 0 0 120 212"
+          fill="none" stroke={phiColor} strokeWidth="1" strokeDasharray="2 5" opacity="0.55"
+        />
+        <path
+          d="M 120 28 A 92 92 0 0 1 120 212"
+          fill="none" stroke={oppColor} strokeWidth="1" strokeDasharray="2 5" opacity="0.55"
+        />
+
+        {/* Slow-spinning thin guide ring */}
+        <g style={{ animation: 'flyersHeroSpin 90s linear infinite', transformOrigin: '120px 120px' }}>
+          <circle cx="120" cy="120" r="78" fill="none" stroke="white" strokeWidth="0.8" strokeDasharray="1 8" opacity="0.45" />
+        </g>
+
+        {/* Faceoff hash marks at top & bottom of ring (rink-spec detail) */}
+        {[14, 226].map((y) => (
+          <g key={y}>
+            <line x1="100" y1={y} x2="108" y2={y} stroke="white" strokeWidth="1.2" opacity="0.5" />
+            <line x1="132" y1={y} x2="140" y2={y} stroke="white" strokeWidth="1.2" opacity="0.5" />
+          </g>
+        ))}
+      </svg>
+
+      {/* Glowing center puck */}
+      <div
+        className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full"
+        style={{
+          width: 30, height: 30,
+          background: 'radial-gradient(circle at 35% 35%, #FFB47A 0%, #F74902 55%, #8A2A00 100%)',
+          boxShadow: '0 0 44px 8px rgba(247,73,2,0.55), 0 0 0 1.5px rgba(255,255,255,0.22) inset, 0 4px 14px rgba(0,0,0,0.5)',
+          animation: 'flyersHeroPuckPulse 2.6s ease-in-out infinite',
+        }}
+      />
+    </div>
+  );
+};
 
 // A slim "skating sweep" highlight that periodically arcs across the Hero
 // to suggest motion. Single horizontal soft gradient, slow loop.
@@ -248,6 +260,19 @@ const FormDots = ({ games, mutedColors = false }) => {
 
 const PHI_LOGO = 'https://assets.nhle.com/logos/nhl/svg/PHI_dark.svg';
 const teamLogoUrl = (abbr) => abbr ? `https://assets.nhle.com/logos/nhl/svg/${abbr}_dark.svg` : null;
+
+// Primary brand color for each NHL team — used to tint the opponent's side of
+// the center face-off ring so the centerpiece reflects the actual matchup
+// rather than reading as a generic decoration.
+const TEAM_PRIMARY = {
+  ANA: '#F47A38', ARI: '#8C2633', BOS: '#FFB81C', BUF: '#003087', CAR: '#CC0000',
+  CBJ: '#002654', CGY: '#D2001C', CHI: '#CF0A2C', COL: '#6F263D', DAL: '#006847',
+  DET: '#CE1126', EDM: '#FF4C00', FLA: '#C8102E', LAK: '#A2AAAD', MIN: '#A6192E',
+  MTL: '#AF1E2D', NJD: '#CE1126', NSH: '#FFB81C', NYI: '#00539B', NYR: '#0038A8',
+  OTT: '#C52032', PHI: '#F74902', PIT: '#FCB514', SEA: '#001628', SJS: '#006D75',
+  STL: '#002F87', TBL: '#002868', TOR: '#00205B', UTA: '#71AFE5', VAN: '#00205B',
+  VGK: '#B4975A', WPG: '#041E42', WSH: '#C8102E',
+};
 
 function useCountdown(startUTC) {
   const [now, setNow] = useState(() => Date.now());
@@ -566,7 +591,7 @@ export const Hero = ({ liveGame, liveDetail, nextGame, lastResult, us, recentGam
             rink is clipped to the upper portion so the bottom HeroStats row
             stays clean. */}
         <FullRinkMark />
-        <CenterFaceoff />
+        <CenterFaceoff oppAbbr={opp} />
         <HeroSweep />
         {/* Top edge highlight + bottom shadow for the "raised card" feel. */}
         <div aria-hidden className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/15 to-transparent" />

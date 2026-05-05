@@ -104,7 +104,7 @@ export const PlayerProfile = ({ playerId }) => {
       {/* Hero — headshot, name, bio, draft */}
       <div className="border border-white/[0.06] bg-gradient-to-br from-[#141414] via-[#101010] to-[#0A0A0A] rounded-md p-5 sm:p-6 relative overflow-hidden">
         <div className="absolute -top-16 -right-16 w-72 h-72 rounded-full pointer-events-none opacity-50"
-          style={{ background: 'radial-gradient(circle, rgba(247,73,2,0.10), transparent 65%)' }} />
+          style={{ background: 'radial-gradient(circle, rgba(255,255,255,0.03), transparent 65%)' }} />
         <div className="relative flex flex-col sm:flex-row gap-5">
           {data.headshot && (
             <img

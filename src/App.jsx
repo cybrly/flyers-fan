@@ -16,6 +16,7 @@ import { ErrorBoundary } from './components/ErrorBoundary.jsx';
 import { PlayerModal } from './components/PlayerModal.jsx';
 import { CommandPalette } from './components/CommandPalette.jsx';
 import { SeriesModal } from './components/SeriesModal.jsx';
+import { LiveRibbon } from './components/LiveRibbon.jsx';
 import { useGoalHorn, useGoalHornEnabled } from './components/GoalHorn.jsx';
 
 // Page-level code splitting — each route ships in its own chunk so the first
@@ -27,6 +28,8 @@ const GameTape  = lazy(() => import('./pages/GameTape.jsx').then((m) => ({ defau
 const Playoffs  = lazy(() => import('./pages/Playoffs.jsx').then((m) => ({ default: m.Playoffs })));
 const Roster    = lazy(() => import('./pages/Roster.jsx').then((m) => ({ default: m.Roster })));
 const PlayerProfile = lazy(() => import('./pages/PlayerProfile.jsx').then((m) => ({ default: m.PlayerProfile })));
+const PlayerCompare = lazy(() => import('./pages/PlayerCompare.jsx').then((m) => ({ default: m.PlayerCompare })));
+const Trends = lazy(() => import('./pages/Trends.jsx').then((m) => ({ default: m.Trends })));
 
 export default function App() {
   // Route-derived state — URL is the source of truth. /game/123, ?player=8478,
@@ -52,6 +55,8 @@ export default function App() {
       playoffs: 'Playoffs · flyers.fan',
       roster: 'Roster · flyers.fan',
       player: 'Player · flyers.fan',
+      compare: 'Compare · flyers.fan',
+      trends: 'Trends · flyers.fan',
     };
     document.title = titles[page] || 'flyers.fan';
   }, [page]);
@@ -69,6 +74,7 @@ export default function App() {
       const map = {
         '1': 'dashboard', '2': 'schedule', '3': 'standings',
         '4': 'game', '5': 'playoffs', '6': 'roster',
+        '7': 'trends', '8': 'compare',
       };
       if (map[e.key]) navigate(pageHref(map[e.key]));
     };
@@ -185,7 +191,10 @@ export default function App() {
 
   return (
     <PlayerCtx.Provider value={playerCtx}>
-    <div className="min-h-screen bg-[#0A0A0A] text-white/90 relative">
+    <div
+      className="min-h-screen bg-[#0A0A0A] text-white/90 relative"
+      style={{ '--header-offset': schedule.liveGame && page !== 'game' ? '84px' : '48px' }}
+    >
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&family=Geist+Mono:wght@400;500;600&display=swap');
         html, body { background: #0A0A0A; }
@@ -211,8 +220,9 @@ export default function App() {
           100% { transform: scale(1); }
         }
         .score-flash { animation: scoreFlash 0.7s ease-out; }
-        /* Sticky table headers sit just below the 48px Topbar. */
-        thead.sticky th { position: sticky; top: 48px; background: rgba(10,10,12,0.92); z-index: 1; backdrop-filter: blur(6px); }
+        /* Sticky table headers sit just below the Topbar. The offset is
+           48px (Topbar) by default, 84px when the LiveRibbon is showing. */
+        thead.sticky th { position: sticky; top: var(--header-offset, 48px); background: rgba(10,10,12,0.92); z-index: 1; backdrop-filter: blur(6px); }
         /* A11y — visible focus ring for keyboard nav, mouse clicks stay clean. */
         :focus { outline: none; }
         :focus-visible { outline: 2px solid #FF8A4C; outline-offset: 2px; border-radius: 3px; }
@@ -245,6 +255,13 @@ export default function App() {
             onOpenPalette={() => setPaletteOpen(true)}
           />
 
+          <LiveRibbon
+            liveGame={schedule.liveGame}
+            liveDetail={isLive(boxscore.data?.gameState) ? game : null}
+            currentPage={page}
+            onOpenGame={openGame}
+          />
+
           <main
             key={page}
             className="flex-1 min-w-0"
@@ -261,6 +278,8 @@ export default function App() {
                 {page === 'playoffs'  && <Playoffs bracket={bracket} onOpenSeries={onOpenSeries} />}
                 {page === 'roster'    && <Roster roster={roster} clubStats={clubStats} />}
                 {page === 'player'    && <PlayerProfile playerId={profileId} />}
+                {page === 'compare'   && <PlayerCompare />}
+                {page === 'trends'    && <Trends schedule={schedule} standings={standings} />}
               </Suspense>
             </ErrorBoundary>
           </main>

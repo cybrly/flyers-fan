@@ -49,7 +49,7 @@ export const Standings = ({ standings }) => {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
           <div className="md:col-span-1 border border-[#F74902]/30 bg-[#F74902]/[0.05] rounded-md p-4 relative overflow-hidden">
             <div className="absolute -top-12 -right-12 w-32 h-32 rounded-full pointer-events-none"
-              style={{ background: 'radial-gradient(circle, rgba(247,73,2,0.2), transparent 70%)' }} />
+              style={{ background: 'radial-gradient(circle, rgba(255,255,255,0.04), transparent 70%)' }} />
             <div className="relative flex items-center gap-2 mb-3">
               <FlyersMark size={16} />
               <span className="text-[11px] font-medium">Philadelphia Flyers</span>

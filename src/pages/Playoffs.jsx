@@ -9,7 +9,7 @@ const SeriesCell = ({ s, onOpen }) => {
   if (!s) {
     // Empty placeholder slot — keeps grid alignment when teams TBD.
     return (
-      <div className="border border-dashed border-white/[0.06] bg-white/[0.01] rounded-md h-[68px] flex items-center justify-center">
+      <div className="border border-dashed border-white/[0.06] bg-white/[0.01] rounded-md h-[96px] flex items-center justify-center">
         <span className="text-[10px] font-mono text-white/25">TBD</span>
       </div>
     );
@@ -18,17 +18,17 @@ const SeriesCell = ({ s, onOpen }) => {
   const botWon = s.complete && !topWon;
   const teamRow = (t, won) => (
     <div className={cx(
-      'flex items-center gap-2 px-2.5 h-[30px]',
+      'flex items-center gap-2.5 px-3 h-[44px]',
       t.abbr === TEAM_ABBR && 'bg-[#F74902]/[0.08]',
     )}>
-      <span className={cx('text-[9px] font-mono w-7 shrink-0 text-center',
+      <span className={cx('text-[11px] font-mono w-7 shrink-0 text-center',
         t.abbr === TEAM_ABBR ? 'text-[#FF8A4C]' : 'text-white/35'
       )}>{t.rank || ''}</span>
-      <TeamLogo abbr={t.abbr} size={16} />
-      <span className={cx('flex-1 text-[11px] truncate',
-        won ? 'text-white font-medium' : s.complete ? 'text-white/40' : 'text-white/65'
+      <TeamLogo abbr={t.abbr} size={28} />
+      <span className={cx('flex-1 text-[14px] truncate',
+        won ? 'text-white font-medium' : s.complete ? 'text-white/40' : 'text-white/75'
       )}>{t.name || '—'}</span>
-      <span className={cx('text-[13px] font-mono tabular-nums shrink-0',
+      <span className={cx('text-[18px] font-mono tabular-nums shrink-0',
         won ? 'text-[#FF8A4C] font-semibold' : s.complete ? 'text-white/35' : 'text-white/65'
       )}>{t.wins}</span>
     </div>
@@ -105,27 +105,27 @@ const ScfCell = ({ s, onOpen }) => {
                   : <Chip tone="green" pulse>LIVE</Chip>}
               </div>
               <div className="divide-y divide-white/[0.06]">
-                <div className={cx('flex items-center gap-2 px-2.5 h-[34px]',
+                <div className={cx('flex items-center gap-2.5 px-3 h-[52px]',
                   s.top.abbr === TEAM_ABBR && 'bg-[#F74902]/[0.08]',
                 )}>
-                  <span className="text-[9px] font-mono w-7 shrink-0 text-center text-white/35">{s.top.rank || ''}</span>
-                  <TeamLogo abbr={s.top.abbr} size={20} />
-                  <span className={cx('flex-1 text-[11px] truncate',
-                    topWon ? 'text-white font-medium' : 'text-white/55'
+                  <span className="text-[11px] font-mono w-7 shrink-0 text-center text-white/35">{s.top.rank || ''}</span>
+                  <TeamLogo abbr={s.top.abbr} size={36} />
+                  <span className={cx('flex-1 text-[15px] truncate',
+                    topWon ? 'text-white font-medium' : 'text-white/65'
                   )}>{s.top.name || '—'}</span>
-                  <span className={cx('text-[14px] font-mono tabular-nums shrink-0',
+                  <span className={cx('text-[20px] font-mono tabular-nums shrink-0',
                     topWon ? 'text-[#FF8A4C] font-semibold' : 'text-white/55'
                   )}>{s.top.wins}</span>
                 </div>
-                <div className={cx('flex items-center gap-2 px-2.5 h-[34px]',
+                <div className={cx('flex items-center gap-2.5 px-3 h-[52px]',
                   s.bottom.abbr === TEAM_ABBR && 'bg-[#F74902]/[0.08]',
                 )}>
-                  <span className="text-[9px] font-mono w-7 shrink-0 text-center text-white/35">{s.bottom.rank || ''}</span>
-                  <TeamLogo abbr={s.bottom.abbr} size={20} />
-                  <span className={cx('flex-1 text-[11px] truncate',
-                    botWon ? 'text-white font-medium' : 'text-white/55'
+                  <span className="text-[11px] font-mono w-7 shrink-0 text-center text-white/35">{s.bottom.rank || ''}</span>
+                  <TeamLogo abbr={s.bottom.abbr} size={36} />
+                  <span className={cx('flex-1 text-[15px] truncate',
+                    botWon ? 'text-white font-medium' : 'text-white/65'
                   )}>{s.bottom.name || '—'}</span>
-                  <span className={cx('text-[14px] font-mono tabular-nums shrink-0',
+                  <span className={cx('text-[20px] font-mono tabular-nums shrink-0',
                     botWon ? 'text-[#FF8A4C] font-semibold' : 'text-white/55'
                   )}>{s.bottom.wins}</span>
                 </div>

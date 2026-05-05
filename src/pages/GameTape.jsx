@@ -249,42 +249,108 @@ export const GameTape = ({ game, loading, pbp, pbpRaw, customGameId, onClearCust
         )}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
-        <div className="lg:col-span-7 2xl:col-span-8 space-y-4">
-          <Section title="Team Comparison">
-            <div className="py-2">
-              <div className="grid grid-cols-[60px_1fr_90px_1fr_60px] items-center gap-3 px-4 h-8 text-[10px] font-mono text-white/35 uppercase tracking-wider">
-                <span className="text-right text-[#FF8A4C]/80">PHI</span>
-                <span /><span className="text-center">Metric</span><span />
-                <span className="text-left text-white/55">{game.oppAbbr}</span>
-              </div>
-              <CompareRow label="Shots"       us={game.stats.shots.us}       them={game.stats.shots.them} />
-              <CompareRow label="Hits"        us={game.stats.hits.us}        them={game.stats.hits.them} />
-              <CompareRow label="Blocks"      us={game.stats.blocks.us}      them={game.stats.blocks.them} />
-              <CompareRow label="Faceoff %"   us={game.stats.faceoffPct.us}  them={game.stats.faceoffPct.them} suffix="%" />
-              <CompareRow label="Takeaways"   us={game.stats.takeaways.us}   them={game.stats.takeaways.them} />
-              <CompareRow label="Giveaways"   us={game.stats.giveaways.us}   them={game.stats.giveaways.them}   higherBetter={false} />
-              <CompareRow label="PIM"         us={game.stats.pim.us}         them={game.stats.pim.them}          higherBetter={false} />
+      <div className="space-y-4">
+        <Section title="Team Comparison">
+          <div className="py-2">
+            <div className="grid grid-cols-[60px_1fr_90px_1fr_60px] items-center gap-3 px-4 h-8 text-[10px] font-mono text-white/35 uppercase tracking-wider">
+              <span className="text-right text-[#FF8A4C]/80">PHI</span>
+              <span /><span className="text-center">Metric</span><span />
+              <span className="text-left text-white/55">{game.oppAbbr}</span>
             </div>
-          </Section>
+            <CompareRow label="Shots"       us={game.stats.shots.us}       them={game.stats.shots.them} />
+            <CompareRow label="Hits"        us={game.stats.hits.us}        them={game.stats.hits.them} />
+            <CompareRow label="Blocks"      us={game.stats.blocks.us}      them={game.stats.blocks.them} />
+            <CompareRow label="Faceoff %"   us={game.stats.faceoffPct.us}  them={game.stats.faceoffPct.them} suffix="%" />
+            <CompareRow label="Takeaways"   us={game.stats.takeaways.us}   them={game.stats.takeaways.them} />
+            <CompareRow label="Giveaways"   us={game.stats.giveaways.us}   them={game.stats.giveaways.them}   higherBetter={false} />
+            <CompareRow label="PIM"         us={game.stats.pim.us}         them={game.stats.pim.them}          higherBetter={false} />
+          </div>
+        </Section>
 
-          {pbpRaw && (
-            <Section title="Shot Map" action={<span className="text-[10px] font-mono text-white/40">offensive zone · all periods</span>}>
-              <ShotMap pbpData={pbpRaw} oppAbbr={game.oppAbbr} />
+        {/* Live Events / Three Stars / Key Numbers — sit in a single row band
+            between the team comparison and the rink graphic so the rink can
+            stretch full-width below them. */}
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+          {pbp && pbp.events.length > 0 && (
+            <Section
+              title={<span className="flex items-center gap-2">Live Events {isLive(game.state) && <Chip tone="live" pulse>LIVE</Chip>}</span>}
+              action={<span className="text-[10px] font-mono text-white/40">{pbp.events.length} shown</span>}
+            >
+              <div className="divide-y divide-white/[0.04] max-h-[480px] overflow-y-auto">
+                {pbp.events.slice(0, 60).map((e) => (
+                  <PBPRow key={e.id} ev={e} />
+                ))}
+              </div>
             </Section>
           )}
 
-          {pbpRaw && <FaceoffSplits pbpRaw={pbpRaw} />}
-
-          {game.id && (
-            <ShiftChart gameId={game.id} isPlayoff={game.gameType === 3} />
+          {game.stars.length > 0 && (
+            <Section title="Three Stars">
+              <div className="divide-y divide-white/[0.04]">
+                {game.stars.map((s) => (
+                  <div key={s.star} className="flex items-center gap-3 px-4 py-3">
+                    <span className="text-[22px] font-semibold tabular-nums text-[#F74902]/60 w-8">★{s.star}</span>
+                    <Headshot playerId={s.id} teamAbbrev={s.teamAbbrev} size={32} />
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-baseline justify-between gap-2">
+                        <span className="text-[12px] font-medium truncate">
+                          <PlayerLink playerId={s.id}>{s.name}</PlayerLink>
+                        </span>
+                        <span className="flex items-center gap-1.5 text-[10px] font-mono text-white/35 shrink-0">
+                          <TeamLogo abbr={s.teamAbbrev} size={12} />
+                          {s.teamAbbrev} · {s.position}
+                        </span>
+                      </div>
+                      <div className="text-[11px] text-white/55 mt-1 font-mono">
+                        {s.goals ? `${s.goals}G ` : ''}
+                        {s.assists ? `${s.assists}A ` : ''}
+                        {s.points ? `${s.points}P` : ''}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </Section>
           )}
 
-          {game.id && (
-            <LinemateAnalysis gameId={game.id} />
-          )}
+          <Section title="Key Numbers">
+            <div className="divide-y divide-white/[0.04]">
+              {[
+                { l: 'Shots on Goal',        v: game.stats.shots.us != null ? `${game.stats.shots.us} / ${game.stats.shots.them}` : '—' },
+                { l: 'Power Play',           v: game.stats.powerPlay.us != null ? `${game.stats.powerPlay.us}${game.stats.powerPlayPctg.us != null ? ` · ${game.stats.powerPlayPctg.us}%` : ''}` : '—' },
+                { l: 'PK Faced',             v: game.stats.powerPlay.them != null ? `${game.stats.powerPlay.them}` : '—' },
+                { l: 'Faceoff %',            v: game.stats.faceoffPct.us != null ? `${game.stats.faceoffPct.us}%` : '—' },
+                { l: 'Blocks vs Opp',        v: game.stats.blocks.us != null ? `${game.stats.blocks.us} / ${game.stats.blocks.them}` : '—' },
+                { l: 'Hits Differential',    v: game.stats.hits.us != null ? (game.stats.hits.us - game.stats.hits.them) : '—' },
+                { l: 'Giveaways',            v: game.stats.giveaways.us ?? '—' },
+                { l: 'Penalty Minutes',      v: game.stats.pim.us ?? '—' },
+              ].map((r) => (
+                <div key={r.l} className="flex items-center justify-between px-4 h-10">
+                  <span className="text-[11px] text-white/55">{r.l}</span>
+                  <span className="text-[12px] font-mono tabular-nums">{r.v}</span>
+                </div>
+              ))}
+            </div>
+          </Section>
+        </div>
 
-          <Section title="Skater Box Score · PHI">
+        {pbpRaw && (
+          <Section title="Shot Map" action={<span className="text-[10px] font-mono text-white/40">offensive zone · all periods</span>}>
+            <ShotMap pbpData={pbpRaw} oppAbbr={game.oppAbbr} />
+          </Section>
+        )}
+
+        {pbpRaw && <FaceoffSplits pbpRaw={pbpRaw} />}
+
+        {game.id && (
+          <ShiftChart gameId={game.id} isPlayoff={game.gameType === 3} />
+        )}
+
+        {game.id && (
+          <LinemateAnalysis gameId={game.id} />
+        )}
+
+        <Section title="Skater Box Score · PHI">
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
@@ -437,71 +503,6 @@ export const GameTape = ({ game, loading, pbp, pbpRaw, customGameId, onClearCust
               </div>
             </Section>
           )}
-        </div>
-
-        <div className="lg:col-span-5 2xl:col-span-4 space-y-4">
-          {pbp && pbp.events.length > 0 && (
-            <Section
-              title={<span className="flex items-center gap-2">Live Events {isLive(game.state) && <Chip tone="live" pulse>LIVE</Chip>}</span>}
-              action={<span className="text-[10px] font-mono text-white/40">{pbp.events.length} shown</span>}
-            >
-              <div className="divide-y divide-white/[0.04] max-h-[480px] overflow-y-auto">
-                {pbp.events.slice(0, 60).map((e) => (
-                  <PBPRow key={e.id} ev={e} />
-                ))}
-              </div>
-            </Section>
-          )}
-
-          {game.stars.length > 0 && (
-            <Section title="Three Stars">
-              <div className="divide-y divide-white/[0.04]">
-                {game.stars.map((s) => (
-                  <div key={s.star} className="flex items-center gap-3 px-4 py-3">
-                    <span className="text-[22px] font-semibold tabular-nums text-[#F74902]/60 w-8">★{s.star}</span>
-                    <Headshot playerId={s.id} teamAbbrev={s.teamAbbrev} size={32} />
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-baseline justify-between gap-2">
-                        <span className="text-[12px] font-medium truncate">
-                          <PlayerLink playerId={s.id}>{s.name}</PlayerLink>
-                        </span>
-                        <span className="flex items-center gap-1.5 text-[10px] font-mono text-white/35 shrink-0">
-                          <TeamLogo abbr={s.teamAbbrev} size={12} />
-                          {s.teamAbbrev} · {s.position}
-                        </span>
-                      </div>
-                      <div className="text-[11px] text-white/55 mt-1 font-mono">
-                        {s.goals ? `${s.goals}G ` : ''}
-                        {s.assists ? `${s.assists}A ` : ''}
-                        {s.points ? `${s.points}P` : ''}
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </Section>
-          )}
-
-          <Section title="Key Numbers">
-            <div className="divide-y divide-white/[0.04]">
-              {[
-                { l: 'Shots on Goal',        v: game.stats.shots.us != null ? `${game.stats.shots.us} / ${game.stats.shots.them}` : '—' },
-                { l: 'Power Play',           v: game.stats.powerPlay.us != null ? `${game.stats.powerPlay.us}${game.stats.powerPlayPctg.us != null ? ` · ${game.stats.powerPlayPctg.us}%` : ''}` : '—' },
-                { l: 'PK Faced',             v: game.stats.powerPlay.them != null ? `${game.stats.powerPlay.them}` : '—' },
-                { l: 'Faceoff %',            v: game.stats.faceoffPct.us != null ? `${game.stats.faceoffPct.us}%` : '—' },
-                { l: 'Blocks vs Opp',        v: game.stats.blocks.us != null ? `${game.stats.blocks.us} / ${game.stats.blocks.them}` : '—' },
-                { l: 'Hits Differential',    v: game.stats.hits.us != null ? (game.stats.hits.us - game.stats.hits.them) : '—' },
-                { l: 'Giveaways',            v: game.stats.giveaways.us ?? '—' },
-                { l: 'Penalty Minutes',      v: game.stats.pim.us ?? '—' },
-              ].map((r) => (
-                <div key={r.l} className="flex items-center justify-between px-4 h-10">
-                  <span className="text-[11px] text-white/55">{r.l}</span>
-                  <span className="text-[12px] font-mono tabular-nums">{r.v}</span>
-                </div>
-              ))}
-            </div>
-          </Section>
-        </div>
       </div>
     </div>
   );

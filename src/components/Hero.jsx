@@ -195,6 +195,36 @@ const HeroSweep = () => (
   </div>
 );
 
+// Big team side — logo + 3-letter abbreviation rendered at the same scale
+// as the centerpiece score/countdown. Sub line (form dots / opponent record)
+// optional. Used by all three Hero variants so the matchup row is uniformly
+// sized and aligned: PHI on the left, centerpiece in the middle, OPP on the
+// right, all at the same baseline. Replaces the old city-name + team-name
+// stack which read as much smaller than the score and felt mis-aligned.
+const TeamSide = ({ logo, abbr, side, sub, tone }) => {
+  const isLeft = side === 'left';
+  return (
+    <div className={cx('flex items-center gap-3 sm:gap-4 min-w-0', isLeft ? '' : 'justify-end')}>
+      {isLeft && logo}
+      <div className={cx('min-w-0', isLeft ? '' : 'text-right')}>
+        <div
+          className={cx(
+            'text-[56px] sm:text-[76px] font-semibold tabular-nums tracking-tight leading-none',
+            tone === 'muted' ? 'text-white/85' : 'text-white',
+          )}
+          style={{ textShadow: '0 2px 4px rgba(0,0,0,0.6)' }}
+        >
+          {abbr}
+        </div>
+        {sub && (
+          <div className={cx('mt-2', isLeft ? '' : 'flex justify-end')}>{sub}</div>
+        )}
+      </div>
+      {!isLeft && logo}
+    </div>
+  );
+};
+
 // Five-dot W/L recap. Shown under each team's name to give the matchup a
 // visual "form check" without burning extra space.
 const FormDots = ({ games, mutedColors = false }) => {
@@ -281,40 +311,37 @@ const HeroLive = ({ liveGame, liveDetail, oppFull, recentGames, oppRow }) => {
       </div>
       <div className="relative grid grid-cols-[1fr_auto_1fr] items-center gap-4 sm:gap-8 mt-5">
         {goalBurst && <GoalCelebration />}
-        <div className="flex items-center gap-3 min-w-0">
-          <FlyersMark size={48} />
-          <div className="min-w-0">
-            <div className="text-[10px] font-mono text-white/45 uppercase tracking-wider">Philadelphia</div>
-            <div className="text-[18px] font-semibold tracking-tight">Flyers</div>
-            <FormDots games={recentGames} />
-          </div>
-        </div>
-        <div className="flex items-baseline gap-3 px-4 sm:px-6 py-2 rounded-md bg-black/40 border border-white/[0.06] shadow-[0_8px_24px_-8px_rgba(0,0,0,0.6),0_1px_0_rgba(255,255,255,0.04)_inset]">
+        <TeamSide
+          logo={<FlyersMark size={64} />}
+          abbr="PHI"
+          side="left"
+          sub={<FormDots games={recentGames} />}
+        />
+        <div className="flex items-baseline gap-3 sm:gap-4">
           <span
             className={cx(
-              'text-[64px] sm:text-[84px] font-semibold tabular-nums tracking-tight text-[#FF8A4C] leading-none',
+              'text-[56px] sm:text-[76px] font-semibold tabular-nums tracking-tight text-[#FF8A4C] leading-none',
               goalBurst && 'score-flash',
             )}
             style={{ textShadow: '0 0 24px rgba(247,73,2,0.4), 0 2px 4px rgba(0,0,0,0.6)' }}
           >{liveGame.us}</span>
-          <span className="text-[36px] text-white/20">–</span>
+          <span className="text-[36px] sm:text-[44px] text-white/20 leading-none">–</span>
           <span
-            className="text-[64px] sm:text-[84px] font-semibold tabular-nums tracking-tight text-white/85 leading-none"
+            className="text-[56px] sm:text-[76px] font-semibold tabular-nums tracking-tight text-white/85 leading-none"
             style={{ textShadow: '0 2px 4px rgba(0,0,0,0.6)' }}
           >{liveGame.them}</span>
         </div>
-        <div className="flex items-center gap-3 min-w-0 justify-end">
-          <div className="text-right min-w-0">
-            <div className="text-[10px] font-mono text-white/45 uppercase tracking-wider">{oppFull?.split(' ').slice(0, -1).join(' ') || liveGame.opp}</div>
-            <div className="text-[18px] font-semibold tracking-tight text-white/85">{oppFull?.split(' ').slice(-1) || ''}</div>
-            {oppRow && (
-              <div className="flex justify-end mt-1.5 text-[10px] font-mono text-white/45 tabular-nums">
-                {oppRow.w}–{oppRow.l}{oppRow.ot ? `–${oppRow.ot}` : ''}
-              </div>
-            )}
-          </div>
-          <TeamLogo abbr={liveGame.opp} size={48} />
-        </div>
+        <TeamSide
+          logo={<TeamLogo abbr={liveGame.opp} size={64} />}
+          abbr={liveGame.opp}
+          side="right"
+          tone="muted"
+          sub={oppRow && (
+            <span className="text-[10px] font-mono text-white/45 tabular-nums">
+              {oppRow.w}–{oppRow.l}{oppRow.ot ? `–${oppRow.ot}` : ''}
+            </span>
+          )}
+        />
       </div>
 
       {/* Win probability + projection tiles — broadcast-feel during live play */}
@@ -393,48 +420,49 @@ const HeroNext = ({ nextGame, oppFull, recentGames, oppRow }) => {
         {nextGame.gameType === 3 && <Chip tone="amber">PLAYOFFS</Chip>}
       </div>
       <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-4 sm:gap-8 mt-5">
-        <div className="flex items-center gap-3 min-w-0">
-          <FlyersMark size={48} />
-          <div className="min-w-0">
-            <div className="text-[10px] font-mono text-white/45 uppercase tracking-wider">Philadelphia</div>
-            <div className="text-[18px] font-semibold tracking-tight">Flyers</div>
-            <FormDots games={recentGames} />
-          </div>
-        </div>
+        <TeamSide
+          logo={<FlyersMark size={64} />}
+          abbr="PHI"
+          side="left"
+          sub={<FormDots games={recentGames} />}
+        />
         {cd && !cd.past ? (
-          <div className="text-center px-5 sm:px-7 py-3 rounded-md bg-black/40 border border-white/[0.06] shadow-[0_8px_24px_-8px_rgba(0,0,0,0.6),0_1px_0_rgba(255,255,255,0.04)_inset]">
+          <div className="text-center">
             <div className="text-[10px] font-mono text-white/40 uppercase tracking-wider mb-1.5 flex items-center justify-center gap-1.5">
               <PuckIcon size={9} />
               Puck drops in
             </div>
-            <div className="flex items-baseline gap-2 justify-center font-semibold tabular-nums tracking-tight text-[#FF8A4C]"
+            <div className="flex items-baseline gap-1 justify-center font-semibold tabular-nums tracking-tight text-[#FF8A4C] leading-none whitespace-nowrap"
               style={{ textShadow: '0 0 22px rgba(247,73,2,0.4), 0 2px 4px rgba(0,0,0,0.6)' }}>
-              {cd.d > 0 && <><span className="text-[56px] sm:text-[76px] leading-none">{cd.d}</span><span className="text-[16px] sm:text-[18px] text-white/40 font-mono">d</span></>}
-              <span className="text-[56px] sm:text-[76px] leading-none">{String(cd.h).padStart(2, '0')}</span>
-              <span className="text-[16px] sm:text-[18px] text-white/40 font-mono">h</span>
-              <span className="text-[56px] sm:text-[76px] leading-none">{String(cd.m).padStart(2, '0')}</span>
-              <span className="text-[16px] sm:text-[18px] text-white/40 font-mono">m</span>
-              <span className="text-[56px] sm:text-[76px] leading-none">{String(cd.s).padStart(2, '0')}</span>
-              <span className="text-[16px] sm:text-[18px] text-white/40 font-mono">s</span>
+              {cd.d > 0 && (
+                <>
+                  <span className="text-[56px] sm:text-[76px]">{cd.d}</span>
+                  <span className="text-[20px] sm:text-[28px] text-white/40 font-mono mr-2">d</span>
+                </>
+              )}
+              <span className="text-[56px] sm:text-[76px]">{String(cd.h).padStart(2, '0')}</span>
+              <span className="text-[28px] sm:text-[40px] text-white/35 mx-0.5">:</span>
+              <span className="text-[56px] sm:text-[76px]">{String(cd.m).padStart(2, '0')}</span>
+              <span className="text-[28px] sm:text-[40px] text-white/35 mx-0.5">:</span>
+              <span className="text-[56px] sm:text-[76px]">{String(cd.s).padStart(2, '0')}</span>
             </div>
           </div>
         ) : (
           <div className="text-center">
-            <div className="text-[28px] font-semibold tabular-nums tracking-tight text-white/40">VS</div>
+            <div className="text-[56px] sm:text-[76px] font-semibold tabular-nums tracking-tight text-white/40 leading-none">VS</div>
           </div>
         )}
-        <div className="flex items-center gap-3 min-w-0 justify-end">
-          <div className="text-right min-w-0">
-            <div className="text-[10px] font-mono text-white/45 uppercase tracking-wider">{oppFull?.split(' ').slice(0, -1).join(' ') || nextGame.opp}</div>
-            <div className="text-[18px] font-semibold tracking-tight text-white/85">{oppFull?.split(' ').slice(-1) || ''}</div>
-            {oppRow && (
-              <div className="flex justify-end mt-1.5 text-[10px] font-mono text-white/45 tabular-nums">
-                {oppRow.w}–{oppRow.l}{oppRow.ot ? `–${oppRow.ot}` : ''}
-              </div>
-            )}
-          </div>
-          <TeamLogo abbr={nextGame.opp} size={48} />
-        </div>
+        <TeamSide
+          logo={<TeamLogo abbr={nextGame.opp} size={64} />}
+          abbr={nextGame.opp}
+          side="right"
+          tone="muted"
+          sub={oppRow && (
+            <span className="text-[10px] font-mono text-white/45 tabular-nums">
+              {oppRow.w}–{oppRow.l}{oppRow.ot ? `–${oppRow.ot}` : ''}
+            </span>
+          )}
+        />
       </div>
     </>
   );
@@ -447,26 +475,24 @@ const HeroLatest = ({ lastResult, oppFull, recentGames, oppRow }) => (
       <span className="text-[11px] font-mono text-white/55 uppercase tracking-wider">{fmtDateFull(lastResult.date)} · Final</span>
     </div>
     <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-4 sm:gap-8 mt-5">
-      <div className="flex items-center gap-3 min-w-0">
-        <FlyersMark size={48} />
-        <div className="min-w-0">
-          <div className="text-[10px] font-mono text-white/45 uppercase tracking-wider">Philadelphia</div>
-          <div className="text-[18px] font-semibold tracking-tight">Flyers</div>
-          <FormDots games={recentGames} />
-        </div>
-      </div>
-      <div className="flex items-baseline gap-3 px-4 sm:px-6 py-2 rounded-md bg-black/40 border border-white/[0.06] shadow-[0_8px_24px_-8px_rgba(0,0,0,0.6),0_1px_0_rgba(255,255,255,0.04)_inset]">
+      <TeamSide
+        logo={<FlyersMark size={64} />}
+        abbr="PHI"
+        side="left"
+        sub={<FormDots games={recentGames} />}
+      />
+      <div className="flex items-baseline gap-3 sm:gap-4">
         <span
-          className={cx('text-[64px] sm:text-[84px] font-semibold tabular-nums tracking-tight leading-none',
+          className={cx('text-[56px] sm:text-[76px] font-semibold tabular-nums tracking-tight leading-none',
             lastResult.w ? 'text-emerald-400' : 'text-white/55'
           )}
           style={{ textShadow: lastResult.w
             ? '0 0 22px rgba(16,185,129,0.35), 0 2px 4px rgba(0,0,0,0.6)'
             : '0 2px 4px rgba(0,0,0,0.6)' }}
         >{lastResult.us}</span>
-        <span className="text-[36px] text-white/20">–</span>
+        <span className="text-[36px] sm:text-[44px] text-white/20 leading-none">–</span>
         <span
-          className={cx('text-[64px] sm:text-[84px] font-semibold tabular-nums tracking-tight leading-none',
+          className={cx('text-[56px] sm:text-[76px] font-semibold tabular-nums tracking-tight leading-none',
             !lastResult.w ? 'text-red-400' : 'text-white/55'
           )}
           style={{ textShadow: !lastResult.w
@@ -474,18 +500,17 @@ const HeroLatest = ({ lastResult, oppFull, recentGames, oppRow }) => (
             : '0 2px 4px rgba(0,0,0,0.6)' }}
         >{lastResult.them}</span>
       </div>
-      <div className="flex items-center gap-3 min-w-0 justify-end">
-        <div className="text-right min-w-0">
-          <div className="text-[10px] font-mono text-white/45 uppercase tracking-wider">{oppFull?.split(' ').slice(0, -1).join(' ') || lastResult.opp}</div>
-          <div className="text-[18px] font-semibold tracking-tight text-white/85">{oppFull?.split(' ').slice(-1) || ''}</div>
-          {oppRow && (
-            <div className="flex justify-end mt-1.5 text-[10px] font-mono text-white/45 tabular-nums">
-              {oppRow.w}–{oppRow.l}{oppRow.ot ? `–${oppRow.ot}` : ''}
-            </div>
-          )}
-        </div>
-        <TeamLogo abbr={lastResult.opp} size={48} />
-      </div>
+      <TeamSide
+        logo={<TeamLogo abbr={lastResult.opp} size={64} />}
+        abbr={lastResult.opp}
+        side="right"
+        tone="muted"
+        sub={oppRow && (
+          <span className="text-[10px] font-mono text-white/45 tabular-nums">
+            {oppRow.w}–{oppRow.l}{oppRow.ot ? `–${oppRow.ot}` : ''}
+          </span>
+        )}
+      />
     </div>
   </>
 );

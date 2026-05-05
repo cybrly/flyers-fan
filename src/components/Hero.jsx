@@ -68,10 +68,16 @@ const HeroLive = ({ liveGame, liveDetail, oppFull }) => {
             <div className="text-[18px] font-semibold tracking-tight">Flyers</div>
           </div>
         </div>
-        <div className="flex items-baseline gap-3">
-          <span className="text-[64px] sm:text-[84px] font-semibold tabular-nums tracking-tight text-[#FF8A4C] leading-none">{liveGame.us}</span>
+        <div className="flex items-baseline gap-3 px-4 sm:px-6 py-2 rounded-md bg-black/40 border border-white/[0.06] shadow-[0_8px_24px_-8px_rgba(0,0,0,0.6),0_1px_0_rgba(255,255,255,0.04)_inset]">
+          <span
+            className="text-[64px] sm:text-[84px] font-semibold tabular-nums tracking-tight text-[#FF8A4C] leading-none"
+            style={{ textShadow: '0 0 24px rgba(247,73,2,0.4), 0 2px 4px rgba(0,0,0,0.6)' }}
+          >{liveGame.us}</span>
           <span className="text-[36px] text-white/20">–</span>
-          <span className="text-[64px] sm:text-[84px] font-semibold tabular-nums tracking-tight text-white/80 leading-none">{liveGame.them}</span>
+          <span
+            className="text-[64px] sm:text-[84px] font-semibold tabular-nums tracking-tight text-white/85 leading-none"
+            style={{ textShadow: '0 2px 4px rgba(0,0,0,0.6)' }}
+          >{liveGame.them}</span>
         </div>
         <div className="flex items-center gap-3 min-w-0 justify-end">
           <div className="text-right min-w-0">
@@ -177,14 +183,24 @@ const HeroLatest = ({ lastResult, oppFull }) => (
           <div className="text-[18px] font-semibold tracking-tight">Flyers</div>
         </div>
       </div>
-      <div className="flex items-baseline gap-3">
-        <span className={cx('text-[64px] sm:text-[84px] font-semibold tabular-nums tracking-tight leading-none',
-          lastResult.w ? 'text-[#FF8A4C]' : 'text-white/55'
-        )}>{lastResult.us}</span>
+      <div className="flex items-baseline gap-3 px-4 sm:px-6 py-2 rounded-md bg-black/40 border border-white/[0.06] shadow-[0_8px_24px_-8px_rgba(0,0,0,0.6),0_1px_0_rgba(255,255,255,0.04)_inset]">
+        <span
+          className={cx('text-[64px] sm:text-[84px] font-semibold tabular-nums tracking-tight leading-none',
+            lastResult.w ? 'text-emerald-400' : 'text-white/55'
+          )}
+          style={{ textShadow: lastResult.w
+            ? '0 0 22px rgba(16,185,129,0.35), 0 2px 4px rgba(0,0,0,0.6)'
+            : '0 2px 4px rgba(0,0,0,0.6)' }}
+        >{lastResult.us}</span>
         <span className="text-[36px] text-white/20">–</span>
-        <span className={cx('text-[64px] sm:text-[84px] font-semibold tabular-nums tracking-tight leading-none',
-          !lastResult.w ? 'text-white/85' : 'text-white/55'
-        )}>{lastResult.them}</span>
+        <span
+          className={cx('text-[64px] sm:text-[84px] font-semibold tabular-nums tracking-tight leading-none',
+            !lastResult.w ? 'text-red-400' : 'text-white/55'
+          )}
+          style={{ textShadow: !lastResult.w
+            ? '0 0 22px rgba(239,68,68,0.32), 0 2px 4px rgba(0,0,0,0.6)'
+            : '0 2px 4px rgba(0,0,0,0.6)' }}
+        >{lastResult.them}</span>
       </div>
       <div className="flex items-center gap-3 min-w-0 justify-end">
         <div className="text-right min-w-0">
@@ -202,10 +218,40 @@ export const Hero = ({ liveGame, liveDetail, nextGame, lastResult, us }) => {
   const oppFull = opp ? OPP_FULL[opp] : null;
 
   return (
-    <div className="relative overflow-hidden rounded-md border border-white/[0.06] bg-gradient-to-br from-[#141414] via-[#101010] to-[#0A0A0A] px-5 sm:px-8 py-6 sm:py-8">
-      {/* No watermark fills — kept the panel pure neutral charcoal. The team
-          logos appear inline in the score block where they belong, instead
-          of as background images that tint the whole surface. */}
+    <div className="relative overflow-hidden rounded-lg border border-white/[0.08] bg-[#0A0A0A] px-5 sm:px-8 py-6 sm:py-8 shadow-[0_0_0_1px_rgba(255,255,255,0.02)_inset,0_24px_48px_-24px_rgba(0,0,0,0.9),0_2px_0_rgba(255,255,255,0.04)_inset]">
+        {/* ── Layered background for depth ──────────────────────────────────
+            Three stacked passes: (1) base dark gradient with a faint vertical
+            light fall-off, (2) two large neutral radial spotlights pinned to
+            where each team logo sits — they make the logos feel "lit" without
+            adding any color, (3) a subtle ice-rink line pattern at very low
+            opacity. None of these layers carry orange / blue tint, so the
+            panel reads as pure charcoal. */}
+        <div aria-hidden className="pointer-events-none absolute inset-0 bg-gradient-to-b from-[#181818] via-[#0E0E0E] to-[#070707]" />
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-0"
+          style={{
+            background: 'radial-gradient(closest-side at 12% 50%, rgba(255,255,255,0.05), transparent 70%), radial-gradient(closest-side at 88% 50%, rgba(255,255,255,0.045), transparent 70%)',
+          }}
+        />
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-0 opacity-[0.06]"
+          style={{
+            backgroundImage:
+              'repeating-linear-gradient(90deg, rgba(255,255,255,0.5) 0 1px, transparent 1px 64px), repeating-linear-gradient(0deg, rgba(255,255,255,0.5) 0 1px, transparent 1px 64px)',
+            maskImage: 'radial-gradient(ellipse at center, black 30%, transparent 75%)',
+            WebkitMaskImage: 'radial-gradient(ellipse at center, black 30%, transparent 75%)',
+          }}
+        />
+        {/* Large featured team logos — flanking the panel, properly contained
+            so they don't tint the surface. Each logo gets a neutral white
+            radial halo behind it for separation. */}
+        <FeatureLogo abbr="PHI" url={PHI_LOGO} side="left" />
+        <FeatureLogo abbr={opp} url={teamLogoUrl(opp)} side="right" />
+        {/* Top edge highlight + bottom shadow for the "raised card" feel. */}
+        <div aria-hidden className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/15 to-transparent" />
+        <div aria-hidden className="pointer-events-none absolute inset-x-8 bottom-0 h-12 bg-gradient-to-t from-black/60 to-transparent" />
 
       <div className="relative">
         {liveGame ? <HeroLive liveGame={liveGame} liveDetail={liveDetail} oppFull={oppFull} /> :
@@ -222,27 +268,69 @@ export const Hero = ({ liveGame, liveDetail, nextGame, lastResult, us }) => {
           )}
 
         {us && (
-          <div className="relative mt-6 pt-5 border-t border-white/[0.05] grid grid-cols-2 sm:grid-cols-4 gap-4">
-            <div>
-              <div className="text-[10px] font-mono text-white/40 uppercase tracking-wider">Record</div>
-              <div className="text-[18px] font-semibold tabular-nums mt-0.5">{us.w}–{us.l}{us.ot ? `–${us.ot}` : ''}</div>
-            </div>
-            <div>
-              <div className="text-[10px] font-mono text-white/40 uppercase tracking-wider">Points</div>
-              <div className="text-[18px] font-semibold tabular-nums mt-0.5">{us.pts}</div>
-            </div>
-            <div>
-              <div className="text-[10px] font-mono text-white/40 uppercase tracking-wider">Goal Diff</div>
-              <div className={cx('text-[18px] font-semibold tabular-nums mt-0.5',
-                us.diff > 0 ? 'text-[#FF8A4C]' : us.diff < 0 ? 'text-red-400' : ''
-              )}>{us.diff > 0 ? '+' : ''}{us.diff}</div>
-            </div>
-            <div>
-              <div className="text-[10px] font-mono text-white/40 uppercase tracking-wider">Metro</div>
-              <div className="text-[18px] font-semibold tabular-nums mt-0.5">#{us.divRank}</div>
-            </div>
+          <div className="relative mt-6 pt-5 border-t border-white/[0.06] grid grid-cols-2 sm:grid-cols-4 gap-4">
+            <HeroStat label="Record" value={`${us.w}–${us.l}${us.ot ? `–${us.ot}` : ''}`} />
+            <HeroStat label="Points" value={us.pts} accent="warm" />
+            <HeroStat
+              label="Goal Diff"
+              value={`${us.diff > 0 ? '+' : ''}${us.diff}`}
+              accent={us.diff > 0 ? 'good' : us.diff < 0 ? 'bad' : null}
+            />
+            <HeroStat label="Metro" value={`#${us.divRank}`} accent={us.divRank <= 3 ? 'good' : us.divRank >= 6 ? 'bad' : null} />
           </div>
         )}
+      </div>
+    </div>
+  );
+};
+
+// Featured team logo — large, soft-glow halo behind, lifts off the surface
+// with a subtle drop shadow. Sits behind text content but above the
+// background gradients. We tuck it slightly off-screen on the inside edge so
+// the score block has room to breathe.
+const FeatureLogo = ({ abbr, url, side }) => {
+  if (!url || !abbr) return null;
+  const isLeft = side === 'left';
+  return (
+    <div
+      aria-hidden
+      className={cx(
+        'pointer-events-none absolute top-1/2 -translate-y-1/2 hidden md:block',
+        isLeft ? 'left-[-18px]' : 'right-[-18px]',
+      )}
+    >
+      <div
+        className="absolute inset-0 m-auto w-[200px] h-[200px] rounded-full"
+        style={{
+          background: 'radial-gradient(closest-side, rgba(255,255,255,0.06), transparent 70%)',
+          filter: 'blur(8px)',
+        }}
+      />
+      <img
+        src={url}
+        alt=""
+        className="relative w-[180px] h-[180px] lg:w-[210px] lg:h-[210px] object-contain"
+        style={{
+          opacity: 0.9,
+          filter: 'drop-shadow(0 18px 24px rgba(0,0,0,0.6)) drop-shadow(0 0 1px rgba(255,255,255,0.08))',
+        }}
+        onError={(e) => { e.currentTarget.style.display = 'none'; }}
+      />
+    </div>
+  );
+};
+
+const HeroStat = ({ label, value, accent }) => {
+  const valueClass =
+    accent === 'good' ? 'text-emerald-400' :
+    accent === 'bad'  ? 'text-red-400' :
+    accent === 'warm' ? 'text-[#FF8A4C]' :
+    'text-white';
+  return (
+    <div className="relative px-3 py-2 rounded-md bg-white/[0.015] border border-white/[0.04]">
+      <div className="text-[10px] font-mono text-white/40 uppercase tracking-wider">{label}</div>
+      <div className={cx('text-[20px] font-semibold tabular-nums mt-0.5 leading-none', valueClass)}>
+        {value}
       </div>
     </div>
   );

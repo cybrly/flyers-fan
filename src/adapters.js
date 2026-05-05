@@ -612,6 +612,80 @@ export function adaptProspects(raw) {
   };
 }
 
+// Draft rankings — /v1/draft/rankings/{year}/{categoryId}. Pre-draft NHL
+// Central Scouting rankings, four categories: 1=NA-Skater, 2=Int-Skater,
+// 3=NA-Goalie, 4=Int-Goalie. We fetch all four and merge into one
+// dictionary keyed by category, leaving sorting/display to the page.
+export function adaptDraftRankings(payloads) {
+  if (!payloads?.length) return null;
+  const out = { draftYear: null, byCategory: {} };
+  for (const p of payloads) {
+    if (!p) continue;
+    out.draftYear = p.draftYear || out.draftYear;
+    out.byCategory[p.categoryKey] = (p.rankings || []).map((r) => ({
+      firstName: r.firstName,
+      lastName: r.lastName,
+      name: `${r.firstName || ''} ${r.lastName || ''}`.trim(),
+      pos: r.positionCode,
+      shoots: r.shootsCatches,
+      heightIn: r.heightInInches,
+      weightLb: r.weightInPounds,
+      birthDate: r.birthDate,
+      birthCity: r.birthCity,
+      birthCountry: r.birthCountry,
+      birthState: r.birthStateProvince,
+      club: r.lastAmateurClub,
+      league: r.lastAmateurLeague,
+      midRank: r.midtermRank,
+      finalRank: r.finalRank,
+    })).sort((a, b) => {
+      const aR = a.finalRank ?? a.midRank ?? 9999;
+      const bR = b.finalRank ?? b.midRank ?? 9999;
+      return aR - bR;
+    });
+  }
+  return out;
+}
+
+// Calendar / month schedule — /v1/club-schedule/{TEAM}/month/{YYYY-MM} or
+// /now. Same per-game shape as the season schedule, plus a small set of
+// month boundary fields for prev/next navigation.
+export function adaptMonthSchedule(raw) {
+  if (!raw?.games) return null;
+  const games = raw.games.map((g) => {
+    const isHome = g.homeTeam?.abbrev === TEAM_ABBR;
+    const us = isHome ? g.homeTeam : g.awayTeam;
+    const them = isHome ? g.awayTeam : g.homeTeam;
+    return {
+      id: g.id,
+      date: g.gameDate,
+      startUTC: g.startTimeUTC,
+      state: g.gameState,
+      gameType: g.gameType,
+      home: isHome,
+      opp: them.abbrev,
+      oppName: them.placeName?.default
+        ? `${them.placeName.default} ${them.commonName?.default || ''}`.trim()
+        : them.abbrev,
+      venue: g.venue?.default,
+      us: us?.score ?? null,
+      them: them?.score ?? null,
+      w: us?.score != null && them?.score != null ? us.score > them.score : null,
+      lastPeriodType: g.gameOutcome?.lastPeriodType,
+      tvBroadcasts: (g.tvBroadcasts || []).map((b) => ({ network: b.network, market: b.market })),
+      threeMinRecap: g.threeMinRecap,
+      condensedGame: g.condensedGame,
+      seriesStatus: g.seriesStatus,
+    };
+  });
+  return {
+    currentMonth: raw.currentMonth,
+    previousMonth: raw.previousMonth,
+    nextMonth: raw.nextMonth,
+    games,
+  };
+}
+
 // Draft picks — /v1/draft/picks/{year}/{round}. Returns { picks: [...] }
 // with each pick's overall pick number, team, and selected player.
 export function adaptDraftPicks(raw, teamAbbr) {

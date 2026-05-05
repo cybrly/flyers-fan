@@ -129,8 +129,19 @@ export const Sidebar = ({ page, setPage, team, liveGame, metro, roster, lastFetc
         </div>
         {streak && (
           <div className="flex items-center justify-between text-[10px] font-mono text-white/40">
-            <span className="flex items-center gap-1.5"><Flame size={9} className="text-[#F74902]" />Streak</span>
-            <span className="text-[#FF8A4C] font-medium">{streak}</span>
+            <span className="flex items-center gap-1.5">
+              <Flame size={9} className={
+                streak.startsWith('W') ? 'text-emerald-400'
+                  : streak.startsWith('L') ? 'text-red-400'
+                  : 'text-[#F74902]'
+              } />
+              Streak
+            </span>
+            <span className={cx('font-medium tabular-nums',
+              streak.startsWith('W') ? 'text-emerald-400'
+                : streak.startsWith('L') ? 'text-red-400'
+                : 'text-[#FF8A4C]'
+            )}>{streak}</span>
           </div>
         )}
       </div>

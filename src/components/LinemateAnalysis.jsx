@@ -31,9 +31,20 @@ export const LinemateAnalysis = ({ gameId, focusPlayerId = null }) => {
 
   const { pairs, players } = useMemo(() => {
     if (!shifts?.length) return { pairs: [], players: {} };
-    // PHI shifts only — at the moment we focus on Flyers combinations.
+    // PHI skater shifts only. NHL shift data uses typeCode 517 for both
+    // skaters and goalies; goalies always appear as 20:00 "shifts" per
+    // period, which would dominate every overlap pair (they're literally
+    // on the ice the whole game). Filter shifts longer than 3 minutes —
+    // safely above the longest realistic skater shift (~2 min) and well
+    // below a goalie's per-period span (15–20 min).
     const phi = shifts
-      .filter((s) => s.teamAbbrev === TEAM_ABBR && s.typeCode === 517 && s.duration && s.duration !== '00:00')
+      .filter((s) => {
+        if (s.teamAbbrev !== TEAM_ABBR) return false;
+        if (s.typeCode !== 517) return false;
+        if (!s.duration || s.duration === '00:00') return false;
+        const durSec = parseMSS(s.duration);
+        return durSec > 0 && durSec < 180; // exclude goalies
+      })
       .map((s) => ({
         playerId: s.playerId,
         name: `${s.firstName || ''} ${s.lastName || ''}`.trim(),

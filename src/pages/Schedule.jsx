@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { cx, OPP_FULL, TEAM_ABBR, arenaMiles } from '../config.js';
+import { cx, OPP_FULL, TEAM_ABBR, arenaMiles, fmtTime } from '../config.js';
 import { Label, Section, Skeleton } from '../components/primitives.jsx';
 import { TeamLogo } from '../components/Logo.jsx';
 
@@ -19,9 +19,10 @@ function enrich(games) {
   });
 }
 
-export const Schedule = ({ schedule, onOpenGame }) => {
+export const Schedule = ({ schedule, monthSchedule, onOpenGame }) => {
   const [filter, setFilter] = useState('all');
   const [scope, setScope] = useState('l20'); // 'l20' | 'all'
+  const [view, setView] = useState('table');  // 'table' | 'calendar'
 
   const all = useMemo(() => enrich(schedule?.games || []), [schedule]);
   const base = scope === 'l20' ? all.slice(0, 20) : all;
@@ -47,28 +48,47 @@ export const Schedule = ({ schedule, onOpenGame }) => {
       <div className="flex items-end justify-between flex-wrap gap-3">
         <div>
           <h1 className="text-[20px] font-semibold tracking-tight">Schedule</h1>
-          <p className="text-[12px] text-white/45 mt-1 font-mono">Game log · {scope === 'l20' ? 'last 20 games' : `full season (${all.length})`} · live data</p>
+          <p className="text-[12px] text-white/45 mt-1 font-mono">{view === 'calendar' ? 'Calendar · current month' : `Game log · ${scope === 'l20' ? 'last 20 games' : `full season (${all.length})`}`} · live data</p>
         </div>
         <div className="flex items-center gap-2">
           <div className="flex items-center gap-0.5 p-0.5 border border-white/[0.08] rounded-md bg-white/[0.02]">
-            {[{ id: 'l20', l: 'L20' }, { id: 'all', l: 'Season' }].map((s) => (
-              <button key={s.id} onClick={() => setScope(s.id)}
+            {[
+              { id: 'table',    l: 'Table' },
+              { id: 'calendar', l: 'Calendar' },
+            ].map((v) => (
+              <button key={v.id} onClick={() => setView(v.id)}
                 className={cx('px-2.5 h-6 text-[11px] font-medium rounded-[4px] transition-colors',
-                  scope === s.id ? 'bg-white/[0.08] text-white' : 'text-white/50 hover:text-white'
-                )}>{s.l}</button>
+                  view === v.id ? 'bg-[#F74902]/15 text-[#FF8A4C]' : 'text-white/50 hover:text-white'
+                )}>{v.l}</button>
             ))}
           </div>
-          <div className="flex items-center gap-0.5 p-0.5 border border-white/[0.08] rounded-md bg-white/[0.02]">
-            {FILTERS.map((f) => (
-              <button key={f.id} onClick={() => setFilter(f.id)}
-                className={cx('px-2.5 h-6 text-[11px] font-medium rounded-[4px] transition-colors',
-                  filter === f.id ? 'bg-white/[0.08] text-white' : 'text-white/50 hover:text-white'
-                )}>{f.label}</button>
-            ))}
-          </div>
+          {view === 'table' && (
+            <>
+              <div className="flex items-center gap-0.5 p-0.5 border border-white/[0.08] rounded-md bg-white/[0.02]">
+                {[{ id: 'l20', l: 'L20' }, { id: 'all', l: 'Season' }].map((s) => (
+                  <button key={s.id} onClick={() => setScope(s.id)}
+                    className={cx('px-2.5 h-6 text-[11px] font-medium rounded-[4px] transition-colors',
+                      scope === s.id ? 'bg-white/[0.08] text-white' : 'text-white/50 hover:text-white'
+                    )}>{s.l}</button>
+                ))}
+              </div>
+              <div className="flex items-center gap-0.5 p-0.5 border border-white/[0.08] rounded-md bg-white/[0.02]">
+                {FILTERS.map((f) => (
+                  <button key={f.id} onClick={() => setFilter(f.id)}
+                    className={cx('px-2.5 h-6 text-[11px] font-medium rounded-[4px] transition-colors',
+                      filter === f.id ? 'bg-white/[0.08] text-white' : 'text-white/50 hover:text-white'
+                    )}>{f.label}</button>
+                ))}
+              </div>
+            </>
+          )}
         </div>
       </div>
 
+      {view === 'calendar' ? (
+        <CalendarView monthSchedule={monthSchedule} onOpenGame={onOpenGame} />
+      ) : (
+      <>
       <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
         {[
           { l: 'Games', v: filtered.length },
@@ -197,7 +217,127 @@ export const Schedule = ({ schedule, onOpenGame }) => {
           )}
         </div>
       </Section>
+      </>
+      )}
     </div>
+  );
+};
+
+// Calendar view — render the current month as a 7-column grid with each
+// game pinned to its date cell. Source: /v1/club-schedule/{TEAM}/month/now,
+// adapted to a flat games array with us/them/state/etc. Each cell shows the
+// opponent logo, score (or start time if upcoming), W/L pill, OT/SO tag,
+// playoff series progress, and links to NHL.com video recap when present.
+const CalendarView = ({ monthSchedule, onOpenGame }) => {
+  if (!monthSchedule) {
+    return <Section><div className="p-6"><Skeleton height={280} /></div></Section>;
+  }
+  const games = monthSchedule.games || [];
+  // Group games by ISO date string for O(1) cell lookup.
+  const byDate = {};
+  for (const g of games) {
+    if (!byDate[g.date]) byDate[g.date] = [];
+    byDate[g.date].push(g);
+  }
+
+  // Build the calendar grid for the current month. currentMonth is YYYY-MM;
+  // anchor on the 1st and pad leading/trailing cells to a full week grid.
+  const [yr, mo] = (monthSchedule.currentMonth || new Date().toISOString().slice(0, 7)).split('-').map(Number);
+  const firstOfMonth = new Date(yr, mo - 1, 1);
+  const lastOfMonth = new Date(yr, mo, 0);
+  const startWeekday = firstOfMonth.getDay(); // 0=Sun
+  const daysInMonth = lastOfMonth.getDate();
+
+  // 6 rows × 7 cols = max 42 cells handles every month layout
+  const cells = [];
+  for (let i = 0; i < 42; i++) {
+    const dayNum = i - startWeekday + 1;
+    if (dayNum < 1 || dayNum > daysInMonth) {
+      cells.push({ empty: true });
+    } else {
+      const dateStr = `${yr}-${String(mo).padStart(2, '0')}-${String(dayNum).padStart(2, '0')}`;
+      cells.push({ dayNum, dateStr, games: byDate[dateStr] || [] });
+    }
+  }
+
+  const today = new Date();
+  const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+  const monthLabel = new Date(yr, mo - 1, 1).toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+
+  return (
+    <Section
+      title={monthLabel}
+      action={<span className="text-[10px] font-mono text-white/40">{games.length} game{games.length === 1 ? '' : 's'}</span>}
+    >
+      <div className="grid grid-cols-7 gap-px bg-white/[0.05] border-b border-white/[0.05]">
+        {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((d) => (
+          <div key={d} className="bg-[#0A0A0A] px-2 h-7 flex items-center text-[10px] font-mono uppercase tracking-wider text-white/40">
+            {d}
+          </div>
+        ))}
+      </div>
+      <div className="grid grid-cols-7 gap-px bg-white/[0.04]">
+        {cells.map((c, i) => {
+          if (c.empty) return <div key={i} className="bg-[#070707] min-h-[88px]" />;
+          const isToday = c.dateStr === todayStr;
+          return (
+            <div key={i} className={cx(
+              'min-h-[88px] p-1.5',
+              isToday ? 'bg-[#F74902]/[0.08] ring-1 ring-[#F74902]/30 ring-inset' : 'bg-[#0A0A0A]',
+            )}>
+              <div className="flex items-center justify-between mb-1">
+                <span className={cx('text-[10px] font-mono tabular-nums',
+                  isToday ? 'text-[#FF8A4C] font-semibold' : 'text-white/45'
+                )}>{c.dayNum}</span>
+              </div>
+              {c.games.map((g) => <CalendarGame key={g.id} g={g} onOpen={onOpenGame} />)}
+            </div>
+          );
+        })}
+      </div>
+    </Section>
+  );
+};
+
+const CalendarGame = ({ g, onOpen }) => {
+  const isFinal = g.us != null && g.them != null;
+  const won = g.w === true;
+  const lost = g.w === false;
+  return (
+    <button
+      onClick={() => onOpen?.(g.id)}
+      className={cx(
+        'w-full text-left rounded-sm px-1.5 py-1 mb-1 last:mb-0 border transition-colors',
+        won
+          ? 'border-emerald-500/30 bg-emerald-500/[0.06] hover:bg-emerald-500/[0.10]'
+          : lost
+            ? 'border-red-500/25 bg-red-500/[0.05] hover:bg-red-500/[0.08]'
+            : 'border-white/[0.08] bg-white/[0.02] hover:bg-white/[0.05]',
+      )}
+    >
+      <div className="flex items-center gap-1 min-w-0">
+        <TeamLogo abbr={g.opp} size={12} />
+        <span className="text-[10px] font-mono text-white/60 shrink-0">{g.home ? 'vs' : '@'}</span>
+        <span className="text-[10px] font-mono text-white/85 truncate flex-1">{g.opp}</span>
+        {g.gameType === 3 && g.seriesStatus && (
+          <span className="text-[8px] font-mono text-amber-300/80">G{g.seriesStatus.gameNumberOfSeries}</span>
+        )}
+      </div>
+      <div className="flex items-center justify-between mt-0.5 text-[10px] font-mono tabular-nums">
+        {isFinal ? (
+          <>
+            <span className={cx(won ? 'text-emerald-400 font-semibold' : lost ? 'text-red-400/85' : 'text-white/65')}>
+              {g.us}–{g.them}
+            </span>
+            {g.lastPeriodType && g.lastPeriodType !== 'REG' && (
+              <span className="text-amber-300/80">{g.lastPeriodType}</span>
+            )}
+          </>
+        ) : (
+          <span className="text-white/55">{fmtTime(g.startUTC)}</span>
+        )}
+      </div>
+    </button>
   );
 };
 

@@ -8,6 +8,7 @@ import {
   adaptSchedule, adaptStandings, adaptGame,
   adaptPlayByPlay, adaptBracket, adaptRoster, adaptClubStats, adaptScoreboard,
   adaptLeagueLeaders, adaptProspects, adaptDraftPicks,
+  adaptDraftRankings, adaptMonthSchedule,
 } from './adapters.js';
 
 import { Sidebar } from './components/Sidebar.jsx';
@@ -32,6 +33,7 @@ const PlayerProfile = lazy(() => import('./pages/PlayerProfile.jsx').then((m) =>
 const PlayerCompare = lazy(() => import('./pages/PlayerCompare.jsx').then((m) => ({ default: m.PlayerCompare })));
 const Trends = lazy(() => import('./pages/Trends.jsx').then((m) => ({ default: m.Trends })));
 const Coaches = lazy(() => import('./pages/Coaches.jsx').then((m) => ({ default: m.Coaches })));
+const Draft = lazy(() => import('./pages/Draft.jsx').then((m) => ({ default: m.Draft })));
 
 export default function App() {
   // Route-derived state — URL is the source of truth. /game/123, ?player=8478,
@@ -60,6 +62,7 @@ export default function App() {
       compare: 'Compare · flyers.fan',
       trends: 'Trends · flyers.fan',
       coaches: 'Coaches · flyers.fan',
+      draft: 'Draft Rankings · flyers.fan',
     };
     document.title = titles[page] || 'flyers.fan';
   }, [page]);
@@ -77,7 +80,7 @@ export default function App() {
       const map = {
         '1': 'dashboard', '2': 'schedule', '3': 'standings',
         '4': 'game', '5': 'playoffs', '6': 'roster',
-        '7': 'trends', '8': 'compare', '9': 'coaches',
+        '7': 'trends', '8': 'compare', '9': 'coaches', '0': 'draft',
       };
       if (map[e.key]) navigate(pageHref(map[e.key]));
     };
@@ -185,17 +188,53 @@ export default function App() {
     return [...r1, ...r2];
   }, [draftR1.data, draftR2.data]);
 
-  // Sidebar team summary (combines record + clinch + streak).
+  // Draft rankings — pre-draft NHL Central Scouting list. Four categories,
+  // fetched only when the Draft tab is active. Cheap CDN cache (rankings
+  // refresh midterm + final per year).
+  const onDraft = page === 'draft';
+  const drYear = '2026';
+  const drNAS = useNHL(onDraft ? `v1/draft/rankings/${drYear}/1` : null, POLL.standings);
+  const drIS  = useNHL(onDraft ? `v1/draft/rankings/${drYear}/2` : null, POLL.standings);
+  const drNAG = useNHL(onDraft ? `v1/draft/rankings/${drYear}/3` : null, POLL.standings);
+  const drIG  = useNHL(onDraft ? `v1/draft/rankings/${drYear}/4` : null, POLL.standings);
+  const draftRankings = useMemo(
+    () => adaptDraftRankings([drNAS.data, drIS.data, drNAG.data, drIG.data]),
+    [drNAS.data, drIS.data, drNAG.data, drIG.data],
+  );
+
+  // Month schedule for the Calendar view on the Schedule page. Fetched only
+  // when calendar view is active — Schedule already pulls the full season
+  // by default, so this is opt-in.
+  const monthSchedRaw = useNHL(page === 'schedule' ? `v1/club-schedule/${TEAM_ABBR}/month/now` : null, POLL.standings);
+  const monthSchedule = useMemo(() => adaptMonthSchedule(monthSchedRaw.data), [monthSchedRaw.data]);
+
+  // Sidebar team summary (combines record + clinch + streak). Streak is
+  // recomputed from the schedule games array because the standings endpoint
+  // freezes its streakCode at the regular-season finale — during playoffs
+  // it would happily report "W3" while the team is dropping playoff games.
+  // Schedule.games includes playoff results, so the derived streak stays
+  // honest year-round.
   const teamCombined = useMemo(() => {
     if (!standings.us) return null;
+    let streak = standings.us.streak;
+    const games = schedule.games || [];
+    if (games.length > 0) {
+      const type = games[0].w;
+      let n = 0;
+      for (const g of games) {
+        if (g.w === type) n++;
+        else break;
+      }
+      streak = `${type ? 'W' : 'L'}${n}`;
+    }
     return {
       w: standings.us.w, l: standings.us.l, ot: standings.us.ot,
       gp: standings.us.gp, pts: standings.us.pts, pct: standings.us.pct,
       divRank: standings.us.divRank, confRank: standings.us.confRank,
       clinched: standings.us.clinched, diff: standings.us.diff,
-      streak: standings.us.streak,
+      streak,
     };
-  }, [standings.us]);
+  }, [standings.us, schedule.games]);
 
   // Most recent refresh timestamp across all feeds.
   const lastFetch = Math.max(
@@ -309,7 +348,7 @@ export default function App() {
                 <div className="p-6 text-[12px] font-mono text-white/35">loading…</div>
               }>
                 {page === 'dashboard' && <Dashboard schedule={schedule} standings={standings} scoreboard={scoreboard} clubStats={clubStats} roster={roster} liveDetail={isLive(boxscore.data?.gameState) ? game : null} lastGame={game} leagueLeaders={leagueLeaders} loading={scheduleRaw.loading || standingsRaw.loading} onOpenGame={openGame} />}
-                {page === 'schedule'  && <Schedule schedule={schedule} onOpenGame={openGame} />}
+                {page === 'schedule'  && <Schedule schedule={schedule} monthSchedule={monthSchedule} onOpenGame={openGame} />}
                 {page === 'standings' && <Standings standings={standings} />}
                 {page === 'game'      && <GameTape game={game} loading={boxscore.loading} pbp={pbp} pbpRaw={pbpRaw.data} customGameId={routeGameId} onClearCustom={clearSelectedGame} />}
                 {page === 'playoffs'  && <Playoffs bracket={bracket} onOpenSeries={onOpenSeries} />}
@@ -318,6 +357,7 @@ export default function App() {
                 {page === 'compare'   && <PlayerCompare schedule={schedule} />}
                 {page === 'trends'    && <Trends schedule={schedule} standings={standings} />}
                 {page === 'coaches'   && <Coaches />}
+                {page === 'draft'     && <Draft rankings={draftRankings} loading={drNAS.loading} />}
               </Suspense>
             </ErrorBoundary>
           </main>

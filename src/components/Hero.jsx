@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react';
 import { cx, OPP_FULL, fmtTime, fmtDateFull } from '../config.js';
+import { useScoreBurst } from '../api.js';
 import { Chip } from './primitives.jsx';
 import { FlyersMark, TeamLogo } from './Logo.jsx';
+import { WinProbability, PaceProjection, GoalCelebration } from './LiveTiles.jsx';
 
 const PHI_LOGO = 'https://assets.nhle.com/logos/nhl/svg/PHI_dark.svg';
 const teamLogoUrl = (abbr) => abbr ? `https://assets.nhle.com/logos/nhl/svg/${abbr}_dark.svg` : null;
@@ -44,6 +46,10 @@ const HeroLive = ({ liveGame, liveDetail, oppFull }) => {
   const sog = liveDetail?.stats?.shots;
   const pp = liveDetail?.stats?.powerPlay;
 
+  // Goal-burst overlay — fires whenever the PHI score increments, then
+  // self-clears after ~2.4s.
+  const goalBurst = useScoreBurst(liveGame.us);
+
   return (
     <>
       <div className="flex items-center gap-2 flex-wrap">
@@ -60,7 +66,8 @@ const HeroLive = ({ liveGame, liveDetail, oppFull }) => {
           {liveGame.home ? 'Home' : 'Away'}{liveGame.venue ? ` · ${liveGame.venue}` : ''}
         </span>
       </div>
-      <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-4 sm:gap-8 mt-5">
+      <div className="relative grid grid-cols-[1fr_auto_1fr] items-center gap-4 sm:gap-8 mt-5">
+        {goalBurst && <GoalCelebration />}
         <div className="flex items-center gap-3 min-w-0">
           <FlyersMark size={48} />
           <div className="min-w-0">
@@ -70,7 +77,10 @@ const HeroLive = ({ liveGame, liveDetail, oppFull }) => {
         </div>
         <div className="flex items-baseline gap-3 px-4 sm:px-6 py-2 rounded-md bg-black/40 border border-white/[0.06] shadow-[0_8px_24px_-8px_rgba(0,0,0,0.6),0_1px_0_rgba(255,255,255,0.04)_inset]">
           <span
-            className="text-[64px] sm:text-[84px] font-semibold tabular-nums tracking-tight text-[#FF8A4C] leading-none"
+            className={cx(
+              'text-[64px] sm:text-[84px] font-semibold tabular-nums tracking-tight text-[#FF8A4C] leading-none',
+              goalBurst && 'score-flash',
+            )}
             style={{ textShadow: '0 0 24px rgba(247,73,2,0.4), 0 2px 4px rgba(0,0,0,0.6)' }}
           >{liveGame.us}</span>
           <span className="text-[36px] text-white/20">–</span>
@@ -87,6 +97,38 @@ const HeroLive = ({ liveGame, liveDetail, oppFull }) => {
           <TeamLogo abbr={liveGame.opp} size={48} />
         </div>
       </div>
+
+      {/* Win probability + projection tiles — broadcast-feel during live play */}
+      {!inIntermission && period && (
+        <div className="mt-4 flex flex-wrap gap-2">
+          <WinProbability
+            us={liveGame.us}
+            them={liveGame.them}
+            period={period?.number}
+            periodType={period?.periodType}
+            clock={clock}
+            isHome={liveGame.home}
+          />
+          <PaceProjection
+            label="Goals"
+            current={liveGame.us}
+            period={period?.number}
+            periodType={period?.periodType}
+            clock={clock}
+            color="#FF8A4C"
+          />
+          {sog?.us != null && (
+            <PaceProjection
+              label="Shots"
+              current={sog.us}
+              period={period?.number}
+              periodType={period?.periodType}
+              clock={clock}
+              color="#10B981"
+            />
+          )}
+        </div>
+      )}
 
       {/* Live stat strip — appears when boxscore data is loaded */}
       {liveDetail && (sog?.us != null || pp?.us != null) && (

@@ -91,6 +91,25 @@ export function useFlashOnChange(value, durationMs = 700) {
   return tick > 0 ? 'score-flash' : '';
 }
 
+// Triggers a transient "burst" state when a numeric value increases (used
+// for goal celebrations — only fires on score-up events, not score-down,
+// so a goal review reversal won't accidentally trigger). Caller renders a
+// celebration overlay while the returned bool is true.
+export function useScoreBurst(value, durationMs = 2400) {
+  const prev = useRef(value);
+  const [active, setActive] = useState(false);
+  useEffect(() => {
+    if (prev.current != null && value != null && value > prev.current) {
+      setActive(true);
+      const t = setTimeout(() => setActive(false), durationMs);
+      prev.current = value;
+      return () => clearTimeout(t);
+    }
+    prev.current = value;
+  }, [value, durationMs]);
+  return active;
+}
+
 // Ticks every second so relative-time labels stay fresh.
 export function useClockTick(ms = 1000) {
   const [, setN] = useState(0);

@@ -124,83 +124,55 @@ const FullRinkMark = () => (
   </div>
 );
 
-// Abstract centerpiece — minimalist white-on-dark radial composition that
-// reads as "ice / motion / impact" without drawing attention to itself.
-// Twenty-four light rays emanate from center (alternating short/long, faint/
-// brighter), wrapped by two concentric dashed guide rings. A small dark puck
-// silhouette anchors the middle. No brand color, no thick rings, no spinning
-// — pure quiet ambient art so the score/countdown stays the focal point.
-const CenterArt = () => {
-  const SIZE = 300;
+// Centered NHL shield watermark behind the score/countdown. Loaded from the
+// NHL CDN and run through grayscale + brightness filtering so the multicolor
+// official mark resolves to a neutral white silhouette — no color cast on
+// the dark hero surface (same technique as the team logos at the sides).
+// Distinct from the team-specific watermarks because it's the league mark,
+// not redundant with PHI / opponent logos. Inline SVG fallback handles the
+// rare case where the CDN doesn't resolve.
+const CenterShield = () => {
+  const [errored, setErrored] = useState(false);
   return (
     <div
       aria-hidden
       className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 select-none"
-      style={{ width: SIZE, height: SIZE }}
+      style={{ width: 260, height: 180 }}
     >
-      <style>{HERO_KEYFRAMES}</style>
-      <svg viewBox="0 0 300 300" width="100%" height="100%" className="absolute inset-0">
-        <defs>
-          {/* Soft radial fade so the rays feel atmospheric, not stenciled. */}
-          <radialGradient id="rayFade" cx="50%" cy="50%" r="55%">
-            <stop offset="0%"   stopColor="white" stopOpacity="0" />
-            <stop offset="40%"  stopColor="white" stopOpacity="0.9" />
-            <stop offset="100%" stopColor="white" stopOpacity="0" />
-          </radialGradient>
-          <mask id="rayMask">
-            <rect x="0" y="0" width="300" height="300" fill="url(#rayFade)" />
-          </mask>
-        </defs>
-
-        {/* Radial light rays — every other one is longer/brighter for rhythm. */}
-        <g mask="url(#rayMask)">
-          {Array.from({ length: 24 }).map((_, i) => {
-            const a = (i / 24) * 2 * Math.PI;
-            const long = i % 2 === 0;
-            const r1 = 26;
-            const r2 = long ? 132 : 96;
-            const x1 = 150 + Math.cos(a) * r1;
-            const y1 = 150 + Math.sin(a) * r1;
-            const x2 = 150 + Math.cos(a) * r2;
-            const y2 = 150 + Math.sin(a) * r2;
-            return (
-              <line
-                key={i}
-                x1={x1} y1={y1} x2={x2} y2={y2}
-                stroke="white"
-                strokeWidth={long ? 0.7 : 0.5}
-                opacity={long ? 0.42 : 0.22}
-                strokeLinecap="round"
-              />
-            );
-          })}
-        </g>
-
-        {/* Two concentric guide rings — barely-there, dashed */}
-        <circle cx="150" cy="150" r="120" fill="none" stroke="white" strokeWidth="0.6" strokeDasharray="1 5" opacity="0.18" />
-        <circle cx="150" cy="150" r="74"  fill="none" stroke="white" strokeWidth="0.6" strokeDasharray="1 4" opacity="0.22" />
-
-        {/* Four cardinal tick marks — faint */}
-        {[0, 90, 180, 270].map((deg) => (
-          <line
-            key={deg}
-            x1="150" y1="32" x2="150" y2="40"
-            stroke="white" strokeWidth="0.8" opacity="0.35"
-            transform={`rotate(${deg} 150 150)`}
+      {!errored ? (
+        <img
+          src="https://assets.nhle.com/logos/nhl/svg/NHL_dark.svg"
+          alt=""
+          className="w-full h-full object-contain"
+          onError={() => setErrored(true)}
+          style={{
+            opacity: 0.13,
+            filter: 'grayscale(1) brightness(1.7) contrast(0.9)',
+          }}
+        />
+      ) : (
+        <svg
+          viewBox="0 0 260 180"
+          width="100%"
+          height="100%"
+          style={{ opacity: 0.13, filter: 'grayscale(1) brightness(1.7)' }}
+        >
+          {/* Inline fallback — abstract NHL-style shield + wordmark */}
+          <path
+            d="M 50 30 L 200 30 L 220 50 L 215 130 L 130 160 L 45 130 L 40 50 Z"
+            fill="none" stroke="white" strokeWidth="2.5"
           />
-        ))}
-      </svg>
-
-      {/* Dark puck silhouette — small, neutral, ambient glow */}
-      <div
-        className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full"
-        style={{
-          width: 18, height: 18,
-          background: 'radial-gradient(circle at 35% 35%, #2a2a2a 0%, #0a0a0a 70%)',
-          boxShadow: '0 0 18px rgba(255,255,255,0.06), 0 0 0 1px rgba(255,255,255,0.08) inset',
-          animation: 'flyersHeroPuckPulse 4s ease-in-out infinite',
-        }}
-      />
+          <text
+            x="130" y="105"
+            textAnchor="middle"
+            fontFamily="Impact, ui-sans-serif, system-ui"
+            fontSize="50"
+            fontWeight="900"
+            fill="white"
+            letterSpacing="3"
+          >NHL</text>
+        </svg>
+      )}
     </div>
   );
 };
@@ -566,7 +538,7 @@ export const Hero = ({ liveGame, liveDetail, nextGame, lastResult, us, recentGam
             rink is clipped to the upper portion so the bottom HeroStats row
             stays clean. */}
         <FullRinkMark />
-        <CenterArt />
+        <CenterShield />
         <HeroSweep />
         {/* Top edge highlight + bottom shadow for the "raised card" feel. */}
         <div aria-hidden className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/15 to-transparent" />

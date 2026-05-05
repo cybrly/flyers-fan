@@ -334,7 +334,9 @@ export default function App() {
       </div>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&family=Geist+Mono:wght@400;500;600&display=swap');
-        html, body { background: #0A0A0A; }
+        html, body { background: #0A0A0A; color-scheme: dark; }
+        select option { background: #0E0E0E; color: rgba(255,255,255,0.85); }
+        select optgroup { background: #0A0A0A; color: rgba(255,255,255,0.45); font-weight: 500; }
         * { font-family: 'Geist', system-ui, -apple-system, sans-serif; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
         .font-mono, code, kbd { font-family: 'Geist Mono', ui-monospace, SF Mono, monospace !important; }
         .tabular-nums { font-variant-numeric: tabular-nums; }

@@ -12,13 +12,26 @@
 //
 // Bump the cache name on each deploy that ships SW changes.
 
-const VERSION = 'v1';
+const VERSION = 'v2';
 const SHELL_CACHE = `shell-${VERSION}`;
 const ASSET_CACHE = `assets-${VERSION}`;
-const SHELL_URLS = ['/', '/manifest.webmanifest', '/favicon.svg', '/icon-512.svg'];
+const SHELL_URLS = [
+  '/', '/manifest.webmanifest', '/favicon.svg', '/icon-512.svg',
+  // The SPA serves the same index.html for all routes via Vercel rewrites,
+  // so caching '/' covers them all. Listing the most-visited paths anyway
+  // helps the network-first navigation handler prime its fallback.
+  '/schedule', '/standings', '/roster', '/playoffs',
+];
 
 self.addEventListener('install', (event) => {
-  event.waitUntil(caches.open(SHELL_CACHE).then((c) => c.addAll(SHELL_URLS)));
+  event.waitUntil((async () => {
+    const cache = await caches.open(SHELL_CACHE);
+    // allSettled — if a single URL 404s on a bad deploy we still install
+    // rather than aborting the whole SW lifecycle.
+    await Promise.allSettled(
+      SHELL_URLS.map((u) => cache.add(u).catch(() => {}))
+    );
+  })());
   self.skipWaiting();
 });
 

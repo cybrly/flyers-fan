@@ -10,6 +10,7 @@ import { ShiftChart } from '../components/ShiftChart.jsx';
 import { LinemateAnalysis } from '../components/LinemateAnalysis.jsx';
 import { FaceoffSplits } from '../components/FaceoffSplits.jsx';
 import { ScoreStateSplits } from '../components/ScoreStateSplits.jsx';
+import { GoalieHeatMap } from '../components/GoalieHeatMap.jsx';
 
 const CompareRow = ({ label, us, them, higherBetter = true, suffix = '' }) => {
   if (us == null || them == null) return null;
@@ -344,6 +345,8 @@ export const GameTape = ({ game, loading, pbp, pbpRaw, customGameId, onClearCust
         )}
 
         {pbpRaw && <ScoreStateSplits pbpRaw={pbpRaw} />}
+
+        {pbpRaw && <GoalieHeatMap pbpRaw={pbpRaw} />}
 
         {pbpRaw && <FaceoffSplits pbpRaw={pbpRaw} />}
 

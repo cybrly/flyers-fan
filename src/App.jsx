@@ -18,6 +18,7 @@ import { Statusbar } from './components/Statusbar.jsx';
 import { ErrorBoundary } from './components/ErrorBoundary.jsx';
 import { PlayerModal } from './components/PlayerModal.jsx';
 import { CommandPalette } from './components/CommandPalette.jsx';
+import { InstallPrompt } from './components/InstallPrompt.jsx';
 import { SeriesModal } from './components/SeriesModal.jsx';
 import { LiveRibbon } from './components/LiveRibbon.jsx';
 import { useGoalHorn, useGoalHornEnabled } from './components/GoalHorn.jsx';
@@ -60,6 +61,7 @@ const PlayerCompare = lazyPage(() => import('./pages/PlayerCompare.jsx'), 'Playe
 const Trends   = lazyPage(() => import('./pages/Trends.jsx'),   'Trends');
 const Coaches  = lazyPage(() => import('./pages/Coaches.jsx'),  'Coaches');
 const Draft    = lazyPage(() => import('./pages/Draft.jsx'),    'Draft');
+const Records  = lazyPage(() => import('./pages/Records.jsx'),  'Records');
 
 export default function App() {
   // Route-derived state — URL is the source of truth. /game/123, ?player=8478,
@@ -90,6 +92,7 @@ export default function App() {
       trends: 'Trends · flyers.fan',
       coaches: 'Coaches · flyers.fan',
       draft: 'Draft Rankings · flyers.fan',
+      records: 'Records · flyers.fan',
     };
     document.title = titles[page] || 'flyers.fan';
   }, [page]);
@@ -421,6 +424,7 @@ export default function App() {
                 {page === 'trends'    && <Trends schedule={schedule} standings={standings} roster={roster} />}
                 {page === 'coaches'   && <Coaches />}
                 {page === 'draft'     && <Draft rankings={draftRankings} loading={drNAS.loading} />}
+                {page === 'records'   && <Records />}
               </Suspense>
             </ErrorBoundary>
           </main>
@@ -445,6 +449,7 @@ export default function App() {
           visible; ships LCP/CLS/INP measurements to Vercel for the
           performance dashboard once the deploy is live. */}
       <SpeedInsights />
+      <InstallPrompt />
     </div>
     </PlayerCtx.Provider>
   );

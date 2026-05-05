@@ -3,6 +3,8 @@ import { cx } from '../config.js';
 import { Section, Skeleton } from '../components/primitives.jsx';
 import { PlayerLink } from '../components/PlayerLink.jsx';
 import { Headshot } from '../components/Headshot.jsx';
+import { Hometowns } from '../components/Hometowns.jsx';
+import { Birthdays } from '../components/Birthdays.jsx';
 
 const HEIGHT = (inches) => inches ? `${Math.floor(inches / 12)}'${inches % 12}"` : '—';
 
@@ -174,6 +176,10 @@ export const Roster = ({ roster, clubStats }) => {
       )}
 
       {clubStats && <IceTimeLeaderboard skaters={clubStats.skaters} />}
+
+      <Birthdays roster={roster} />
+
+      <Hometowns roster={roster} />
 
       <Section title={view === 'forwards' ? 'Forwards' : view === 'defense' ? 'Defense' : 'Goalies'}>
         <div className="overflow-x-auto">

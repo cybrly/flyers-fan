@@ -203,6 +203,10 @@ export const PlayerProfile = ({ playerId }) => {
       <div className="grid grid-cols-1 xl:grid-cols-12 gap-4">
         {/* Career season-by-season */}
         <div className="xl:col-span-8 space-y-4">
+          {nhlSeasons.length > 1 && (
+            <CareerArc seasons={nhlSeasons} isSkater={isSkater} />
+          )}
+
           {nhlSeasons.length > 0 && (
             <Section
               title="NHL · Season by Season"
@@ -449,6 +453,162 @@ const Stat = ({ row, v }) => (
     <span className="text-[12px] font-mono tabular-nums text-white/85">{v ?? '—'}</span>
   </div>
 );
+
+// SVG career arc chart. For skaters it stacks G + A bars per season with a
+// points-line overlay; for goalies it draws a SV% line with a reference at
+// .910 (league baseline). Each x-axis tick is a season label, e.g. 17–18.
+const CareerArc = ({ seasons, isSkater }) => {
+  // Aggregate by season — players traded mid-year produce two rows per
+  // season; we sum them so the chart isn't visually duplicated.
+  const byYear = {};
+  for (const s of seasons) {
+    const key = s.season;
+    if (!byYear[key]) byYear[key] = { season: key, gp: 0, g: 0, a: 0, p: 0, savePctg: null, sv: 0, sa: 0 };
+    const r = byYear[key];
+    r.gp += s.gamesPlayed || 0;
+    r.g  += s.goals || 0;
+    r.a  += s.assists || 0;
+    r.p  += s.points || 0;
+    if (s.savePctg != null) {
+      const sa = s.shotsAgainst || 0;
+      r.sv += sa - (s.goalsAgainst || 0);
+      r.sa += sa;
+    }
+  }
+  const rows = Object.values(byYear)
+    .sort((a, b) => a.season - b.season)
+    .map((r) => ({
+      ...r,
+      savePctg: r.sa > 0 ? r.sv / r.sa : null,
+    }));
+  if (rows.length < 2) return null;
+
+  const W = 1000, H = 220;
+  const PAD = { top: 16, right: 24, bottom: 36, left: 36 };
+  const PW = W - PAD.left - PAD.right;
+  const PH = H - PAD.top - PAD.bottom;
+
+  const maxY = isSkater
+    ? Math.max(20, ...rows.map((r) => r.p)) * 1.08
+    : 1.0;
+  const minY = isSkater ? 0 : 0.85;
+
+  const x = (i) => PAD.left + (rows.length === 1 ? PW / 2 : (i / (rows.length - 1)) * PW);
+  const y = (v) => PAD.top + PH - ((v - minY) / (maxY - minY)) * PH;
+
+  const linePath = (key) => rows.map((r, i) => `${i === 0 ? 'M' : 'L'} ${x(i).toFixed(1)} ${y(r[key]).toFixed(1)}`).join(' ');
+
+  const ticksY = (() => {
+    if (isSkater) {
+      const step = Math.ceil(maxY / 5 / 5) * 5 || 5;
+      const out = [];
+      for (let v = 0; v <= maxY; v += step) out.push(v);
+      return out;
+    }
+    return [0.85, 0.88, 0.91, 0.94, 0.97, 1.0];
+  })();
+
+  return (
+    <Section
+      title="Career Arc"
+      action={<span className="text-[10px] font-mono text-white/40">{isSkater ? 'goals · assists · points' : 'save % per season'}</span>}
+    >
+      <div className="p-3">
+        <svg viewBox={`0 0 ${W} ${H}`} width="100%" height="auto" className="block">
+          {/* Y grid + labels */}
+          {ticksY.map((t) => (
+            <g key={t}>
+              <line x1={PAD.left} y1={y(t)} x2={PAD.left + PW} y2={y(t)}
+                stroke="rgba(255,255,255,0.05)" strokeDasharray="2 4" />
+              <text x={PAD.left - 6} y={y(t) + 3} textAnchor="end"
+                fontSize="9" fill="rgba(255,255,255,0.35)" fontFamily="ui-monospace, monospace">
+                {isSkater ? Math.round(t) : (t * 100).toFixed(0) + '%'}
+              </text>
+            </g>
+          ))}
+
+          {/* Reference line for goalies at .910 */}
+          {!isSkater && (
+            <line x1={PAD.left} x2={PAD.left + PW} y1={y(0.910)} y2={y(0.910)}
+              stroke="rgba(247,73,2,0.35)" strokeWidth="1" strokeDasharray="3 3" />
+          )}
+
+          {isSkater ? (
+            <>
+              {/* Stacked G / A bars per season */}
+              {rows.map((r, i) => {
+                const cx = x(i);
+                const barW = Math.max(8, Math.min(38, PW / rows.length - 4));
+                const gH = ((r.g) / (maxY - minY)) * PH;
+                const aH = ((r.a) / (maxY - minY)) * PH;
+                return (
+                  <g key={r.season}>
+                    <rect
+                      x={cx - barW / 2}
+                      y={y(r.p)}
+                      width={barW}
+                      height={gH}
+                      fill="#10B981"
+                      opacity="0.7"
+                    >
+                      <title>{seasonLabel(r.season)} · {r.g} goals</title>
+                    </rect>
+                    <rect
+                      x={cx - barW / 2}
+                      y={y(r.p) + gH}
+                      width={barW}
+                      height={aH}
+                      fill="#38BDF8"
+                      opacity="0.55"
+                    >
+                      <title>{seasonLabel(r.season)} · {r.a} assists</title>
+                    </rect>
+                  </g>
+                );
+              })}
+              {/* Points line on top */}
+              <path d={linePath('p')} fill="none" stroke="#F74902" strokeWidth="2.4" strokeLinejoin="round" />
+              {rows.map((r, i) => (
+                <g key={`pt-${r.season}`}>
+                  <circle cx={x(i)} cy={y(r.p)} r="3.2" fill="#F74902" stroke="#0A0A0A" strokeWidth="1.5">
+                    <title>{seasonLabel(r.season)} · {r.p} pts in {r.gp} GP</title>
+                  </circle>
+                </g>
+              ))}
+            </>
+          ) : (
+            <>
+              <path d={linePath('savePctg')} fill="none" stroke="#F74902" strokeWidth="2.4" strokeLinejoin="round" />
+              {rows.map((r, i) => r.savePctg != null && (
+                <circle key={`sv-${r.season}`} cx={x(i)} cy={y(r.savePctg)} r="3.2" fill="#F74902" stroke="#0A0A0A" strokeWidth="1.5">
+                  <title>{seasonLabel(r.season)} · SV% {(r.savePctg * 100).toFixed(1)}</title>
+                </circle>
+              ))}
+            </>
+          )}
+
+          {/* X-axis season labels */}
+          {rows.map((r, i) => (
+            <g key={`x-${r.season}`}>
+              <line x1={x(i)} y1={PAD.top + PH} x2={x(i)} y2={PAD.top + PH + 4} stroke="rgba(255,255,255,0.15)" />
+              <text x={x(i)} y={PAD.top + PH + 16} textAnchor="middle"
+                fontSize="9" fill="rgba(255,255,255,0.45)" fontFamily="ui-monospace, monospace">
+                {seasonLabel(r.season)}
+              </text>
+            </g>
+          ))}
+        </svg>
+        {isSkater && (
+          <div className="flex items-center gap-4 px-2 mt-1 text-[10px] font-mono text-white/45">
+            <span className="flex items-center gap-1.5"><span className="w-2 h-2 bg-emerald-400/70 rounded-sm" /> goals</span>
+            <span className="flex items-center gap-1.5"><span className="w-2 h-2 bg-sky-400/70 rounded-sm" /> assists</span>
+            <span className="flex items-center gap-1.5"><span className="w-2 h-2 bg-[#F74902] rounded-sm" /> points</span>
+          </div>
+        )}
+      </div>
+    </Section>
+  );
+};
 
 // Convert "MM:SS" to total seconds for trend calculations.
 const toiToSec = (toi) => {

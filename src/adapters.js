@@ -498,7 +498,9 @@ export function adaptRoster(raw) {
     heightIn: p.heightInInches,
     weightLb: p.weightInPounds,
     age: p.birthDate ? Math.floor((Date.now() - new Date(p.birthDate).getTime()) / 31557600000) : null,
+    birthDate: p.birthDate,
     birthCity: p.birthCity?.default,
+    birthStateProvince: p.birthStateProvince?.default,
     birthCountry: p.birthCountry,
     headshot: p.headshot,
   });

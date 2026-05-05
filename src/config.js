@@ -16,6 +16,44 @@ export const API = (path) => `/api/nhl?path=${encodeURIComponent(path)}`;
 
 export const cx = (...a) => a.filter(Boolean).join(' ');
 
+// NHL arena coordinates (latitude, longitude) keyed by team abbreviation.
+// Used to compute travel miles between consecutive games on the schedule.
+// Coordinates are approximate but accurate to ~0.5 mile, which is plenty
+// for a schedule-context "miles flown" annotation.
+export const TEAM_ARENAS = {
+  ANA: [33.8078, -117.8761], BOS: [42.3662, -71.0621], BUF: [42.8751, -78.8765],
+  CGY: [51.0374, -114.0519], CAR: [35.8033, -78.7217], CHI: [41.8807, -87.6742],
+  COL: [39.7487, -105.0076], CBJ: [39.9695, -83.0061], DAL: [32.7905, -96.8104],
+  DET: [42.3411, -83.0552],  EDM: [53.5469, -113.4972], FLA: [26.1585, -80.3257],
+  LAK: [34.0430, -118.2673], MIN: [44.9447, -93.1011], MTL: [45.4961, -73.5693],
+  NSH: [36.1593, -86.7785],  NJD: [40.7336, -74.1709], NYI: [40.7228, -73.5907],
+  NYR: [40.7505, -73.9934],  OTT: [45.297, -75.927],   PHI: [39.9012, -75.1719],
+  PIT: [40.4395, -79.9893],  SJS: [37.3327, -121.901], SEA: [47.6221, -122.354],
+  STL: [38.6266, -90.2026],  TBL: [27.9428, -82.4519], TOR: [43.6435, -79.3791],
+  UTA: [40.7683, -111.9011], VAN: [49.2778, -123.1089], VGK: [36.1028, -115.1782],
+  WPG: [49.8929, -97.1437],  WSH: [38.898, -77.0209],
+};
+
+// Great-circle distance between two lat/lng pairs in miles. Used for travel
+// distance calculations on the schedule. Same-arena returns 0.
+export function arenaMiles(fromAbbr, toAbbr) {
+  const a = TEAM_ARENAS[fromAbbr];
+  const b = TEAM_ARENAS[toAbbr];
+  if (!a || !b) return null;
+  if (a === b) return 0;
+  const R = 3958.8; // Earth radius in miles
+  const toRad = (d) => d * Math.PI / 180;
+  const dLat = toRad(b[0] - a[0]);
+  const dLng = toRad(b[1] - a[1]);
+  const lat1 = toRad(a[0]);
+  const lat2 = toRad(b[0]);
+  const sinDLat = Math.sin(dLat / 2);
+  const sinDLng = Math.sin(dLng / 2);
+  const A = sinDLat * sinDLat + Math.cos(lat1) * Math.cos(lat2) * sinDLng * sinDLng;
+  const C = 2 * Math.atan2(Math.sqrt(A), Math.sqrt(1 - A));
+  return Math.round(R * C);
+}
+
 // Current team captains (2025–26 NHL season) keyed by team abbreviation.
 // Used as the default left/right players on the Compare page when no IDs
 // are pinned via URL. NHL roster API doesn't expose a captain flag in the

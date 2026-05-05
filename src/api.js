@@ -100,6 +100,27 @@ export function useClockTick(ms = 1000) {
   }, [ms]);
 }
 
+// Fetches /api/shifts for a given gameId. Returns the raw shift array (one
+// entry per shift, both teams). Browser HTTP cache dedupes parallel calls
+// from different components (ShiftChart, LinemateAnalysis, etc.) since the
+// proxy sets s-maxage=30 with stale-while-revalidate.
+export function useShifts(gameId) {
+  const [data, setData] = useState(null);
+  const [error, setError] = useState(null);
+  const [loading, setLoading] = useState(!!gameId);
+  useEffect(() => {
+    if (!gameId) { setData(null); setLoading(false); return; }
+    let cancelled = false;
+    setLoading(true);
+    fetch(`/api/shifts?gameId=${gameId}`)
+      .then((r) => r.ok ? r.json() : Promise.reject(new Error(`HTTP ${r.status}`)))
+      .then((d) => { if (!cancelled) { setData(d?.data || []); setLoading(false); setError(null); } })
+      .catch((e) => { if (!cancelled) { setError(e.message); setLoading(false); } });
+    return () => { cancelled = true; };
+  }, [gameId]);
+  return { data, error, loading };
+}
+
 // Smoothly interpolates a numeric value from its previous render to its new
 // value over `durationMs` using an ease-out-cubic curve. Strings or `null`
 // pass through unchanged. Used for KPI tiles so updated season totals tick

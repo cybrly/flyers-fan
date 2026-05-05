@@ -261,6 +261,8 @@ export const Dashboard = ({ schedule, standings, scoreboard, clubStats, roster, 
         </div>
       </Section>
 
+      <OutcomeSplitsPanel games={games} />
+
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Section title="Goal Differential · L20">
           <div className="p-4 space-y-3">
@@ -629,6 +631,97 @@ const UpcomingPanel = ({ upcoming }) => {
             <span className="text-[10px] font-mono text-white/45 tabular-nums">{fmtTime(g.startUTC)}</span>
           </div>
         ))}
+      </div>
+    </Section>
+  );
+};
+
+// Margin and end-state breakdowns. Computed from the schedule games array
+// so no extra fetch — we just reduce by victory margin and ending period.
+// Two rows of tiles: by-margin (1G / 2G / 3+G W-L), by-end-state (REG / OT
+// / SO W-L). Each cell color-coded so wins read green and losses red.
+const OutcomeSplitsPanel = ({ games }) => {
+  if (!games?.length) return null;
+
+  const margin = (g) => Math.abs(g.us - g.them);
+  const isOT = (g) => g.lastPeriodType === 'OT';
+  const isSO = (g) => g.lastPeriodType === 'SO';
+  const isREG = (g) => !isOT(g) && !isSO(g);
+
+  const split = (filterFn) => {
+    const sub = games.filter(filterFn);
+    return {
+      w: sub.filter((g) => g.w).length,
+      l: sub.filter((g) => !g.w).length,
+      n: sub.length,
+    };
+  };
+
+  // Longest current win/loss streak across the L20 (chronological scan).
+  const streaks = (() => {
+    if (!games.length) return { maxW: 0, maxL: 0 };
+    let maxW = 0; let maxL = 0; let curW = 0; let curL = 0;
+    // games is newest-first; iterate chronologically (oldest → newest).
+    [...games].reverse().forEach((g) => {
+      if (g.w) { curW++; curL = 0; if (curW > maxW) maxW = curW; }
+      else { curL++; curW = 0; if (curL > maxL) maxL = curL; }
+    });
+    return { maxW, maxL };
+  })();
+
+  const oneGoal = split((g) => margin(g) === 1);
+  const twoGoal = split((g) => margin(g) === 2);
+  const threePlus = split((g) => margin(g) >= 3);
+  const reg = split(isREG);
+  const ot = split(isOT);
+  const so = split(isSO);
+  const highScore = split((g) => g.us + g.them >= 7);
+  const lowScore = split((g) => g.us + g.them <= 3);
+
+  const Tile = ({ l, sub, w, l_, accent, n }) => (
+    <div className="bg-[#0A0A0A] px-3 py-3 border-r border-b border-white/[0.04]">
+      <div className="flex items-center justify-between gap-1">
+        <div className="text-[9px] font-mono text-white/40 uppercase tracking-wider">{l}</div>
+        {n != null && <div className="text-[9px] font-mono text-white/30 tabular-nums">{n}G</div>}
+      </div>
+      <div className="flex items-baseline gap-1.5 mt-1">
+        <span className={cx('text-[18px] font-semibold tabular-nums tracking-tight',
+          accent === 'good' ? 'text-emerald-400'
+          : accent === 'bad' ? 'text-red-400'
+          : 'text-white'
+        )}>{w}</span>
+        <span className="text-[12px] font-mono text-white/30">–</span>
+        <span className="text-[14px] font-mono tabular-nums text-white/55">{l_}</span>
+      </div>
+      {sub && <div className="text-[9px] font-mono text-white/30 mt-0.5">{sub}</div>}
+    </div>
+  );
+
+  return (
+    <Section
+      title="Outcome Splits"
+      action={<span className="text-[10px] font-mono text-white/40">L{games.length} · margin · end-state</span>}
+    >
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-px bg-white/[0.04]">
+        <Tile l="1-Goal Games"  w={oneGoal.w}   l_={oneGoal.l}   n={oneGoal.n}   accent={oneGoal.w > oneGoal.l ? 'good' : oneGoal.w < oneGoal.l ? 'bad' : null} />
+        <Tile l="2-Goal Games"  w={twoGoal.w}   l_={twoGoal.l}   n={twoGoal.n}   accent={twoGoal.w > twoGoal.l ? 'good' : twoGoal.w < twoGoal.l ? 'bad' : null} />
+        <Tile l="3+ Goal Games" w={threePlus.w} l_={threePlus.l} n={threePlus.n} accent={threePlus.w > threePlus.l ? 'good' : threePlus.w < threePlus.l ? 'bad' : null} />
+        <Tile l="High Score 7+" w={highScore.w} l_={highScore.l} n={highScore.n} sub="combined goals" />
+        <Tile l="Regulation"    w={reg.w}       l_={reg.l}       n={reg.n}       accent={reg.w > reg.l ? 'good' : reg.w < reg.l ? 'bad' : null} />
+        <Tile l="Overtime"      w={ot.w}        l_={ot.l}        n={ot.n}        accent={ot.n === 0 ? null : ot.w >= ot.l ? 'good' : 'bad'} />
+        <Tile l="Shootout"      w={so.w}        l_={so.l}        n={so.n}        accent={so.n === 0 ? null : so.w >= so.l ? 'good' : 'bad'} />
+        <Tile l="Low Score ≤3"  w={lowScore.w}  l_={lowScore.l}  n={lowScore.n}  sub="defensive grinds" />
+      </div>
+      <div className="px-4 py-2.5 border-t border-white/[0.05] flex items-center gap-5 text-[10px] font-mono">
+        <span className="text-white/40 uppercase tracking-wider">Streaks</span>
+        <span className="flex items-center gap-1.5">
+          <span className="text-white/35">longest W</span>
+          <span className="text-emerald-400 font-semibold tabular-nums">{streaks.maxW}</span>
+        </span>
+        <span className="flex items-center gap-1.5">
+          <span className="text-white/35">longest L</span>
+          <span className="text-red-400 font-semibold tabular-nums">{streaks.maxL}</span>
+        </span>
       </div>
     </Section>
   );

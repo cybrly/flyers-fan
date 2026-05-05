@@ -7,6 +7,7 @@ import { PlayerLink } from '../components/PlayerLink.jsx';
 import { Headshot } from '../components/Headshot.jsx';
 import { ShotMap } from '../components/ShotMap.jsx';
 import { ShiftChart } from '../components/ShiftChart.jsx';
+import { LinemateAnalysis } from '../components/LinemateAnalysis.jsx';
 
 const CompareRow = ({ label, us, them, higherBetter = true, suffix = '' }) => {
   if (us == null || them == null) return null;
@@ -274,6 +275,10 @@ export const GameTape = ({ game, loading, pbp, pbpRaw, customGameId, onClearCust
 
           {game.id && (
             <ShiftChart gameId={game.id} isPlayoff={game.gameType === 3} />
+          )}
+
+          {game.id && (
+            <LinemateAnalysis gameId={game.id} />
           )}
 
           <Section title="Skater Box Score · PHI">

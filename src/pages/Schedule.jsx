@@ -1,13 +1,29 @@
-import { useState } from 'react';
-import { cx, OPP_FULL } from '../config.js';
+import { useMemo, useState } from 'react';
+import { cx, OPP_FULL, TEAM_ABBR, arenaMiles } from '../config.js';
 import { Label, Section, Skeleton } from '../components/primitives.jsx';
 import { TeamLogo } from '../components/Logo.jsx';
+
+// Annotate every finished game with rest days (since the prior PHI game) and
+// travel miles (great-circle from the prior game's venue to this one's).
+// Schedule arrives newest-first, so the "previous game" sits at index+1.
+function enrich(games) {
+  return games.map((g, i, arr) => {
+    const prev = arr[i + 1];
+    if (!prev) return { ...g, restDays: null, travelMiles: null };
+    const ms = new Date(g.date).getTime() - new Date(prev.date).getTime();
+    const restDays = Math.max(0, Math.floor(ms / 86400000));
+    const fromArena = prev.home ? TEAM_ABBR : prev.opp;
+    const toArena   = g.home    ? TEAM_ABBR : g.opp;
+    const travelMiles = arenaMiles(fromArena, toArena);
+    return { ...g, restDays, travelMiles };
+  });
+}
 
 export const Schedule = ({ schedule, onOpenGame }) => {
   const [filter, setFilter] = useState('all');
   const [scope, setScope] = useState('l20'); // 'l20' | 'all'
 
-  const all = schedule?.games || [];
+  const all = useMemo(() => enrich(schedule?.games || []), [schedule]);
   const base = scope === 'l20' ? all.slice(0, 20) : all;
 
   const filtered = base.filter((g) => {
@@ -71,6 +87,9 @@ export const Schedule = ({ schedule, onOpenGame }) => {
         ))}
       </div>
 
+      <TravelSummary games={filtered} />
+
+
       <Section>
         <div className="overflow-x-auto">
           <table className="w-full">
@@ -81,14 +100,16 @@ export const Schedule = ({ schedule, onOpenGame }) => {
                 <th className="font-normal text-left px-2 h-9">Opponent</th>
                 <th className="font-normal text-center px-2 h-9 w-[60px]">Site</th>
                 <th className="font-normal text-right px-2 h-9 w-[90px]">Score</th>
-                <th className="font-normal text-right px-2 h-9 w-[80px]">Diff</th>
-                <th className="font-normal text-center px-2 h-9 w-[120px]">Goals</th>
+                <th className="font-normal text-right px-2 h-9 w-[60px]">Diff</th>
+                <th className="font-normal text-center px-2 h-9 w-[80px]">Rest</th>
+                <th className="font-normal text-right px-2 h-9 w-[70px]">Travel</th>
+                <th className="font-normal text-center px-2 h-9 w-[110px]">Goals</th>
                 <th className="font-normal text-right px-4 h-9 w-[50px]">Type</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-white/[0.04]">
               {!all.length && Array.from({ length: 8 }).map((_, i) => (
-                <tr key={i}><td colSpan={8} className="px-4 h-11"><Skeleton className="w-full" height={18} /></td></tr>
+                <tr key={i}><td colSpan={10} className="px-4 h-11"><Skeleton className="w-full" height={18} /></td></tr>
               ))}
               {filtered.map((g) => {
                 const diff = g.us - g.them;
@@ -125,6 +146,29 @@ export const Schedule = ({ schedule, onOpenGame }) => {
                         diff > 0 ? 'text-emerald-400' : diff < 0 ? 'text-red-400' : 'text-white/40'
                       )}>{diff > 0 ? '+' : ''}{diff}</span>
                     </td>
+                    <td className="px-2 text-center">
+                      {g.restDays != null && (
+                        <span className={cx('inline-flex items-center gap-1 text-[10px] font-mono tabular-nums',
+                          g.restDays === 0 ? 'text-red-400'
+                          : g.restDays === 1 ? 'text-amber-400'
+                          : g.restDays >= 3 ? 'text-emerald-400'
+                          : 'text-white/55'
+                        )}>
+                          {g.restDays === 0 ? 'B2B' : `${g.restDays}d`}
+                        </span>
+                      )}
+                    </td>
+                    <td className="px-2 text-right">
+                      {g.travelMiles != null && (
+                        <span className={cx('text-[10px] font-mono tabular-nums',
+                          g.travelMiles === 0 ? 'text-white/30'
+                          : g.travelMiles >= 1500 ? 'text-amber-400'
+                          : 'text-white/55'
+                        )}>
+                          {g.travelMiles === 0 ? '—' : `${g.travelMiles.toLocaleString()}`}
+                        </span>
+                      )}
+                    </td>
                     <td className="px-2">
                       <div className="flex items-center justify-center gap-[2px]">
                         {Array.from({ length: max }).map((_, idx) => (
@@ -152,3 +196,42 @@ export const Schedule = ({ schedule, onOpenGame }) => {
     </div>
   );
 };
+
+// Travel + rest summary tiles. Sums total miles flown, longest road trip,
+// number of B2Bs, and gives a record-when-rested-vs-tired split. Uses the
+// enriched filtered games (so it respects the active filter).
+const TravelSummary = ({ games }) => {
+  if (!games?.length) return null;
+  const totalMiles = games.reduce((a, g) => a + (g.travelMiles || 0), 0);
+  const b2b = games.filter((g) => g.restDays === 0);
+  const restedPlus = games.filter((g) => g.restDays != null && g.restDays >= 2);
+  const longTravel = games.filter((g) => (g.travelMiles || 0) >= 1500);
+  const b2bRecord = `${b2b.filter((g) => g.w).length}–${b2b.filter((g) => !g.w).length}`;
+  const restedRecord = `${restedPlus.filter((g) => g.w).length}–${restedPlus.filter((g) => !g.w).length}`;
+  return (
+    <Section title="Travel & Rest" action={<span className="text-[10px] font-mono text-white/40">{games.length} games</span>}>
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-px bg-white/[0.04]">
+        <Tile label="Miles Flown" value={totalMiles.toLocaleString()} sub="great-circle" color="#8AB4FF" />
+        <Tile label="Back-to-Backs" value={b2b.length} sub={`record ${b2bRecord}`} color="#EF4444" tone={b2b.filter((g) => g.w).length >= b2b.length / 2 ? 'good' : 'bad'} />
+        <Tile label="2+ Days Rest" value={restedPlus.length} sub={`record ${restedRecord}`} color="#10B981" tone={restedPlus.filter((g) => g.w).length >= restedPlus.length / 2 ? 'good' : null} />
+        <Tile label="Long Travel (1.5k+)" value={longTravel.length} sub="cross-country" color="#F59E0B" />
+      </div>
+    </Section>
+  );
+};
+
+const Tile = ({ label, value, sub, color, tone }) => (
+  <div className="bg-[#0A0A0A] px-3 py-3">
+    <div className="flex items-center gap-1.5">
+      <span className="w-1.5 h-1.5 rounded-full" style={{ background: color }} />
+      <span className="text-[9px] font-mono text-white/40 uppercase tracking-wider">{label}</span>
+    </div>
+    <div className={cx('text-[20px] font-semibold tabular-nums tracking-tight mt-1',
+      tone === 'good' ? 'text-emerald-400' : tone === 'bad' ? 'text-red-400' : 'text-white'
+    )} style={tone ? {} : { color }}>
+      {value}
+    </div>
+    {sub && <div className="text-[9px] font-mono text-white/30 mt-0.5">{sub}</div>}
+  </div>
+);
+

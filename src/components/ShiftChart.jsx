@@ -1,5 +1,6 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { cx, TEAM_ABBR } from '../config.js';
+import { useShifts } from '../api.js';
 import { Section, Skeleton } from './primitives.jsx';
 import { PlayerLink } from './PlayerLink.jsx';
 
@@ -39,27 +40,13 @@ const absSec = (period, mss, isPlayoff) => {
 };
 
 export const ShiftChart = ({ gameId, isPlayoff = false }) => {
-  const [data, setData] = useState(null);
-  const [err, setErr] = useState(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    if (!gameId) return;
-    let cancelled = false;
-    setLoading(true);
-    fetch(`/api/shifts?gameId=${gameId}`)
-      .then((r) => r.ok ? r.json() : Promise.reject(new Error(`HTTP ${r.status}`)))
-      .then((d) => { if (!cancelled) { setData(d); setLoading(false); } })
-      .catch((e) => { if (!cancelled) { setErr(e.message); setLoading(false); } });
-    return () => { cancelled = true; };
-  }, [gameId]);
+  const { data: shifts, error: err, loading } = useShifts(gameId);
 
   const { teams, totalSec, maxPeriod } = useMemo(() => {
-    const shifts = data?.data || [];
-    if (!shifts.length) return { teams: {}, totalSec: 3600, maxPeriod: 3 };
+    if (!shifts?.length) return { teams: {}, totalSec: 3600, maxPeriod: 3 };
 
     // Filter "off-ice" placeholder events that the API sometimes emits with
-    // no actual duration, plus goalie pulls / fake shifts (typeCode !== 517).
+    // no actual duration, plus non-shift type codes.
     const real = shifts.filter((s) => s.duration && s.duration !== '00:00' && s.typeCode === 517);
 
     const byTeam = {};
@@ -108,7 +95,7 @@ export const ShiftChart = ({ gameId, isPlayoff = false }) => {
       </Section>
     );
   }
-  if (err || !data?.data?.length) {
+  if (err || !shifts?.length) {
     return (
       <Section title="Shift Chart">
         <div className="p-6 text-center text-[11px] font-mono text-white/35">

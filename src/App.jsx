@@ -192,7 +192,7 @@ export default function App() {
   const rosterPath = `v1/roster/${TEAM_ABBR}/current`;
   const rosterRaw = useNHL(rosterPath, POLL.standings);
   const roster = useMemo(() => adaptRoster(rosterRaw.data), [rosterRaw.data]);
-  const clubStatsPath = (page === 'roster' || page === 'dashboard') ? `v1/club-stats/${TEAM_ABBR}/now` : null;
+  const clubStatsPath = (page === 'roster' || page === 'dashboard' || page === 'goalies') ? `v1/club-stats/${TEAM_ABBR}/now` : null;
   const clubStatsRaw = useNHL(clubStatsPath, POLL.standings);
   const clubStats = useMemo(() => adaptClubStats(clubStatsRaw.data), [clubStatsRaw.data]);
 

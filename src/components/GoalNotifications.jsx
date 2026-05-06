@@ -8,6 +8,41 @@ const KEY = 'flyersfan.goalNotifications';
 // (audio) toggle so a user can have one without the other. We watch the
 // timeline and fire one notification per new PHI goal — never opposing-team
 // goals, since the user is a Flyers fan first.
+//
+// Delivery path:
+//   • If a service worker is active, route through registration.showNotification.
+//     This is the path that lights up on installed iOS PWAs (16.4+) and
+//     Android Chrome PWAs, supports actions/vibrate/badge, and lets the
+//     notificationclick handler in sw.js focus the app.
+//   • Otherwise fall back to the plain Notification constructor for desktop
+//     browser tabs that don't have an SW registered yet.
+
+const showGoalNotification = async (goal) => {
+  const title = '🚨 GOAL · Philadelphia Flyers';
+  const opts = {
+    body: `${goal.scorer} scores · ${goal.awayScore}–${goal.homeScore}`,
+    icon: '/icon-512.svg',
+    badge: '/favicon.svg',
+    tag: 'phi-goal',
+    renotify: true,
+    silent: false,
+    vibrate: [200, 80, 200, 80, 400],
+    data: { url: '/', goalId: `${goal.period}-${goal.time}-${goal.scorerId}` },
+  };
+  try {
+    if ('serviceWorker' in navigator) {
+      const reg = await navigator.serviceWorker.getRegistration();
+      if (reg) {
+        await reg.showNotification(title, opts);
+        return;
+      }
+    }
+  } catch { /* fall through to plain Notification */ }
+  try {
+    const n = new Notification(title, opts);
+    setTimeout(() => { try { n.close(); } catch { /* ignore */ } }, 6000);
+  } catch { /* ignore */ }
+};
 
 export const useGoalNotifications = (timeline, enabled) => {
   const lastUsCountRef = useRef(0);
@@ -21,28 +56,15 @@ export const useGoalNotifications = (timeline, enabled) => {
     if (typeof window === 'undefined' || !('Notification' in window)) return;
     if (Notification.permission !== 'granted') return;
     if (prevLen === 0) {
-      // First load — record current PHI count without firing.
       lastUsCountRef.current = (timeline || []).filter((g) => g.us).length;
       return;
     }
-    if (len <= prevLen) return; // nothing new
+    if (len <= prevLen) return;
 
     const usGoals = (timeline || []).filter((g) => g.us);
     const prevUsCount = lastUsCountRef.current;
     if (usGoals.length > prevUsCount) {
-      const newest = usGoals[usGoals.length - 1];
-      try {
-        const n = new Notification(`🚨 GOAL · Philadelphia Flyers`, {
-          body: `${newest.scorer} scores · ${newest.awayScore}–${newest.homeScore}`,
-          icon: '/favicon.svg',
-          tag: 'phi-goal',
-          renotify: true,
-          silent: false,
-        });
-        // Auto-close after 6s so the desktop doesn't get cluttered during
-        // a five-goal night.
-        setTimeout(() => { try { n.close(); } catch { /* ignore */ } }, 6000);
-      } catch { /* notifications can throw on some platforms */ }
+      showGoalNotification(usGoals[usGoals.length - 1]);
     }
     lastUsCountRef.current = usGoals.length;
   }, [timeline, enabled]);

@@ -12,7 +12,7 @@
 //
 // Bump the cache name on each deploy that ships SW changes.
 
-const VERSION = 'v2';
+const VERSION = 'v3';
 const SHELL_CACHE = `shell-${VERSION}`;
 const ASSET_CACHE = `assets-${VERSION}`;
 const SHELL_URLS = [
@@ -83,4 +83,23 @@ self.addEventListener('fetch', (event) => {
       }
     })());
   }
+});
+
+// Goal-notification click handler: focus an existing flyers.fan window if
+// one is open, otherwise spawn a new one on the page that surfaced the
+// alert. The data.url is set by the page when it posts the notification.
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  const targetUrl = event.notification.data?.url || '/';
+  event.waitUntil((async () => {
+    const all = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+    for (const c of all) {
+      if (c.url.includes(self.location.origin)) {
+        c.focus();
+        if ('navigate' in c) c.navigate(targetUrl).catch(() => {});
+        return;
+      }
+    }
+    if (self.clients.openWindow) await self.clients.openWindow(targetUrl);
+  })());
 });

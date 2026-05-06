@@ -13,6 +13,8 @@ import { SeriesTracker } from '../components/SeriesTracker.jsx';
 import { HeadToHead } from '../components/HeadToHead.jsx';
 import { LeagueLeaders } from '../components/LeagueLeaders.jsx';
 import { ThreeStarsPanel, AwardWatchPanel, RecordsTrackerPanel } from '../components/EngagementPanels.jsx';
+import { ThisDayInHistory } from '../components/ThisDayInHistory.jsx';
+import { MilestoneWatch } from '../components/MilestoneWatch.jsx';
 
 // Dashboard is laid out as a single linear flow split into named bands
 // (Tonight / Season / Recent / Offense / Roster / Reference). Each band
@@ -412,6 +414,11 @@ export const Dashboard = ({ schedule, standings, scoreboard, clubStats, roster, 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <YoungGunsPanel roster={roster} clubStats={clubStats} />
         <HonorsPanel />
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <ThisDayInHistory />
+        <MilestoneWatch clubStats={clubStats} />
       </div>
 
       {/* ─── BAND · REFERENCE ─────────────────────────────────────────────── */}

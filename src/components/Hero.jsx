@@ -517,12 +517,29 @@ const HeroLatest = ({ lastResult, oppFull, recentGames, oppRow }) => (
   </>
 );
 
+// Walk recentGames in newest-first order to find the current streak.
+// Returns { type: 'W'|'L', count } or null if there's no clear streak.
+// W3+ counts as "hot", L4+ as "cold" — anything less is normal noise.
+const computeStreak = (games) => {
+  if (!games || games.length === 0) return null;
+  const first = games[0].w;
+  let n = 0;
+  for (const g of games) {
+    if (g.w === first) n++;
+    else break;
+  }
+  if (first && n >= 3) return { type: 'W', count: n };
+  if (!first && n >= 4) return { type: 'L', count: n };
+  return null;
+};
+
 export const Hero = ({ liveGame, liveDetail, nextGame, lastResult, us, recentGames, standings }) => {
   const opp = liveGame?.opp || nextGame?.opp || lastResult?.opp;
   const oppFull = opp ? OPP_FULL[opp] : null;
   // Find the opponent's full standings row so we can show their record next
   // to their name. league has every team; us is just PHI so we skip it.
   const oppRow = opp && standings?.league ? standings.league.find((t) => t.abbr === opp) : null;
+  const streak = computeStreak(recentGames);
 
   return (
     <div className="relative overflow-hidden rounded-lg border border-[#F74902]/[0.25] bg-[#0A0A0A] px-5 sm:px-8 py-6 sm:py-8 shadow-[0_0_0_1px_rgba(255,255,255,0.02)_inset,0_24px_48px_-24px_rgba(0,0,0,0.9),0_2px_0_rgba(255,255,255,0.04)_inset]">
@@ -583,6 +600,21 @@ export const Hero = ({ liveGame, liveDetail, nextGame, lastResult, us, recentGam
               </div>
             </div>
           )}
+
+        {streak && (
+          <div className={cx(
+            'relative mt-5 mx-auto max-w-fit px-4 py-1.5 rounded-md border flex items-center gap-2 text-[12px] font-mono uppercase tracking-wider',
+            streak.type === 'W'
+              ? 'border-[#F74902]/40 bg-[#F74902]/[0.08] text-[#FF8A4C]'
+              : 'border-red-500/30 bg-red-500/[0.08] text-red-300',
+          )}>
+            <span className={cx('w-1.5 h-1.5 rounded-full',
+              streak.type === 'W' ? 'bg-[#F74902]' : 'bg-red-400')} />
+            <span className="font-semibold tabular-nums">{streak.count}-game {streak.type === 'W' ? 'win streak' : 'losing skid'}</span>
+            {streak.type === 'W' && streak.count >= 5 && <span className="text-[#FF8A4C]">· heating up</span>}
+            {streak.type === 'L' && streak.count >= 6 && <span className="text-red-300/80">· need a spark</span>}
+          </div>
+        )}
 
         {us && (
           <div className="relative mt-6 pt-5 border-t border-white/[0.06] grid grid-cols-2 sm:grid-cols-4 gap-4">

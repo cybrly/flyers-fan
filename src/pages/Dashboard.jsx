@@ -13,6 +13,8 @@ import { HeadToHead } from '../components/HeadToHead.jsx';
 import { LeagueLeaders } from '../components/LeagueLeaders.jsx';
 import { ThreeStarsPanel, AwardWatchPanel, RecordsTrackerPanel } from '../components/EngagementPanels.jsx';
 import { ThisDayInHistory } from '../components/ThisDayInHistory.jsx';
+import { ScheduleStrength } from '../components/ScheduleStrength.jsx';
+import { PlayoffRace } from '../components/PlayoffRace.jsx';
 
 // Dashboard is laid out as a single linear flow split into named bands
 // (Tonight / Season / Recent / Offense / Roster / Reference). Each band
@@ -116,6 +118,11 @@ export const Dashboard = ({ schedule, standings, scoreboard, clubStats, roster, 
         <HeadToHead schedule={schedule} onOpenGame={onOpenGame} />
       </div>
 
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <PlayoffRace standings={standings} />
+        <ScheduleStrength upcoming={schedule?.upcoming || []} standings={standings} />
+      </div>
+
       {/* ─── BAND · SEASON OVERVIEW ───────────────────────────────────────── */}
       <SectionBand label="Season Overview" color="warm" sub={`${SEASON_LABEL} · all 82`} />
 
@@ -200,15 +207,11 @@ export const Dashboard = ({ schedule, standings, scoreboard, clubStats, roster, 
         title="Recent Games"
         action={<span className="text-[10px] font-mono text-white/40">Last 10 · click any row</span>}
       >
-        {/* Compact dense table — fixed-width columns sum to ~770 px so on
-            wide displays the table sits centered with breathing room
-            instead of stretching the opponent column to ~600 px of dead
-            space between the team name and the score. The redundant
-            Home/Plane site icon was dropped (the leading "vs" / "@"
-            already conveys it) and the End/Type tags collapsed into a
-            single combined cell. */}
+        {/* Compact dense table on tablet/desktop. On phones the grid
+            collapses to a stacked-card fallback that puts result + opp +
+            score on the first line and the supporting bits below. */}
         <div className="divide-y divide-white/[0.04] mx-auto" style={{ maxWidth: 880 }}>
-          <div className="grid grid-cols-[44px_56px_minmax(180px,1fr)_72px_50px_70px_120px] gap-2 items-center px-4 h-8 text-[10px] font-mono text-white/35 uppercase tracking-wider">
+          <div className="hidden sm:grid grid-cols-[44px_56px_minmax(180px,1fr)_72px_50px_70px_120px] gap-2 items-center px-4 h-8 text-[10px] font-mono text-white/35 uppercase tracking-wider">
             <span>Res</span>
             <span>Date</span>
             <span>Opponent</span>
@@ -225,44 +228,77 @@ export const Dashboard = ({ schedule, standings, scoreboard, clubStats, roster, 
             const diff = g.us - g.them;
             const endTag = g.lastPeriodType === 'OT' ? 'OT' : g.lastPeriodType === 'SO' ? 'SO' : null;
             const isPO = g.gameType === 3;
+            const resBadge = (
+              <span className={cx(
+                'inline-flex items-center justify-center w-[22px] h-[18px] text-[10px] font-mono font-semibold rounded-[3px]',
+                g.w ? 'bg-emerald-500/15 text-emerald-300 border border-emerald-500/30'
+                    : 'bg-red-500/10 text-red-300 border border-red-500/25'
+              )}>{g.w ? 'W' : 'L'}</span>
+            );
+            const goalBars = (
+              <div className="flex items-center justify-center gap-0.5">
+                {Array.from({ length: max }).map((_, i) => (
+                  <div key={`u${i}`} className={cx('w-1 h-3', i < g.us ? 'bg-[#F74902]' : 'bg-white/[0.06]')} />
+                ))}
+                <div className="w-1" />
+                {Array.from({ length: max }).map((_, i) => (
+                  <div key={`t${i}`} className={cx('w-1 h-3', i < g.them ? 'bg-white/40' : 'bg-white/[0.06]')} />
+                ))}
+              </div>
+            );
             return (
               <button
                 key={g.id}
                 onClick={() => onOpenGame?.(g.id)}
-                className="w-full text-left grid grid-cols-[44px_56px_minmax(180px,1fr)_72px_50px_70px_120px] gap-2 items-center px-4 h-10 hover:bg-white/[0.03] transition-colors cursor-pointer"
+                className="w-full text-left hover:bg-white/[0.03] transition-colors cursor-pointer"
               >
-                <span className={cx(
-                  'inline-flex items-center justify-center w-[22px] h-[18px] text-[10px] font-mono font-semibold rounded-[3px]',
-                  g.w ? 'bg-emerald-500/15 text-emerald-300 border border-emerald-500/30'
-                      : 'bg-red-500/10 text-red-300 border border-red-500/25'
-                )}>{g.w ? 'W' : 'L'}</span>
-                <span className="text-[12px] font-mono text-white/50 tabular-nums">{g.label}</span>
-                <div className="flex items-center gap-2 min-w-0">
-                  <span className="text-[10px] font-mono text-white/35 uppercase shrink-0">{g.home ? 'vs' : '@'}</span>
-                  <TeamLogo abbr={g.opp} size={16} />
-                  <span className="text-[13px] text-white/85 truncate">{OPP_FULL[g.opp] || g.oppName}</span>
+                {/* Phone layout — stacked card */}
+                <div className="sm:hidden flex flex-col gap-1.5 px-4 py-3">
+                  <div className="flex items-center gap-2">
+                    {resBadge}
+                    <TeamLogo abbr={g.opp} size={18} />
+                    <span className="text-[10px] font-mono text-white/35 uppercase shrink-0">{g.home ? 'vs' : '@'}</span>
+                    <span className="text-[14px] text-white/90 truncate flex-1">{OPP_FULL[g.opp] || g.oppName}</span>
+                    <span className="font-mono tabular-nums text-[15px] shrink-0">
+                      <span className={g.w ? 'text-[#FF8A4C] font-medium' : 'text-white/80'}>{g.us}</span>
+                      <span className="text-white/30 mx-1">–</span>
+                      <span className={g.w ? 'text-white/50' : 'text-white/80 font-medium'}>{g.them}</span>
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-3 text-[10px] font-mono text-white/45 tabular-nums pl-7">
+                    <span>{g.label}</span>
+                    <span className={cx(
+                      diff > 0 ? 'text-emerald-400' : diff < 0 ? 'text-red-400' : 'text-white/40'
+                    )}>{diff > 0 ? '+' : ''}{diff}</span>
+                    {endTag && <span className="text-amber-400/85">{endTag}</span>}
+                    {isPO && <span className="text-[#FF8A4C]">PO</span>}
+                    <span className="ml-auto">{goalBars}</span>
+                  </div>
                 </div>
-                <div className="text-right font-mono tabular-nums text-[14px]">
-                  <span className={g.w ? 'text-[#FF8A4C] font-medium' : 'text-white/80'}>{g.us}</span>
-                  <span className="text-white/30 mx-1">–</span>
-                  <span className={g.w ? 'text-white/50' : 'text-white/80 font-medium'}>{g.them}</span>
-                </div>
-                <span className={cx('text-right text-[12px] font-mono tabular-nums',
-                  diff > 0 ? 'text-emerald-400' : diff < 0 ? 'text-red-400' : 'text-white/40'
-                )}>{diff > 0 ? '+' : ''}{diff}</span>
-                <span className="flex items-center justify-center gap-1 text-[10px] font-mono">
-                  {endTag && <span className="text-amber-400/85">{endTag}</span>}
-                  {isPO && <span className="text-[#FF8A4C]">PO</span>}
-                  {!endTag && !isPO && <span className="text-white/20">—</span>}
-                </span>
-                <div className="flex items-center justify-center gap-0.5">
-                  {Array.from({ length: max }).map((_, i) => (
-                    <div key={`u${i}`} className={cx('w-1 h-3', i < g.us ? 'bg-[#F74902]' : 'bg-white/[0.06]')} />
-                  ))}
-                  <div className="w-1" />
-                  {Array.from({ length: max }).map((_, i) => (
-                    <div key={`t${i}`} className={cx('w-1 h-3', i < g.them ? 'bg-white/40' : 'bg-white/[0.06]')} />
-                  ))}
+
+                {/* Tablet/desktop layout — dense grid */}
+                <div className="hidden sm:grid grid-cols-[44px_56px_minmax(180px,1fr)_72px_50px_70px_120px] gap-2 items-center px-4 h-10">
+                  {resBadge}
+                  <span className="text-[12px] font-mono text-white/50 tabular-nums">{g.label}</span>
+                  <div className="flex items-center gap-2 min-w-0">
+                    <span className="text-[10px] font-mono text-white/35 uppercase shrink-0">{g.home ? 'vs' : '@'}</span>
+                    <TeamLogo abbr={g.opp} size={16} />
+                    <span className="text-[13px] text-white/85 truncate">{OPP_FULL[g.opp] || g.oppName}</span>
+                  </div>
+                  <div className="text-right font-mono tabular-nums text-[14px]">
+                    <span className={g.w ? 'text-[#FF8A4C] font-medium' : 'text-white/80'}>{g.us}</span>
+                    <span className="text-white/30 mx-1">–</span>
+                    <span className={g.w ? 'text-white/50' : 'text-white/80 font-medium'}>{g.them}</span>
+                  </div>
+                  <span className={cx('text-right text-[12px] font-mono tabular-nums',
+                    diff > 0 ? 'text-emerald-400' : diff < 0 ? 'text-red-400' : 'text-white/40'
+                  )}>{diff > 0 ? '+' : ''}{diff}</span>
+                  <span className="flex items-center justify-center gap-1 text-[10px] font-mono">
+                    {endTag && <span className="text-amber-400/85">{endTag}</span>}
+                    {isPO && <span className="text-[#FF8A4C]">PO</span>}
+                    {!endTag && !isPO && <span className="text-white/20">—</span>}
+                  </span>
+                  {goalBars}
                 </div>
               </button>
             );

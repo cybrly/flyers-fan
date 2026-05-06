@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo, useCallback, lazy, Suspense } from 'react
 import { SpeedInsights } from '@vercel/speed-insights/react';
 
 import { TEAM_ABBR, SEASON, POLL, PLAYOFF_YEAR, UPCOMING_DRAFT_YEAR, PRIOR_DRAFT_YEAR, isLive, isFuture } from './config.js';
-import { useNHL, useClockTick } from './api.js';
+import { useNHL, useClockTick, useLiveStream } from './api.js';
 import { PlayerCtx } from './context.js';
 import { useRoute, navigate, setOverlay, pageHref, gameHref } from './router.js';
 import {
@@ -162,6 +162,13 @@ export default function App() {
     (d) => (boxscore.data && isLive(boxscore.data.gameState)) ? POLL.live : POLL.idle);
   const landing = useNHL(gameId ? `v1/gamecenter/${gameId}/landing` : null,
     (d) => (boxscore.data && isLive(boxscore.data.gameState)) ? POLL.live : POLL.idle);
+
+  // SSE overlay for live games. Connects only when boxscore data confirms
+  // the game is live; we use the boxscore.data check rather than the
+  // schedule liveGame because schedule polls slower (5 min) and we want
+  // the stream to spin up at puck drop, not at the next standings tick.
+  const liveActive = !!(boxscore.data && isLive(boxscore.data.gameState));
+  const { snap: liveSnap } = useLiveStream(liveActive ? gameId : null, liveActive);
 
   const game = useMemo(
     () => adaptGame(boxscore.data, rightRail.data, landing.data),
@@ -433,7 +440,7 @@ export default function App() {
               <Suspense fallback={
                 <div className="p-6 text-[12px] font-mono text-white/35">loading…</div>
               }>
-                {page === 'dashboard' && <Dashboard schedule={schedule} standings={standings} scoreboard={scoreboard} clubStats={clubStats} roster={roster} liveDetail={isLive(boxscore.data?.gameState) ? game : null} lastGame={game} leagueLeaders={leagueLeaders} loading={scheduleRaw.loading || standingsRaw.loading} onOpenGame={openGame} />}
+                {page === 'dashboard' && <Dashboard schedule={schedule} standings={standings} scoreboard={scoreboard} clubStats={clubStats} roster={roster} liveDetail={isLive(boxscore.data?.gameState) ? game : null} liveSnap={liveSnap} lastGame={game} leagueLeaders={leagueLeaders} loading={scheduleRaw.loading || standingsRaw.loading} onOpenGame={openGame} />}
                 {page === 'schedule'  && <Schedule schedule={schedule} monthSchedule={monthSchedule} onOpenGame={openGame} scoreboard={scoreboard} standings={standings} leagueLeaders={leagueLeaders} />}
                 {page === 'standings' && <Standings standings={standings} />}
                 {page === 'game'      && <GameTape game={game} loading={boxscore.loading} pbp={pbp} pbpRaw={pbpRaw.data} customGameId={routeGameId} onClearCustom={clearSelectedGame} />}

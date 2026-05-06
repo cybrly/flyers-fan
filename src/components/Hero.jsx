@@ -266,9 +266,20 @@ function useCountdown(startUTC) {
 // is the adapted boxscore object — when present we show period, clock, SOG,
 // power play, and intermission state. Without it we fall back to the schedule
 // snapshot (just scores).
-const HeroLive = ({ liveGame, liveDetail, oppFull, recentGames, oppRow }) => {
-  const period = liveDetail?.periodDescriptor;
-  const clock = liveDetail?.clock;
+const HeroLive = ({ liveGame, liveDetail, liveSnap, oppFull, recentGames, oppRow }) => {
+  // Prefer live SSE snapshot for the rapidly-moving primitives (score,
+  // period, clock) when the stream has emitted a 'box' event. Falls back
+  // to the polled liveDetail/liveGame data the moment the stream is
+  // silent. snapTs lets us drop snaps older than ~6s in case the stream
+  // has stalled — better to show 5s-old polled data than 30s-old SSE.
+  const snapFresh = liveSnap?.ts && (Date.now() - liveSnap.ts) < 6000;
+  const liveAway = snapFresh && liveSnap?.away?.score != null ? liveSnap.away.score : (liveGame.home ? liveGame.them : liveGame.us);
+  const liveHome = snapFresh && liveSnap?.home?.score != null ? liveSnap.home.score : (liveGame.home ? liveGame.us : liveGame.them);
+  const usScore  = liveGame.home ? liveHome : liveAway;
+  const themScore = liveGame.home ? liveAway : liveHome;
+
+  const period = (snapFresh && liveSnap?.periodDescriptor) || liveDetail?.periodDescriptor;
+  const clock  = (snapFresh && liveSnap?.clock) || liveDetail?.clock;
   const inIntermission = clock?.inIntermission;
   const periodLabel = period?.periodType === 'OT'
     ? 'OT'
@@ -277,12 +288,15 @@ const HeroLive = ({ liveGame, liveDetail, oppFull, recentGames, oppRow }) => {
       : period?.number ? `P${period.number}` : null;
   const clockText = clock?.timeRemaining || '—:—';
 
+  // SOG/PP still come from the polled boxscore (the stream doesn't
+  // surface every minor stat — only score/period/clock).
   const sog = liveDetail?.stats?.shots;
   const pp = liveDetail?.stats?.powerPlay;
 
   // Goal-burst overlay — fires whenever the PHI score increments, then
-  // self-clears after ~2.4s.
-  const goalBurst = useScoreBurst(liveGame.us);
+  // self-clears after ~2.4s. Prefer the SSE-overlay value so the burst
+  // fires at sub-2s latency on goal events.
+  const goalBurst = useScoreBurst(usScore);
 
   return (
     <>
@@ -331,12 +345,12 @@ const HeroLive = ({ liveGame, liveDetail, oppFull, recentGames, oppRow }) => {
               goalBurst && 'score-flash',
             )}
             style={{ textShadow: '0 0 24px rgba(247,73,2,0.4), 0 2px 4px rgba(0,0,0,0.6)' }}
-          >{liveGame.us}</span>
+          >{usScore}</span>
           <span className="text-[28px] sm:text-[44px] text-white/20 leading-none">–</span>
           <span
             className="text-[44px] sm:text-[76px] font-semibold tabular-nums tracking-tight text-white/85 leading-none"
             style={{ textShadow: '0 2px 4px rgba(0,0,0,0.6)' }}
-          >{liveGame.them}</span>
+          >{themScore}</span>
         </div>
       </div>
 
@@ -344,8 +358,8 @@ const HeroLive = ({ liveGame, liveDetail, oppFull, recentGames, oppRow }) => {
       {!inIntermission && period && (
         <div className="mt-4 flex flex-wrap gap-2">
           <WinProbability
-            us={liveGame.us}
-            them={liveGame.them}
+            us={usScore}
+            them={themScore}
             period={period?.number}
             periodType={period?.periodType}
             clock={clock}
@@ -353,7 +367,7 @@ const HeroLive = ({ liveGame, liveDetail, oppFull, recentGames, oppRow }) => {
           />
           <PaceProjection
             label="Goals"
-            current={liveGame.us}
+            current={usScore}
             period={period?.number}
             periodType={period?.periodType}
             clock={clock}
@@ -533,7 +547,7 @@ const computeStreak = (games) => {
   return null;
 };
 
-export const Hero = ({ liveGame, liveDetail, nextGame, lastResult, us, recentGames, standings }) => {
+export const Hero = ({ liveGame, liveDetail, liveSnap, nextGame, lastResult, us, recentGames, standings }) => {
   const opp = liveGame?.opp || nextGame?.opp || lastResult?.opp;
   const oppFull = opp ? OPP_FULL[opp] : null;
   // Find the opponent's full standings row so we can show their record next
@@ -588,7 +602,7 @@ export const Hero = ({ liveGame, liveDetail, nextGame, lastResult, us, recentGam
         <div aria-hidden className="pointer-events-none absolute inset-x-8 bottom-0 h-12 bg-gradient-to-t from-black/60 to-transparent" />
 
       <div className="relative">
-        {liveGame ? <HeroLive liveGame={liveGame} liveDetail={liveDetail} oppFull={oppFull} recentGames={recentGames} oppRow={oppRow} /> :
+        {liveGame ? <HeroLive liveGame={liveGame} liveDetail={liveDetail} liveSnap={liveSnap} oppFull={oppFull} recentGames={recentGames} oppRow={oppRow} /> :
           nextGame ? <HeroNext nextGame={nextGame} oppFull={oppFull} recentGames={recentGames} oppRow={oppRow} /> :
           lastResult ? <HeroLatest lastResult={lastResult} oppFull={oppFull} recentGames={recentGames} oppRow={oppRow} /> :
           (

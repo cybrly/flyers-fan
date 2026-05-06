@@ -147,6 +147,79 @@ export function useShifts(gameId, pollMs = 0) {
   return { data, error, loading };
 }
 
+// Real-time live-game stream over SSE. Connects to /api/live?game={id}
+// for sub-2s score/clock updates while a PHI game is live. The existing
+// useNHL polling continues alongside (it provides the full data shape we
+// need for skaters/PBP/officials/etc); this hook only overlays the
+// fastest-moving primitives so the score and clock feel instantaneous.
+//
+// Connection rotation: the edge function caps each stream at ~25s, then
+// sends 'reconnect' and closes. EventSource auto-reconnects on close, so
+// we just consume the stream until 'final' (game ended) when we close
+// for good and let the standard poll take over.
+export function useLiveStream(gameId, enabled = true) {
+  const [snap, setSnap] = useState(null);
+  const [connected, setConnected] = useState(false);
+  useEffect(() => {
+    setSnap(null);
+    setConnected(false);
+    if (!enabled || !gameId) return;
+    if (typeof EventSource === 'undefined') return;
+
+    let stopped = false;
+    let es = null;
+    let backoff = 0;
+
+    const connect = () => {
+      if (stopped) return;
+      try {
+        es = new EventSource(`/api/live?game=${encodeURIComponent(gameId)}`);
+      } catch {
+        return;
+      }
+      es.addEventListener('connected', () => { setConnected(true); backoff = 0; });
+      es.addEventListener('box', (ev) => {
+        try {
+          const d = JSON.parse(ev.data);
+          setSnap((prev) => ({ ...(prev || {}), ...d, kind: 'box' }));
+        } catch { /* malformed event — ignore */ }
+      });
+      es.addEventListener('pbp', (ev) => {
+        try {
+          const d = JSON.parse(ev.data);
+          setSnap((prev) => ({ ...(prev || {}), pbpCount: d.count, lastPlays: d.tail, kind: 'pbp' }));
+        } catch { /* ignore */ }
+      });
+      es.addEventListener('final', () => {
+        stopped = true;
+        try { es?.close(); } catch { /* ignore */ }
+        setConnected(false);
+      });
+      es.addEventListener('reconnect', () => {
+        try { es?.close(); } catch { /* ignore */ }
+        setConnected(false);
+        if (!stopped) setTimeout(connect, 100);
+      });
+      es.onerror = () => {
+        try { es?.close(); } catch { /* ignore */ }
+        setConnected(false);
+        if (stopped) return;
+        // Exponential-ish backoff capped at 8s — server might be cold or
+        // upstream NHL is hiccuping. Faster than full re-poll either way.
+        backoff = Math.min(8000, (backoff || 500) * 2);
+        setTimeout(connect, backoff);
+      };
+    };
+
+    connect();
+    return () => {
+      stopped = true;
+      try { es?.close(); } catch { /* ignore */ }
+    };
+  }, [gameId, enabled]);
+  return { snap, connected };
+}
+
 // Smoothly interpolates a numeric value from its previous render to its new
 // value over `durationMs` using an ease-out-cubic curve. Strings or `null`
 // pass through unchanged. Used for KPI tiles so updated season totals tick

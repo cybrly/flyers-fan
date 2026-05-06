@@ -45,7 +45,7 @@ const l10Tone = (w, l) => w >= 7 ? 'good' : w >= 5 ? 'warm' : l >= 7 ? 'bad' : '
 const divTone = (rank) => !rank ? 'default' : rank <= 3 ? 'good' : rank >= 6 ? 'bad' : 'amber';
 const ptsPctTone = (pct) => pct >= 0.6 ? 'good' : pct >= 0.5 ? 'warm' : pct <= 0.45 ? 'bad' : 'amber';
 
-export const Dashboard = ({ schedule, standings, scoreboard, clubStats, roster, liveDetail, lastGame, leagueLeaders, loading, onOpenGame }) => {
+export const Dashboard = ({ schedule, standings, scoreboard, clubStats, roster, liveDetail, liveSnap, lastGame, leagueLeaders, loading, onOpenGame }) => {
   const games = schedule?.games?.slice(0, 20) || [];
   const chronGames = [...games].reverse();
   const l10 = games.slice(0, 10);
@@ -95,6 +95,7 @@ export const Dashboard = ({ schedule, standings, scoreboard, clubStats, roster, 
       <Hero
         liveGame={liveGame}
         liveDetail={liveDetail}
+        liveSnap={liveSnap}
         nextGame={nextGame}
         lastResult={lastResult}
         us={us}

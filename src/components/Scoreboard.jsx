@@ -18,7 +18,7 @@ export const Scoreboard = ({ data }) => {
   });
 
   return (
-    <div className="border border-white/[0.06] bg-[#0C0C0C]/40 rounded-md overflow-hidden">
+    <div className="border border-[#F74902]/[0.18] bg-[#0C0C0C]/40 rounded-md overflow-hidden">
       <div className="flex items-stretch">
         <div className="shrink-0 px-3 flex items-center gap-2 border-r border-white/[0.05] bg-white/[0.02]">
           <span className="text-[9px] font-mono uppercase tracking-[0.18em] text-white/45">

@@ -102,7 +102,7 @@ const SummaryTile = ({ label, value, sub, tone }) => {
     tone === 'cool' ? 'bg-sky-400' :
     'bg-white/40';
   return (
-    <div className="border border-white/[0.06] bg-[#0C0C0C]/60 rounded-md px-3 py-2.5">
+    <div className="border border-[#F74902]/[0.18] bg-[#0C0C0C]/60 rounded-md px-3 py-2.5">
       <div className="flex items-center gap-1.5">
         <span className={cx('w-1.5 h-1.5 rounded-full', dot)} />
         <span className="text-[10px] font-mono text-white/40 uppercase tracking-wider">{label}</span>

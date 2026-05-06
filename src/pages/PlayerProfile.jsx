@@ -66,7 +66,7 @@ const SocialLinks = ({ playerId, fullName }) => {
 const HEIGHT = (inches) => inches ? `${Math.floor(inches / 12)}'${inches % 12}"` : '—';
 
 const StatCell = ({ label, value, sub, accent = false }) => (
-  <div className="flex flex-col gap-0.5 px-3 py-2.5 border border-white/[0.06] rounded-md bg-white/[0.02]">
+  <div className="flex flex-col gap-0.5 px-3 py-2.5 border border-[#F74902]/[0.18] rounded-md bg-white/[0.02]">
     <span className="text-[10px] font-mono text-white/40 uppercase tracking-wider">{label}</span>
     <span className={cx('text-[18px] font-semibold tabular-nums', accent && 'text-[#FF8A4C]')}>
       {value ?? '—'}
@@ -116,7 +116,7 @@ export const PlayerProfile = ({ playerId }) => {
   if (error && !data) {
     return (
       <div className="p-4 md:p-6">
-        <div className="border border-white/[0.06] bg-[#0C0C0C]/60 rounded-md p-10 text-center">
+        <div className="border border-[#F74902]/[0.18] bg-[#0C0C0C]/60 rounded-md p-10 text-center">
           <AlertCircle size={20} className="text-red-400 mx-auto mb-2" />
           <div className="text-[13px] text-white/70">Couldn't load player.</div>
           <div className="text-[11px] font-mono text-white/40 mt-1">{error}</div>
@@ -158,7 +158,7 @@ export const PlayerProfile = ({ playerId }) => {
       </div>
 
       {/* Hero — headshot, name, bio, draft */}
-      <div className="border border-white/[0.06] bg-gradient-to-br from-[#141414] via-[#101010] to-[#0A0A0A] rounded-md p-5 sm:p-6 relative overflow-hidden">
+      <div className="border border-[#F74902]/[0.20] bg-gradient-to-br from-[#141414] via-[#101010] to-[#0A0A0A] rounded-md p-5 sm:p-6 relative overflow-hidden">
         <div className="absolute -top-16 -right-16 w-72 h-72 rounded-full pointer-events-none opacity-50"
           style={{ background: 'radial-gradient(circle, rgba(255,255,255,0.03), transparent 65%)' }} />
         <div className="relative flex flex-col sm:flex-row gap-5">

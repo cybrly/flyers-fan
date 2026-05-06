@@ -265,7 +265,7 @@ export const GameTape = ({ game, loading, pbp, pbpRaw, customGameId, onClearCust
   if (!game) {
     return (
       <div className="p-4 md:p-6">
-        <div className="border border-white/[0.06] bg-[#0C0C0C]/60 rounded-md p-10 text-center relative overflow-hidden">
+        <div className="border border-[#F74902]/[0.18] bg-[#0C0C0C]/60 rounded-md p-10 text-center relative overflow-hidden">
           <div className="absolute -top-20 -right-20 w-60 h-60 rounded-full pointer-events-none"
             style={{ background: 'radial-gradient(circle, rgba(255,255,255,0.03), transparent 60%)' }} />
           <div className="flex justify-center"><FlyersMark size={28} /></div>
@@ -311,7 +311,7 @@ export const GameTape = ({ game, loading, pbp, pbpRaw, customGameId, onClearCust
         </div>
       </div>
 
-      <div className="border border-white/[0.06] bg-[#0C0C0C]/60 rounded-md p-5 relative overflow-hidden">
+      <div className="border border-[#F74902]/[0.18] bg-[#0C0C0C]/60 rounded-md p-5 relative overflow-hidden">
         {/* Subtle white edge glow sits on the side where PHI actually is —
             left when away, right when home. Neutral so it doesn't tint. */}
         <div className={cx(

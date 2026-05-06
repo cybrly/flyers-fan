@@ -64,7 +64,7 @@ export const WinProbability = ({ us, them, period, periodType, clock, isHome }) 
     'text-red-400';
 
   return (
-    <div className="flex-1 min-w-[120px] px-3 py-2 border border-white/[0.06] rounded-md bg-white/[0.015]">
+    <div className="flex-1 min-w-[120px] px-3 py-2 border border-[#F74902]/[0.18] rounded-md bg-white/[0.015]">
       <div className="text-[9px] font-mono text-white/40 uppercase tracking-wider">PHI win prob</div>
       <div className="flex items-baseline gap-1.5 mt-0.5">
         <span className={cx('text-[22px] font-semibold tabular-nums tracking-tight', tone)}>{pct}%</span>
@@ -102,7 +102,7 @@ export const PaceProjection = ({ label, current, period, periodType, clock, colo
   );
 
   return (
-    <div className="flex-1 min-w-[120px] px-3 py-2 border border-white/[0.06] rounded-md bg-white/[0.015]">
+    <div className="flex-1 min-w-[120px] px-3 py-2 border border-[#F74902]/[0.18] rounded-md bg-white/[0.015]">
       <div className="text-[9px] font-mono text-white/40 uppercase tracking-wider">{label} · pace</div>
       <div className="flex items-baseline gap-1.5 mt-0.5">
         <span className="text-[22px] font-semibold tabular-nums tracking-tight" style={{ color }}>

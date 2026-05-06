@@ -14,16 +14,14 @@ import { GoalieHeatMap } from '../components/GoalieHeatMap.jsx';
 import { GoalieMatchup } from '../components/GoalieMatchup.jsx';
 import { LiveShotTicker } from '../components/LiveShotTicker.jsx';
 
-// Team-comparison row, redesigned for executive readability:
-//   - Large 22 px tabular numbers anchored to each team's side
-//   - Two divergent bars meeting at a center axis, filled in team
-//     brand colors (PHI orange on the left, neutral slate on the right)
-//     so identity is conveyed by COLOR, not by polarity-tinted text
-//   - Single thin emerald underline on the leading number — calm
-//     advantage cue without painting the row red
-//   - Faint emerald chevron pointing toward the winning side
-// `higherBetter=false` flips polarity for stats where lower is better
-// (giveaways, PIM).
+// Team-comparison row, executive layout. Order from outer-edge to
+// inner-center on each side:
+//   [ bar fill ]  [ team value ]  [ LABEL ]  [ team value ]  [ bar fill ]
+// Numbers sit immediately adjacent to the center label (so the eye
+// scans left→center→right naturally), bars extend outward from the
+// numbers to the row edges. PHI bar uses the team orange, OPP bar uses
+// neutral slate so identity is conveyed by color, advantage by a thin
+// emerald underline + chevron on the leading number.
 const CompareRow = ({ label, us, them, higherBetter = true, suffix = '' }) => {
   if (us == null || them == null) return null;
   const total = us + them;
@@ -34,33 +32,41 @@ const CompareRow = ({ label, us, them, higherBetter = true, suffix = '' }) => {
   const themWon = !tied && !usWon;
   const delta = us - them;
 
+  const Number = ({ value, isWinner, side }) => (
+    <div className={cx('flex items-baseline gap-1.5 shrink-0 tabular-nums', side === 'right' && 'flex-row-reverse')}>
+      {isWinner && <ChevronGlyph dir={side === 'left' ? 'right' : 'left'} />}
+      <span
+        className={cx(
+          'text-[22px] font-semibold tracking-tight leading-none transition-colors',
+          tied ? 'text-white/65' : isWinner ? 'text-white' : 'text-white/55',
+        )}
+        style={isWinner ? { borderBottom: '1px solid #34D399', paddingBottom: '2px' } : undefined}
+      >
+        {value}{suffix}
+      </span>
+    </div>
+  );
+
   return (
-    <div className="grid grid-cols-[1fr_minmax(120px,160px)_1fr] items-center gap-4 h-14 px-5 transition-colors hover:bg-white/[0.015] border-b border-white/[0.04] last:border-b-0">
-      {/* PHI side — number right-anchored, bar grows leftward from center */}
-      <div className="flex items-center justify-end gap-3 min-w-0">
-        <div className="flex-1 max-w-[260px]">
-          <div className="relative h-[3px] bg-white/[0.05] rounded-full overflow-hidden">
-            <div
-              className="absolute right-0 h-full rounded-l-full transition-[width] duration-500 ease-out"
-              style={{
-                width: `${usShare}%`,
-                background: tied
-                  ? 'rgba(255,255,255,0.20)'
-                  : 'linear-gradient(to left, rgba(247,73,2,0.95), rgba(247,73,2,0.55))',
-              }}
-            />
-          </div>
-        </div>
-        <div className="flex items-baseline gap-1.5 shrink-0 tabular-nums">
-          {usWon && <ChevronGlyph dir="left" />}
-          <span className={cx(
-            'text-[22px] font-semibold tracking-tight leading-none transition-colors',
-            tied ? 'text-white/65' : usWon ? 'text-white' : 'text-white/55',
-          )} style={usWon ? { borderBottom: '1px solid #34D399', paddingBottom: '2px' } : undefined}>
-            {us}{suffix}
-          </span>
+    <div className="grid grid-cols-[1fr_auto_minmax(120px,160px)_auto_1fr] items-center gap-4 h-14 px-5 transition-colors hover:bg-white/[0.015] border-b border-white/[0.04] last:border-b-0">
+      {/* Outer bar — left side, anchored to the right edge of its cell so
+          it grows toward the row edge as PHI's share increases. */}
+      <div className="min-w-0">
+        <div className="relative h-[3px] bg-white/[0.05] rounded-full overflow-hidden">
+          <div
+            className="absolute right-0 h-full rounded-l-full transition-[width] duration-500 ease-out"
+            style={{
+              width: `${usShare}%`,
+              background: tied
+                ? 'rgba(255,255,255,0.20)'
+                : 'linear-gradient(to left, rgba(247,73,2,0.95), rgba(247,73,2,0.55))',
+            }}
+          />
         </div>
       </div>
+
+      {/* PHI value — sits right against the center label */}
+      <Number value={us} isWinner={usWon} side="left" />
 
       {/* Center label + delta */}
       <div className="flex flex-col items-center gap-0.5">
@@ -75,29 +81,22 @@ const CompareRow = ({ label, us, them, higherBetter = true, suffix = '' }) => {
         </span>
       </div>
 
-      {/* OPP side — number left-anchored, bar grows rightward from center */}
-      <div className="flex items-center gap-3 min-w-0">
-        <div className="flex items-baseline gap-1.5 shrink-0 tabular-nums">
-          <span className={cx(
-            'text-[22px] font-semibold tracking-tight leading-none transition-colors',
-            tied ? 'text-white/65' : themWon ? 'text-white' : 'text-white/55',
-          )} style={themWon ? { borderBottom: '1px solid #34D399', paddingBottom: '2px' } : undefined}>
-            {them}{suffix}
-          </span>
-          {themWon && <ChevronGlyph dir="right" />}
-        </div>
-        <div className="flex-1 max-w-[260px]">
-          <div className="relative h-[3px] bg-white/[0.05] rounded-full overflow-hidden">
-            <div
-              className="absolute left-0 h-full rounded-r-full transition-[width] duration-500 ease-out"
-              style={{
-                width: `${themShare}%`,
-                background: tied
-                  ? 'rgba(255,255,255,0.20)'
-                  : 'linear-gradient(to right, rgba(226,232,240,0.85), rgba(148,163,184,0.45))',
-              }}
-            />
-          </div>
+      {/* OPP value — sits right against the center label */}
+      <Number value={them} isWinner={themWon} side="right" />
+
+      {/* Outer bar — right side, anchored to the left edge of its cell so
+          it grows toward the row edge as OPP's share increases. */}
+      <div className="min-w-0">
+        <div className="relative h-[3px] bg-white/[0.05] rounded-full overflow-hidden">
+          <div
+            className="absolute left-0 h-full rounded-r-full transition-[width] duration-500 ease-out"
+            style={{
+              width: `${themShare}%`,
+              background: tied
+                ? 'rgba(255,255,255,0.20)'
+                : 'linear-gradient(to right, rgba(226,232,240,0.85), rgba(148,163,184,0.45))',
+            }}
+          />
         </div>
       </div>
     </div>

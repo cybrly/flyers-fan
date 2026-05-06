@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { cx, OPP_FULL, TEAM_ABBR, arenaMiles, fmtTime } from '../config.js';
 import { Label, Section, Skeleton } from '../components/primitives.jsx';
 import { TeamLogo } from '../components/Logo.jsx';
+import { WatchabilityPanel } from '../components/WatchabilityPanel.jsx';
 
 // Annotate every finished game with rest days (since the prior PHI game) and
 // travel miles (great-circle from the prior game's venue to this one's).
@@ -19,7 +20,7 @@ function enrich(games) {
   });
 }
 
-export const Schedule = ({ schedule, monthSchedule, onOpenGame }) => {
+export const Schedule = ({ schedule, monthSchedule, onOpenGame, scoreboard, standings, leagueLeaders }) => {
   const [filter, setFilter] = useState('all');
   const [scope, setScope] = useState('l20'); // 'l20' | 'all'
   const [view, setView] = useState('table');  // 'table' | 'calendar'
@@ -109,6 +110,12 @@ export const Schedule = ({ schedule, monthSchedule, onOpenGame }) => {
 
       <TravelSummary games={filtered} />
 
+      <WatchabilityPanel
+        scoreboard={scoreboard}
+        standings={standings}
+        leagueLeaders={leagueLeaders}
+        ourTeamAbbr={TEAM_ABBR}
+      />
 
       <Section>
         {/* Tablet/desktop — full 11-column table. Hidden on phones in

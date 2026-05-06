@@ -62,6 +62,7 @@ const Trends   = lazyPage(() => import('./pages/Trends.jsx'),   'Trends');
 const Coaches  = lazyPage(() => import('./pages/Coaches.jsx'),  'Coaches');
 const Draft    = lazyPage(() => import('./pages/Draft.jsx'),    'Draft');
 const Records  = lazyPage(() => import('./pages/Records.jsx'),  'Records');
+const OnIce    = lazyPage(() => import('./pages/OnIce.jsx'),    'OnIce');
 
 export default function App() {
   // Route-derived state — URL is the source of truth. /game/123, ?player=8478,
@@ -93,6 +94,7 @@ export default function App() {
       coaches: 'Coaches · flyers.fan',
       draft: 'Draft Rankings · flyers.fan',
       records: 'Records · flyers.fan',
+      'on-ice': 'On Ice · flyers.fan',
     };
     document.title = titles[page] || 'flyers.fan';
   }, [page]);
@@ -427,6 +429,7 @@ export default function App() {
                 {page === 'coaches'   && <Coaches />}
                 {page === 'draft'     && <Draft rankings={draftRankings} loading={drNAS.loading} />}
                 {page === 'records'   && <Records />}
+                {page === 'on-ice'    && <OnIce game={game} gameId={gameId} />}
               </Suspense>
             </ErrorBoundary>
           </main>

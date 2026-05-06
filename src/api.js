@@ -123,20 +123,27 @@ export function useClockTick(ms = 1000) {
 // entry per shift, both teams). Browser HTTP cache dedupes parallel calls
 // from different components (ShiftChart, LinemateAnalysis, etc.) since the
 // proxy sets s-maxage=30 with stale-while-revalidate.
-export function useShifts(gameId) {
+export function useShifts(gameId, pollMs = 0) {
   const [data, setData] = useState(null);
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(!!gameId);
   useEffect(() => {
     if (!gameId) { setData(null); setLoading(false); return; }
     let cancelled = false;
-    setLoading(true);
-    fetch(`/api/shifts?gameId=${gameId}`)
-      .then((r) => r.ok ? r.json() : Promise.reject(new Error(`HTTP ${r.status}`)))
-      .then((d) => { if (!cancelled) { setData(d?.data || []); setLoading(false); setError(null); } })
-      .catch((e) => { if (!cancelled) { setError(e.message); setLoading(false); } });
-    return () => { cancelled = true; };
-  }, [gameId]);
+    let timer = null;
+    const fetchOnce = (showSpinner = false) => {
+      if (showSpinner) setLoading(true);
+      return fetch(`/api/shifts?gameId=${gameId}`)
+        .then((r) => r.ok ? r.json() : Promise.reject(new Error(`HTTP ${r.status}`)))
+        .then((d) => { if (!cancelled) { setData(d?.data || []); setLoading(false); setError(null); } })
+        .catch((e) => { if (!cancelled) { setError(e.message); setLoading(false); } });
+    };
+    fetchOnce(true);
+    if (pollMs > 0) {
+      timer = setInterval(() => fetchOnce(false), pollMs);
+    }
+    return () => { cancelled = true; if (timer) clearInterval(timer); };
+  }, [gameId, pollMs]);
   return { data, error, loading };
 }
 

@@ -14,26 +14,33 @@ import { GoalieHeatMap } from '../components/GoalieHeatMap.jsx';
 import { GoalieMatchup } from '../components/GoalieMatchup.jsx';
 import { LiveShotTicker } from '../components/LiveShotTicker.jsx';
 
+// One row of the team comparison grid. Better side tints green, worse
+// side tints red; ties stay neutral. Bar fills follow the same polarity
+// so a quick scan shows which team is winning each metric.
+// `higherBetter=false` flips the polarity for stats where lower is
+// better (giveaways, PIM).
 const CompareRow = ({ label, us, them, higherBetter = true, suffix = '' }) => {
   if (us == null || them == null) return null;
   const total = us + them;
   const usPct = total > 0 ? (us / total) * 100 : 50;
-  const usWon = higherBetter ? us > them : us < them;
+  const tied = us === them;
+  const usWon = !tied && (higherBetter ? us > them : us < them);
+  const themWon = !tied && !usWon;
+  const usColor = tied ? 'text-white/55' : usWon ? 'text-emerald-400 font-semibold' : 'text-red-400 font-semibold';
+  const themColor = tied ? 'text-white/55' : themWon ? 'text-emerald-400 font-semibold' : 'text-red-400 font-semibold';
+  const usBarColor = tied ? 'bg-white/30' : usWon ? 'bg-emerald-500/80' : 'bg-red-500/70';
+  const themBarColor = tied ? 'bg-white/30' : themWon ? 'bg-emerald-500/80' : 'bg-red-500/70';
   return (
     <div className="grid grid-cols-[60px_1fr_90px_1fr_60px] items-center gap-3 h-9 px-4 hover:bg-white/[0.02] transition-colors">
-      <span className={cx('text-right text-[12px] font-mono tabular-nums',
-        usWon ? 'text-[#FF8A4C]' : 'text-white/55'
-      )}>{us}{suffix}</span>
+      <span className={cx('text-right text-[12px] font-mono tabular-nums', usColor)}>{us}{suffix}</span>
       <div className="relative h-1 bg-white/[0.04] rounded-full overflow-hidden">
-        <div className="absolute right-1/2 h-full bg-[#F74902]/70" style={{ width: `${usPct / 2}%` }} />
+        <div className={cx('absolute right-1/2 h-full', usBarColor)} style={{ width: `${usPct / 2}%` }} />
       </div>
       <span className="text-center text-[10px] font-mono text-white/45 tracking-wider uppercase">{label}</span>
       <div className="relative h-1 bg-white/[0.04] rounded-full overflow-hidden">
-        <div className="absolute left-1/2 h-full bg-white/50" style={{ width: `${(100 - usPct) / 2}%` }} />
+        <div className={cx('absolute left-1/2 h-full', themBarColor)} style={{ width: `${(100 - usPct) / 2}%` }} />
       </div>
-      <span className={cx('text-left text-[12px] font-mono tabular-nums',
-        !usWon ? 'text-white font-medium' : 'text-white/50'
-      )}>{them}{suffix}</span>
+      <span className={cx('text-left text-[12px] font-mono tabular-nums', themColor)}>{them}{suffix}</span>
     </div>
   );
 };

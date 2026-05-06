@@ -12,6 +12,7 @@ import { SeriesTracker } from '../components/SeriesTracker.jsx';
 import { HeadToHead } from '../components/HeadToHead.jsx';
 import { LeagueLeaders } from '../components/LeagueLeaders.jsx';
 import { ThreeStarsPanel, AwardWatchPanel, RecordsTrackerPanel } from '../components/EngagementPanels.jsx';
+import { InjuryWatch } from '../components/InjuryWatch.jsx';
 import { ThisDayInHistory } from '../components/ThisDayInHistory.jsx';
 import { ScheduleStrength } from '../components/ScheduleStrength.jsx';
 import { PlayoffRace } from '../components/PlayoffRace.jsx';
@@ -465,6 +466,8 @@ export const Dashboard = ({ schedule, standings, scoreboard, clubStats, roster, 
           lives in one scroll-stop instead of surprising the reader between
           data-heavy sections. */}
       <CollapsibleBand id="notes-notables" label="Notes & Notables" color="amber" sub="records · awards · honors · history" defaultCollapsed>
+
+      <InjuryWatch lastGame={lastGame} />
 
       <RecordsTrackerPanel clubStats={clubStats} />
 

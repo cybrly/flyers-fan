@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { Home, Plane } from 'lucide-react';
 import { cx, OPP_FULL, fmtDate, fmtDateFull, fmtTime, SEASON_LABEL } from '../config.js';
 import { Chip, Section, SectionBand, Skeleton } from '../components/primitives.jsx';
 import { GoalDiffBars, FormDots, MiniBar } from '../components/charts.jsx';
@@ -201,16 +200,21 @@ export const Dashboard = ({ schedule, standings, scoreboard, clubStats, roster, 
         title="Recent Games"
         action={<span className="text-[10px] font-mono text-white/40">Last 10 · click any row</span>}
       >
-        <div className="divide-y divide-white/[0.04]">
-          <div className="grid grid-cols-[44px_60px_1fr_72px_50px_56px_44px_42px_120px] gap-2 items-center px-4 h-8 text-[10px] font-mono text-white/35 uppercase tracking-wider">
+        {/* Compact dense table — fixed-width columns sum to ~770 px so on
+            wide displays the table sits centered with breathing room
+            instead of stretching the opponent column to ~600 px of dead
+            space between the team name and the score. The redundant
+            Home/Plane site icon was dropped (the leading "vs" / "@"
+            already conveys it) and the End/Type tags collapsed into a
+            single combined cell. */}
+        <div className="divide-y divide-white/[0.04] mx-auto" style={{ maxWidth: 880 }}>
+          <div className="grid grid-cols-[44px_56px_minmax(180px,1fr)_72px_50px_70px_120px] gap-2 items-center px-4 h-8 text-[10px] font-mono text-white/35 uppercase tracking-wider">
             <span>Res</span>
             <span>Date</span>
             <span>Opponent</span>
             <span className="text-right">Score</span>
             <span className="text-right">Diff</span>
-            <span className="text-center">Site</span>
-            <span className="text-center">End</span>
-            <span className="text-center">Type</span>
+            <span className="text-center">Tags</span>
             <span className="text-center">Goals</span>
           </div>
           {!games.length && Array.from({ length: 5 }).map((_, i) => (
@@ -219,13 +223,13 @@ export const Dashboard = ({ schedule, standings, scoreboard, clubStats, roster, 
           {games.slice(0, 10).map((g) => {
             const max = Math.max(g.us, g.them);
             const diff = g.us - g.them;
-            const endTag = g.lastPeriodType === 'OT' ? 'OT' : g.lastPeriodType === 'SO' ? 'SO' : 'REG';
-            const typeTag = g.gameType === 3 ? 'PO' : 'REG';
+            const endTag = g.lastPeriodType === 'OT' ? 'OT' : g.lastPeriodType === 'SO' ? 'SO' : null;
+            const isPO = g.gameType === 3;
             return (
               <button
                 key={g.id}
                 onClick={() => onOpenGame?.(g.id)}
-                className="w-full text-left grid grid-cols-[44px_60px_1fr_72px_50px_56px_44px_42px_120px] gap-2 items-center px-4 h-10 hover:bg-white/[0.03] transition-colors cursor-pointer"
+                className="w-full text-left grid grid-cols-[44px_56px_minmax(180px,1fr)_72px_50px_70px_120px] gap-2 items-center px-4 h-10 hover:bg-white/[0.03] transition-colors cursor-pointer"
               >
                 <span className={cx(
                   'inline-flex items-center justify-center w-[22px] h-[18px] text-[10px] font-mono font-semibold rounded-[3px]',
@@ -237,7 +241,6 @@ export const Dashboard = ({ schedule, standings, scoreboard, clubStats, roster, 
                   <span className="text-[10px] font-mono text-white/35 uppercase shrink-0">{g.home ? 'vs' : '@'}</span>
                   <TeamLogo abbr={g.opp} size={16} />
                   <span className="text-[13px] text-white/85 truncate">{OPP_FULL[g.opp] || g.oppName}</span>
-                  <span className="text-[10px] font-mono text-white/35">{g.opp}</span>
                 </div>
                 <div className="text-right font-mono tabular-nums text-[14px]">
                   <span className={g.w ? 'text-[#FF8A4C] font-medium' : 'text-white/80'}>{g.us}</span>
@@ -247,15 +250,11 @@ export const Dashboard = ({ schedule, standings, scoreboard, clubStats, roster, 
                 <span className={cx('text-right text-[12px] font-mono tabular-nums',
                   diff > 0 ? 'text-emerald-400' : diff < 0 ? 'text-red-400' : 'text-white/40'
                 )}>{diff > 0 ? '+' : ''}{diff}</span>
-                <span className="flex items-center justify-center text-[10px] font-mono text-white/45">
-                  {g.home ? <Home size={11} /> : <Plane size={11} />}
+                <span className="flex items-center justify-center gap-1 text-[10px] font-mono">
+                  {endTag && <span className="text-amber-400/85">{endTag}</span>}
+                  {isPO && <span className="text-[#FF8A4C]">PO</span>}
+                  {!endTag && !isPO && <span className="text-white/20">—</span>}
                 </span>
-                <span className={cx('text-center text-[10px] font-mono',
-                  endTag === 'OT' ? 'text-amber-400' : endTag === 'SO' ? 'text-amber-400/80' : 'text-white/30'
-                )}>{endTag}</span>
-                <span className={cx('text-center text-[10px] font-mono',
-                  typeTag === 'PO' ? 'text-[#FF8A4C]' : 'text-white/30'
-                )}>{typeTag}</span>
                 <div className="flex items-center justify-center gap-0.5">
                   {Array.from({ length: max }).map((_, i) => (
                     <div key={`u${i}`} className={cx('w-1 h-3', i < g.us ? 'bg-[#F74902]' : 'bg-white/[0.06]')} />

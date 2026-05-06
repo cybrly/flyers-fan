@@ -14,7 +14,6 @@ import { HeadToHead } from '../components/HeadToHead.jsx';
 import { LeagueLeaders } from '../components/LeagueLeaders.jsx';
 import { ThreeStarsPanel, AwardWatchPanel, RecordsTrackerPanel } from '../components/EngagementPanels.jsx';
 import { ThisDayInHistory } from '../components/ThisDayInHistory.jsx';
-import { MilestoneWatch } from '../components/MilestoneWatch.jsx';
 
 // Dashboard is laid out as a single linear flow split into named bands
 // (Tonight / Season / Recent / Offense / Roster / Reference). Each band
@@ -397,8 +396,6 @@ export const Dashboard = ({ schedule, standings, scoreboard, clubStats, roster, 
             </div>
           </Section>
         )}
-
-        <MilestoneWatch clubStats={clubStats} />
       </div>
 
       {/* League leaders panel — full-width pivot from PHI to NHL-wide. */}

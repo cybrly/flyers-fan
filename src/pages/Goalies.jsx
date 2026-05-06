@@ -181,8 +181,13 @@ export const Goalies = ({ clubStats, schedule }) => {
         </p>
       </div>
 
-      <Section title="Crease Watch" action={<span className="text-[10px] font-mono text-white/40 uppercase tracking-wider">{goalies.length} goalies</span>}>
-        {goalies.length === 0 ? (
+      <Section title="Crease Watch" action={<span className="text-[10px] font-mono text-white/40 uppercase tracking-wider">{goalies.length || ''} {goalies.length ? 'goalies' : ''}</span>}>
+        {!clubStats ? (
+          <div className="p-4 space-y-3">
+            <Skeleton height={88} />
+            <Skeleton height={88} />
+          </div>
+        ) : goalies.length === 0 ? (
           <div className="p-8 text-center text-[12px] font-mono text-white/40">No goalie stats available.</div>
         ) : (
           <div>

@@ -15,6 +15,7 @@ import { ThreeStarsPanel, AwardWatchPanel, RecordsTrackerPanel } from '../compon
 import { ThisDayInHistory } from '../components/ThisDayInHistory.jsx';
 import { ScheduleStrength } from '../components/ScheduleStrength.jsx';
 import { PlayoffRace } from '../components/PlayoffRace.jsx';
+import { navigate } from '../router.js';
 
 // Dashboard is laid out as a single linear flow split into named bands
 // (Tonight / Season / Recent / Offense / Roster / Reference). Each band
@@ -96,31 +97,39 @@ export const Dashboard = ({ schedule, standings, scoreboard, clubStats, roster, 
         standings={standings}
       />
 
+      {/* Quick Actions rail — short-circuits the scroll for power users
+          by surfacing the most likely next click as a row of contextual
+          chips: "Game tape" if a recent or live game exists, "On-ice
+          tracker" during live play, "Compare top scorer" once club stats
+          have loaded. Each chip is a router jump, not a new feature, so
+          no scroll cost on idle days when none of them apply. */}
+      <QuickActionsRail
+        liveGame={liveGame}
+        nextGame={nextGame}
+        lastResult={lastResult}
+        clubStats={clubStats}
+        onOpenGame={onOpenGame}
+      />
+
       {/* ─── BAND · TONIGHT ───────────────────────────────────────────────── */}
+      {/* Hero already covers "what's happening tonight" — this band answers
+          the second-order questions: where do we stand, what's the next
+          stretch, and how do other teams stack up. The duplicated
+          live/next/latest 3-card row was removed because Hero serves the
+          same function. SeriesTracker only renders during a live PHI
+          playoff series; it's been moved to the Reference band so
+          regular-season visitors aren't paying scroll cost for an empty
+          slot. */}
       <SectionBand
         label="Tonight"
         color="orange"
-        sub={liveGame ? 'live · race · next stretch' : nextGame ? 'next up · race · next stretch' : 'recent · race · next stretch'}
-        count={scoreboard?.games?.length || null}
+        sub="race · next stretch · standings"
       />
 
-      <SeriesTracker scoreboard={scoreboard} schedule={schedule} onOpenGame={onOpenGame} />
-
-      {/* Live / Next / Latest result side-by-side */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        <LiveOrNextCard
-          liveGame={liveGame}
-          liveDetail={liveDetail}
-          nextGame={nextGame}
-          onOpenGame={onOpenGame}
-        />
-        <LatestResultCard lastResult={lastResult} lastGame={lastGame} onOpenGame={onOpenGame} />
-        <HeadToHead schedule={schedule} onOpenGame={onOpenGame} />
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <PlayoffRace standings={standings} />
         <ScheduleStrength upcoming={schedule?.upcoming || []} standings={standings} />
+        <StandingsPanel standings={standings} />
       </div>
 
       {/* ─── BAND · SEASON OVERVIEW ───────────────────────────────────────── */}
@@ -143,7 +152,12 @@ export const Dashboard = ({ schedule, standings, scoreboard, clubStats, roster, 
         </div>
       </div>
 
-      <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3">
+      {/* Primary KPI strip — 4 high-signal tiles a fan glances for first.
+          Record + Points + Goal Diff + Last 10 collectively answer
+          "are we good and how have we been lately?" Pace / Streak /
+          Division are demoted to a thinner secondary row below so the
+          primary row reads cleanly. */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         <KPI
           label="Record"
           value={us ? `${us.w}–${us.l}${us.ot ? `–${us.ot}` : ''}` : '—'}
@@ -161,27 +175,12 @@ export const Dashboard = ({ schedule, standings, scoreboard, clubStats, roster, 
           loading={loading && !us}
         />
         <KPI
-          label="82-game Pace"
-          value={pace ?? '—'}
-          sub="pts"
-          tone={pace ? paceTone(pace) : 'default'}
-          loading={loading && !us}
-        />
-        <KPI
           label="Goal Diff"
           value={us ? `${us.diff >= 0 ? '+' : ''}${us.diff}` : '—'}
           sub="season"
           sparkData={running.diffArr}
           tone={us ? diffTone(us.diff) : 'default'}
           loading={loading && !us}
-        />
-        <KPI
-          label="Streak"
-          value={streak ? `${streak.type}${streak.count}` : '—'}
-          sub={streak?.type === 'W' ? 'hot' : 'cold'}
-          sparkData={running.winPctArr}
-          tone={streakTone(streak)}
-          loading={!streak}
         />
         <KPI
           label="Last 10"
@@ -191,12 +190,27 @@ export const Dashboard = ({ schedule, standings, scoreboard, clubStats, roster, 
           tone={games.length ? l10Tone(l10Record.w, l10Record.l) : 'default'}
           loading={!games.length}
         />
-        <KPI
+      </div>
+
+      {/* Secondary stat strip — supporting metrics in a denser row. */}
+      <div className="grid grid-cols-3 gap-3">
+        <SecondaryStat
+          label="82-game Pace"
+          value={pace ?? '—'}
+          sub="pts projected"
+          tone={pace ? paceTone(pace) : 'default'}
+        />
+        <SecondaryStat
+          label="Streak"
+          value={streak ? `${streak.type}${streak.count}` : '—'}
+          sub={streak?.type === 'W' ? 'hot' : streak?.type === 'L' ? 'cold' : ''}
+          tone={streakTone(streak)}
+        />
+        <SecondaryStat
           label="Division"
           value={us ? `#${us.divRank}` : '—'}
           sub="Metro"
           tone={us ? divTone(us.divRank) : 'default'}
-          loading={!us}
         />
       </div>
 
@@ -433,33 +447,63 @@ export const Dashboard = ({ schedule, standings, scoreboard, clubStats, roster, 
         )}
       </div>
 
-      {/* League leaders panel — full-width pivot from PHI to NHL-wide. */}
+      {/* ─── BAND · LEAGUE ────────────────────────────────────────────────── */}
+      <SectionBand label="League" color="sky" sub="leaders · NHL-wide" />
+
       <LeagueLeaders data={leagueLeaders} />
+
+      {/* ─── BAND · NOTES & NOTABLES ──────────────────────────────────────── */}
+      {/* Was previously scattered across Roster & Franchise + standalone
+          rows. Collected into one band so all "color and context" content
+          lives in one scroll-stop instead of surprising the reader between
+          data-heavy sections. */}
+      <SectionBand label="Notes & Notables" color="amber" sub="records · awards · honors · history" />
 
       <RecordsTrackerPanel clubStats={clubStats} />
 
       <AwardWatchPanel />
 
-      {/* ─── BAND · ROSTER & FRANCHISE ────────────────────────────────────── */}
-      <SectionBand label="Roster & Franchise" color="amber" sub="young guns · honors · history · milestones" />
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         <YoungGunsPanel roster={roster} clubStats={clubStats} />
         <HonorsPanel />
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <ThisDayInHistory />
         <MilestoneWatch clubStats={clubStats} />
       </div>
 
       {/* ─── BAND · REFERENCE ─────────────────────────────────────────────── */}
-      <SectionBand label="Reference" color="sky" sub="standings · upcoming" />
+      {/* Standings has been promoted to the Tonight band; Reference now
+          carries the supporting context: head-to-head with the next
+          opponent, the active playoff series tracker (only renders when
+          relevant), and the upcoming schedule. */}
+      <SectionBand label="Reference" color="sky" sub="head-to-head · series · upcoming" />
+
+      <SeriesTracker scoreboard={scoreboard} schedule={schedule} onOpenGame={onOpenGame} />
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <StandingsPanel standings={standings} />
+        <HeadToHead schedule={schedule} onOpenGame={onOpenGame} />
         <UpcomingPanel upcoming={schedule?.upcoming || []} />
       </div>
+
+      {/* Latest result — useful as a "what just happened" recap when the
+          Hero is busy showing the live or upcoming game. Hidden when the
+          Hero is already showing the lastResult itself (no liveGame and
+          no nextGame), so we don't paint the same info twice. */}
+      {(liveGame || nextGame) && lastResult && (
+        <LatestResultCard lastResult={lastResult} lastGame={lastGame} onOpenGame={onOpenGame} />
+      )}
+
+      {/* Off-day fallback: when there's no live or next game, surface the
+          NHL milestone calendar via NoGameCard so the page isn't a
+          dead-end on quiet nights. Hidden whenever a game card is
+          already represented above. */}
+      {!liveGame && !nextGame && (
+        <LiveOrNextCard
+          liveGame={null}
+          liveDetail={null}
+          nextGame={null}
+          onOpenGame={onOpenGame}
+        />
+      )}
 
       {/* League ticker — relegated to the bottom so league-wide scores don't
           crowd Flyers content at the top of the dashboard. */}
@@ -473,6 +517,84 @@ export const Dashboard = ({ schedule, standings, scoreboard, clubStats, roster, 
 };
 
 // ─── Tonight cards ─────────────────────────────────────────────────────────
+
+// Quick Actions rail — sits directly under the Hero with 3-5 contextual
+// jump chips. Rendered nothing if no actions are relevant (off-day,
+// no roster loaded). Each chip is a single-router-hop shortcut to
+// content the user is most likely to want next.
+const QuickActionsRail = ({ liveGame, nextGame, lastResult, clubStats, onOpenGame }) => {
+  const actions = [];
+  if (liveGame) {
+    actions.push({ label: 'On-ice tracker', sub: 'Live skaters', href: '/on-ice', tone: 'live' });
+    actions.push({ label: 'Game tape · live', sub: `vs ${liveGame.opp}`, fn: () => onOpenGame?.(liveGame.id), tone: 'orange' });
+  } else if (lastResult) {
+    actions.push({ label: 'Last game tape', sub: `${lastResult.w ? 'W' : 'L'} ${lastResult.us}–${lastResult.them} vs ${lastResult.opp}`, fn: () => onOpenGame?.(lastResult.id), tone: 'orange' });
+  }
+  if (nextGame) {
+    actions.push({ label: 'Next opponent', sub: `${nextGame.home ? 'vs' : '@'} ${nextGame.opp}`, href: '/schedule', tone: 'sky' });
+  }
+  if (clubStats?.skaters?.length) {
+    const topScorer = [...clubStats.skaters].sort((a, b) => b.pts - a.pts)[0];
+    if (topScorer) {
+      actions.push({ label: `Compare ${topScorer.name}`, sub: 'Top PHI scorer', href: `/compare?a=${topScorer.id}`, tone: 'default' });
+    }
+  }
+  actions.push({ label: 'All trends', sub: 'season trajectory', href: '/trends', tone: 'default' });
+
+  if (actions.length === 0) return null;
+
+  const TONE = {
+    live:    'border-red-500/40 bg-red-500/[0.08] text-red-300 hover:bg-red-500/[0.12]',
+    orange:  'border-[#F74902]/35 bg-[#F74902]/[0.06] text-[#FF8A4C] hover:bg-[#F74902]/[0.12]',
+    sky:     'border-sky-500/30 bg-sky-500/[0.06] text-sky-300 hover:bg-sky-500/[0.10]',
+    default: 'border-white/[0.08] bg-white/[0.02] text-white/75 hover:bg-white/[0.05]',
+  };
+
+  return (
+    <div className="flex items-center gap-2 overflow-x-auto pb-1 -mt-1">
+      <span className="text-[9px] font-mono uppercase tracking-[0.18em] text-white/35 shrink-0 pr-1">Jump to</span>
+      {actions.map((a, i) => {
+        const inner = (
+          <div className="flex items-baseline gap-1.5">
+            <span className="font-medium">{a.label}</span>
+            {a.sub && <span className="text-[10px] font-mono opacity-60">{a.sub}</span>}
+          </div>
+        );
+        const className = cx(
+          'inline-flex items-center px-3 h-8 rounded-md border text-[12px] transition-colors shrink-0 whitespace-nowrap',
+          TONE[a.tone] || TONE.default,
+        );
+        if (a.fn) {
+          return <button key={i} onClick={a.fn} className={className}>{inner}</button>;
+        }
+        return <a key={i} href={a.href} onClick={(e) => { e.preventDefault(); navigate(a.href); }} className={className}>{inner}</a>;
+      })}
+    </div>
+  );
+};
+
+// Smaller, denser stat tile for the secondary row under the primary
+// KPI grid. No sparkline, no count-up — just label + value + sub +
+// semantic tone. Visually subordinate so the primary KPIs lead.
+const SECONDARY_TONE = {
+  default: 'text-white border-white/[0.08] bg-white/[0.015]',
+  good:    'text-emerald-400 border-emerald-500/25 bg-emerald-500/[0.04]',
+  bad:     'text-red-400 border-red-500/25 bg-red-500/[0.04]',
+  warm:    'text-[#FF8A4C] border-[#F74902]/25 bg-[#F74902]/[0.04]',
+  amber:   'text-amber-300 border-amber-500/25 bg-amber-500/[0.04]',
+};
+const SecondaryStat = ({ label, value, sub, tone = 'default' }) => {
+  const t = SECONDARY_TONE[tone] || SECONDARY_TONE.default;
+  return (
+    <div className={cx('flex items-baseline justify-between gap-3 px-3.5 h-10 rounded-md border', t)}>
+      <span className="text-[10px] font-mono text-white/45 uppercase tracking-wider whitespace-nowrap">{label}</span>
+      <div className="flex items-baseline gap-1.5 tabular-nums">
+        <span className="text-[16px] font-semibold tracking-tight">{value}</span>
+        {sub && <span className="text-[9px] font-mono text-white/40">{sub}</span>}
+      </div>
+    </div>
+  );
+};
 
 const LiveOrNextCard = ({ liveGame, liveDetail, nextGame, onOpenGame }) => {
   if (liveGame) {

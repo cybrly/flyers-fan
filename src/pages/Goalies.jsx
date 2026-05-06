@@ -136,7 +136,7 @@ const GoalieRow = ({ goalie, seasonStr }) => {
           <div className="flex items-center gap-1 flex-wrap">
             {recent.length === 0 && <span className="text-[10px] font-mono text-white/30">no games</span>}
             {recent.map((e) => {
-              const dec = e.decision || (e.gameType === 3 ? '' : '');
+              const dec = e.decision || '';
               const tone = dec === 'W' ? 'bg-emerald-500/20 border-emerald-500/40 text-emerald-300'
                 : dec === 'L' ? 'bg-red-500/15 border-red-500/35 text-red-300'
                 : dec === 'O' ? 'bg-amber-500/15 border-amber-500/35 text-amber-300'

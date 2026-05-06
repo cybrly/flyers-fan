@@ -393,7 +393,7 @@ export default function App() {
           onCloseMobile={() => setNavOpen(false)}
         />
 
-        <div className="flex-1 min-w-0 flex flex-col min-h-screen">
+        <div className="flex-1 min-w-0 flex flex-col min-h-screen pb-14 sm:pb-0">
           <Topbar
             page={page}
             liveGame={schedule.liveGame}
@@ -414,7 +414,7 @@ export default function App() {
             id="main-content"
             tabIndex={-1}
             key={page}
-            className="flex-1 min-w-0 outline-none pb-14 sm:pb-0"
+            className="flex-1 min-w-0 outline-none"
             style={{ animation: 'fadeIn 0.25s ease-out' }}
           >
             <ErrorBoundary resetKey={page}>
@@ -447,6 +447,7 @@ export default function App() {
         page={page}
         setPage={setPage}
         onOpenMore={() => setNavOpen(true)}
+        liveGame={schedule.liveGame}
       />
 
       <PlayerModal playerId={playerId} onClose={playerCtx.close} />

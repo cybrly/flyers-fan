@@ -9,11 +9,11 @@ import { cx } from '../config.js';
 const ITEMS = [
   { id: 'dashboard', label: 'Home',     icon: LayoutDashboard },
   { id: 'schedule',  label: 'Schedule', icon: Calendar },
-  { id: 'on-ice',    label: 'On Ice',   icon: Activity },
+  { id: 'on-ice',    label: 'On Ice',   icon: Activity, liveBadge: true },
   { id: 'standings', label: 'Standings', icon: Trophy },
 ];
 
-export const MobileBottomNav = ({ page, setPage, onOpenMore }) => (
+export const MobileBottomNav = ({ page, setPage, onOpenMore, liveGame }) => (
   <nav
     aria-label="Primary"
     className="sm:hidden fixed bottom-0 inset-x-0 z-30 h-14 border-t border-[#F74902]/[0.22] bg-[#080808]/96 backdrop-blur-md flex items-stretch"
@@ -22,17 +22,26 @@ export const MobileBottomNav = ({ page, setPage, onOpenMore }) => (
     {ITEMS.map((it) => {
       const Icon = it.icon;
       const active = page === it.id;
+      const showLive = it.liveBadge && !!liveGame;
       return (
         <button
           key={it.id}
           onClick={() => setPage(it.id)}
           aria-current={active ? 'page' : undefined}
           className={cx(
-            'flex-1 flex flex-col items-center justify-center gap-0.5 transition-colors',
+            'relative flex-1 flex flex-col items-center justify-center gap-0.5 transition-colors',
             active ? 'text-[#FF8A4C]' : 'text-white/55 hover:text-white/85',
           )}
         >
-          <Icon size={18} strokeWidth={active ? 2.4 : 1.8} />
+          <div className="relative">
+            <Icon size={18} strokeWidth={active ? 2.4 : 1.8} />
+            {showLive && (
+              <span
+                aria-hidden
+                className="absolute -top-0.5 -right-1 w-2 h-2 rounded-full bg-red-500 ring-2 ring-[#080808] animate-pulse"
+              />
+            )}
+          </div>
           <span className={cx('text-[10px] font-mono tracking-wide', active && 'font-semibold')}>
             {it.label}
           </span>

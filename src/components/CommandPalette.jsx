@@ -8,9 +8,41 @@ import { NAV_ITEMS } from './nav.js';
 export const CommandPalette = ({ open, onClose, setPage, schedule, roster, clubStats, onOpenGame, onOpenPlayer }) => {
   const [q, setQ] = useState('');
   const [active, setActive] = useState(0);
+  const [leagueHits, setLeagueHits] = useState([]);
+  const [leagueLoading, setLeagueLoading] = useState(false);
   const inputRef = useRef(null);
 
-  useEffect(() => { if (open) { setQ(''); setActive(0); setTimeout(() => inputRef.current?.focus(), 30); } }, [open]);
+  useEffect(() => {
+    if (open) {
+      setQ('');
+      setActive(0);
+      setLeagueHits([]);
+      setTimeout(() => inputRef.current?.focus(), 30);
+    }
+  }, [open]);
+
+  // League-wide player search via /api/search proxy. Debounced so we don't
+  // hammer the upstream while the user is typing. Only fires once query is
+  // 2+ chars; bails out fast for shorter input. Local roster + schedule
+  // remain the primary surface so PHI fans get instant matches without a
+  // network round-trip.
+  useEffect(() => {
+    const term = q.trim();
+    if (term.length < 2) { setLeagueHits([]); setLeagueLoading(false); return; }
+    let cancelled = false;
+    setLeagueLoading(true);
+    const t = setTimeout(() => {
+      fetch(`/api/search?q=${encodeURIComponent(term)}&limit=12`)
+        .then((r) => r.json())
+        .then((d) => {
+          if (cancelled) return;
+          setLeagueHits(Array.isArray(d) ? d : []);
+          setLeagueLoading(false);
+        })
+        .catch(() => { if (!cancelled) { setLeagueHits([]); setLeagueLoading(false); } });
+    }, 220);
+    return () => { cancelled = true; clearTimeout(t); };
+  }, [q]);
 
   const items = useMemo(() => {
     const out = [];
@@ -49,14 +81,33 @@ export const CommandPalette = ({ open, onClose, setPage, schedule, roster, clubS
 
   const filtered = useMemo(() => {
     const term = q.trim().toLowerCase();
-    if (!term) return items.slice(0, 30);
-    const matches = items.filter((it) =>
-      it.label.toLowerCase().includes(term) ||
-      (it.sub || '').toLowerCase().includes(term) ||
-      it.kind.toLowerCase().includes(term)
+    const localMatches = !term
+      ? items.slice(0, 30)
+      : items.filter((it) =>
+          it.label.toLowerCase().includes(term) ||
+          (it.sub || '').toLowerCase().includes(term) ||
+          it.kind.toLowerCase().includes(term)
+        ).slice(0, 30);
+
+    // Dedupe league hits already covered by local PHI roster
+    const localPlayerIds = new Set(
+      items.filter((it) => it.key.startsWith('p-') || it.key.startsWith('cs-'))
+        .map((it) => Number(it.key.split('-')[1])),
     );
-    return matches.slice(0, 40);
-  }, [items, q]);
+    const leagueItems = leagueHits
+      .filter((r) => r.playerId && !localPlayerIds.has(Number(r.playerId)))
+      .map((r) => ({
+        key: `lp-${r.playerId}`,
+        kind: 'NHL Player',
+        label: r.name,
+        sub: [r.teamAbbrev, r.positionCode, r.sweaterNumber ? `#${r.sweaterNumber}` : null]
+          .filter(Boolean).join(' · '),
+        teamAbbr: r.teamAbbrev,
+        onPick: () => onOpenPlayer(r.playerId),
+      }));
+
+    return [...localMatches, ...leagueItems].slice(0, 40);
+  }, [items, q, leagueHits, onOpenPlayer]);
 
   useEffect(() => { setActive(0); }, [q, filtered.length]);
 
@@ -88,9 +139,12 @@ export const CommandPalette = ({ open, onClose, setPage, schedule, roster, clubS
             value={q}
             onChange={(e) => setQ(e.target.value)}
             onKeyDown={onKey}
-            placeholder="Search pages, games, players…"
+            placeholder="Search pages, games, NHL players…"
             className="flex-1 bg-transparent outline-none text-[13px] placeholder:text-white/30"
           />
+          {leagueLoading && (
+            <span className="text-[10px] font-mono text-white/35">searching league…</span>
+          )}
           <Kbd>Esc</Kbd>
         </div>
         <div className="max-h-[52vh] overflow-y-auto py-1">

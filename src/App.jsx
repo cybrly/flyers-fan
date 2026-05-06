@@ -21,6 +21,7 @@ import { CommandPalette } from './components/CommandPalette.jsx';
 import { InstallPrompt } from './components/InstallPrompt.jsx';
 import { SeriesModal } from './components/SeriesModal.jsx';
 import { LiveRibbon } from './components/LiveRibbon.jsx';
+import { MobileBottomNav } from './components/MobileBottomNav.jsx';
 import { useGoalHorn, useGoalHornEnabled } from './components/GoalHorn.jsx';
 import { useGoalNotifications, useGoalNotificationsEnabled } from './components/GoalNotifications.jsx';
 
@@ -411,7 +412,7 @@ export default function App() {
             id="main-content"
             tabIndex={-1}
             key={page}
-            className="flex-1 min-w-0 outline-none"
+            className="flex-1 min-w-0 outline-none pb-14 sm:pb-0"
             style={{ animation: 'fadeIn 0.25s ease-out' }}
           >
             <ErrorBoundary resetKey={page}>
@@ -438,6 +439,12 @@ export default function App() {
           <Statusbar lastFetch={lastFetch} error={anyError} refresh={refresh} />
         </div>
       </div>
+
+      <MobileBottomNav
+        page={page}
+        setPage={setPage}
+        onOpenMore={() => setNavOpen(true)}
+      />
 
       <PlayerModal playerId={playerId} onClose={playerCtx.close} />
       <SeriesModal letter={seriesLetter} onClose={closeSeries} />

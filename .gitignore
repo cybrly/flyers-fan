@@ -12,6 +12,14 @@ dist
 dist-ssr
 *.local
 
+# Lockfile intentionally untracked. WSL → Windows filesystem hangs on
+# npm install in this repo, so the lockfile can't be reliably
+# regenerated locally. Vercel runs `npm install` fresh on each deploy
+# when no lockfile is present, which handles package.json correctly.
+# Re-adding a stale lockfile breaks `npm ci` on Vercel and fails every
+# deploy.
+package-lock.json
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

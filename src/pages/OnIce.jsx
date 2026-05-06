@@ -60,6 +60,123 @@ const fmtMSS = (sec) => {
   return `${m}:${String(s).padStart(2, '0')}`;
 };
 
+const FWD_POS = new Set(['C', 'L', 'R', 'LW', 'RW']);
+
+// Sweep all PHI forward shifts and accumulate per-trio shared ice time.
+// For each period we build a sorted event list of starts/ends, walk it
+// while tracking the currently-on-ice forward set, and for every interval
+// add its duration to every trio combination present. Cheap (O(C(n,3) ·
+// intervals)) and gives us a clean ranked list of "lines that actually
+// played together," not the chalkboard lines coaches drew up.
+function computeLineChemistry(shifts, forwards) {
+  if (!shifts?.length || !forwards?.length) return [];
+  const fwdIds = new Set(forwards.map((p) => p.id));
+  const fwdById = new Map(forwards.map((p) => [p.id, p]));
+
+  const byPeriod = new Map();
+  for (const s of shifts) {
+    if (!fwdIds.has(s.playerId)) continue;
+    if (s.typeCode !== 517) continue;
+    if (!s.duration || s.duration === '00:00') continue;
+    const start = parseMSS(s.startTime);
+    const end = parseMSS(s.endTime);
+    if (end <= start) continue;
+    const arr = byPeriod.get(s.period) || [];
+    arr.push({ t: start, type: 'start', id: s.playerId });
+    arr.push({ t: end, type: 'end', id: s.playerId });
+    byPeriod.set(s.period, arr);
+  }
+
+  const trioSec = new Map();
+  for (const [, events] of byPeriod) {
+    events.sort((a, b) => a.t - b.t || (a.type === 'end' ? -1 : 1));
+    const onIce = new Set();
+    let prev = null;
+    for (const ev of events) {
+      if (prev != null && ev.t > prev && onIce.size >= 3) {
+        const dur = ev.t - prev;
+        const ids = [...onIce];
+        for (let i = 0; i < ids.length; i++) {
+          for (let j = i + 1; j < ids.length; j++) {
+            for (let k = j + 1; k < ids.length; k++) {
+              const a = ids[i], b = ids[j], c = ids[k];
+              const sorted = [a, b, c].sort((x, y) => x - y);
+              const key = sorted.join('|');
+              trioSec.set(key, (trioSec.get(key) || 0) + dur);
+            }
+          }
+        }
+      }
+      if (ev.type === 'start') onIce.add(ev.id);
+      else onIce.delete(ev.id);
+      prev = ev.t;
+    }
+  }
+
+  return [...trioSec.entries()]
+    .map(([key, sec]) => ({
+      key,
+      sec,
+      players: key.split('|').map((id) => fwdById.get(Number(id))).filter(Boolean),
+    }))
+    .filter((x) => x.players.length === 3)
+    .sort((a, b) => b.sec - a.sec)
+    .slice(0, 5);
+}
+
+const LineChemistry = ({ skaters, shifts }) => {
+  const forwards = useMemo(
+    () => skaters.filter((p) => FWD_POS.has(p.pos)),
+    [skaters],
+  );
+  const trios = useMemo(() => computeLineChemistry(shifts, forwards), [shifts, forwards]);
+  if (trios.length === 0) return null;
+  const topSec = trios[0].sec;
+  return (
+    <Section
+      title="Line Chemistry"
+      action={<span className="text-[10px] font-mono text-white/40 uppercase tracking-wider">top forward trios · shared TOI</span>}
+    >
+      <div className="divide-y divide-white/[0.04]">
+        {trios.map((t, i) => {
+          const pct = topSec > 0 ? t.sec / topSec : 0;
+          return (
+            <div key={t.key} className="grid grid-cols-[28px_1fr_72px] gap-3 items-center px-4 py-3">
+              <span className={cx('text-[12px] font-mono tabular-nums',
+                i === 0 ? 'text-[#FF8A4C] font-semibold' : 'text-white/40'
+              )}>#{i + 1}</span>
+              <div className="flex items-center gap-2 min-w-0">
+                {t.players.map((p) => (
+                  <div key={p.id} className="flex items-center gap-1.5 min-w-0">
+                    <Headshot playerId={p.id} num={p.num} size={26} />
+                    <div className="flex flex-col min-w-0">
+                      <PlayerLink playerId={p.id} className="text-[12px] text-white/85 truncate hover:text-white">
+                        {p.name?.split(' ').slice(-1)[0]}
+                      </PlayerLink>
+                      <span className="text-[9px] font-mono text-white/30 tabular-nums">#{p.num} · {p.pos}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <div className="flex flex-col items-end gap-1">
+                <span className="text-[14px] font-mono font-semibold tabular-nums text-white/90">
+                  {fmtMSS(t.sec)}
+                </span>
+                <div className="w-16 h-1 bg-white/[0.05] rounded-full overflow-hidden">
+                  <div className="h-full bg-[#F74902]/70 rounded-full" style={{ width: `${pct * 100}%` }} />
+                </div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+      <div className="px-4 py-2 border-t border-white/[0.05] text-[10px] font-mono text-white/35">
+        Computed live from shift overlaps — these are the trios that actually played together, not the projected lines.
+      </div>
+    </Section>
+  );
+};
+
 // One row of the skater table — renders for both PHI and OPP.
 const SkaterRow = ({ p, liveShift, accentColor, periodLabel, periodElapsed }) => {
   const onIce = !!liveShift?.active;
@@ -311,6 +428,8 @@ export const OnIce = ({ game, gameId }) => {
           periodElapsed={periodState?.elapsed || 0}
         />
       )}
+
+      <LineChemistry skaters={skaters} shifts={shifts} />
 
       {/* Side-by-side full skater tables */}
       <Section

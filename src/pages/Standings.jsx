@@ -92,7 +92,9 @@ export const Standings = ({ standings }) => {
       )}
 
       <Section title={view === 'metro' ? 'Metropolitan Division' : view === 'east' ? 'Eastern Conference' : 'Full League'}>
-        <div className="overflow-x-auto">
+        {/* Tablet/desktop — full 11-column table. Hidden under sm: where it
+            used to horizontal-scroll into oblivion. */}
+        <div className="hidden sm:block overflow-x-auto">
           <table className="w-full">
             <thead className="sticky">
               <tr className="text-[10px] font-mono text-white/35 uppercase tracking-wider border-b border-white/[0.05]">
@@ -151,6 +153,45 @@ export const Standings = ({ standings }) => {
               })}
             </tbody>
           </table>
+        </div>
+
+        {/* Phone — stacked card per team. Top row: rank · logo · abbr ·
+            name · pts. Second row: record · pts% · diff · clinch chip. */}
+        <div className="sm:hidden divide-y divide-white/[0.04]">
+          {!data.length && Array.from({ length: 8 }).map((_, i) => (
+            <div key={i} className="px-4 py-3"><Skeleton className="w-full" height={20} /></div>
+          ))}
+          {data.map((t, i) => {
+            const isUs = t.us;
+            const inPlayoffs = view === 'metro' ? i < 3 : false;
+            return (
+              <div key={t.abbr} className={cx(
+                'flex flex-col gap-1 px-4 py-3 transition-colors',
+                isUs ? 'bg-[#F74902]/[0.06]' : 'hover:bg-white/[0.02]',
+              )}>
+                <div className="flex items-center gap-2.5">
+                  <span className={cx('w-6 text-[12px] font-mono tabular-nums shrink-0',
+                    isUs ? 'text-[#FF8A4C] font-semibold' : inPlayoffs ? 'text-white/70' : 'text-white/30'
+                  )}>{i + 1}</span>
+                  <TeamLogo abbr={t.abbr} size={20} />
+                  <span className={cx('text-[14px] truncate flex-1',
+                    isUs ? 'text-white font-medium' : 'text-white/85'
+                  )}>{t.team}</span>
+                  <span className={cx('text-[18px] font-mono font-semibold tabular-nums shrink-0',
+                    isUs ? 'text-[#FF8A4C]' : 'text-white/85'
+                  )}>{t.pts}</span>
+                </div>
+                <div className="flex items-center gap-3 pl-[34px] text-[11px] font-mono text-white/55 tabular-nums">
+                  <span>{t.w}–{t.l}{t.ot ? `–${t.ot}` : ''}</span>
+                  <span className="text-white/40">{(t.pct * 100).toFixed(1)}%</span>
+                  <span className={cx(
+                    t.diff > 0 ? 'text-emerald-400' : t.diff < 0 ? 'text-red-400' : 'text-white/40'
+                  )}>{t.diff > 0 ? '+' : ''}{t.diff}</span>
+                  {clinchChip(t.clinched) && <span className="ml-auto">{clinchChip(t.clinched)}</span>}
+                </div>
+              </div>
+            );
+          })}
         </div>
       </Section>
     </div>

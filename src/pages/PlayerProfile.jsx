@@ -7,6 +7,7 @@ import { TeamLogo } from '../components/Logo.jsx';
 import { Sparkline } from '../components/charts.jsx';
 import { navigate, gameHref } from '../router.js';
 import { PLAYER_SOCIALS } from '../data/playerSocials.js';
+import { SkaterHotCold, GoalieHotCold } from '../components/HotCold.jsx';
 
 // Inline SVGs for Instagram + X. Drawn small and monochrome so they live
 // quietly in the player hero. Lucide-react v1.8 doesn't ship Instagram or
@@ -177,6 +178,11 @@ export const PlayerProfile = ({ playerId }) => {
                 <span className="text-[18px] font-mono text-white/35">#{data.sweaterNumber}</span>
               )}
               {data.isActive === false && <Chip tone="muted">RETIRED</Chip>}
+              {data.isActive !== false && (
+                isSkater
+                  ? <SkaterHotCold playerId={playerId} showNeutral />
+                  : <GoalieHotCold playerId={playerId} showNeutral />
+              )}
             </div>
             <div className="text-[13px] font-mono text-white/65 mt-2 flex items-center gap-2 flex-wrap">
               <TeamLogo abbr={data.currentTeamAbbrev} size={16} />

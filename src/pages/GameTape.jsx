@@ -13,6 +13,7 @@ import { ScoreStateSplits } from '../components/ScoreStateSplits.jsx';
 import { GoalieHeatMap } from '../components/GoalieHeatMap.jsx';
 import { GoalieMatchup } from '../components/GoalieMatchup.jsx';
 import { LiveShotTicker } from '../components/LiveShotTicker.jsx';
+import { ShareGameButton } from '../components/ShareGame.jsx';
 
 // Team-comparison row, executive layout. Order from outer-edge to
 // inner-center on each side:
@@ -308,6 +309,7 @@ export const GameTape = ({ game, loading, pbp, pbpRaw, customGameId, onClearCust
               ● {game.score.us > game.score.them ? 'W' : 'L'} · {game.score.us}–{game.score.them}
             </Chip>
           )}
+          {!liveNow && <ShareGameButton game={game} />}
         </div>
       </div>
 

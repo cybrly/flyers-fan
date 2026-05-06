@@ -14,6 +14,9 @@ import { LeagueLeaders } from '../components/LeagueLeaders.jsx';
 import { ThreeStarsPanel, AwardWatchPanel, RecordsTrackerPanel } from '../components/EngagementPanels.jsx';
 import { InjuryWatch } from '../components/InjuryWatch.jsx';
 import { SpecialTeams } from '../components/SpecialTeams.jsx';
+import { SkaterHotCold } from '../components/HotCold.jsx';
+import { AutoNarrative } from '../components/AutoNarrative.jsx';
+import { OpponentScout } from '../components/OpponentScout.jsx';
 import { ThisDayInHistory } from '../components/ThisDayInHistory.jsx';
 import { ScheduleStrength } from '../components/ScheduleStrength.jsx';
 import { PlayoffRace } from '../components/PlayoffRace.jsx';
@@ -113,6 +116,13 @@ export const Dashboard = ({ schedule, standings, scoreboard, clubStats, roster, 
         onOpenGame={onOpenGame}
       />
 
+      <AutoNarrative
+        team={us}
+        games={games}
+        nextGame={nextGame}
+        lastGame={lastResult}
+      />
+
       {/* ─── BAND · TONIGHT ───────────────────────────────────────────────── */}
       {/* Hero already covers "what's happening tonight" — this band answers
           the second-order questions: where do we stand, what's the next
@@ -133,6 +143,7 @@ export const Dashboard = ({ schedule, standings, scoreboard, clubStats, roster, 
           <ScheduleStrength upcoming={schedule?.upcoming || []} standings={standings} />
           <StandingsPanel standings={standings} />
         </div>
+        {nextGame && <OpponentScout nextGame={nextGame} />}
       </CollapsibleBand>
 
       {/* ─── BAND · SEASON OVERVIEW ───────────────────────────────────────── */}
@@ -400,6 +411,7 @@ export const Dashboard = ({ schedule, standings, scoreboard, clubStats, roster, 
                       <span className="text-[13px] truncate">{p.name}</span>
                     </PlayerLink>
                     {p.pos && <span className="text-[9px] font-mono text-white/30">{p.pos}</span>}
+                    <SkaterHotCold playerId={p.id} />
                   </span>
                   <span className="flex items-center gap-2 text-[10px] font-mono tabular-nums shrink-0">
                     <span className="text-emerald-400/80">{p.g}<span className="text-white/30">G</span></span>

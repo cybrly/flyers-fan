@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { cx } from '../config.js';
 import { Section, Skeleton } from '../components/primitives.jsx';
+import { SkaterHotCold, GoalieHotCold } from '../components/HotCold.jsx';
 import { PlayerLink } from '../components/PlayerLink.jsx';
 import { Headshot } from '../components/Headshot.jsx';
 import { Hometowns } from '../components/Hometowns.jsx';
@@ -177,10 +178,13 @@ const Leaderboard = ({ rows, columns, title, withPtsBar = false }) => {
                 i < 3 ? 'text-[#FF8A4C]' : 'text-white/30'
               )}>{i + 1}</td>
               <td className="px-2 text-[12px] text-white/85">
-                <span className="flex items-center gap-2">
+                <span className="flex items-center gap-2 flex-wrap">
                   <Headshot src={p.headshot} num={p.num} size={22} />
                   <PlayerLink playerId={p.id}>{p.name}</PlayerLink>
                   {p.pos && <span className="text-[10px] font-mono text-white/35">{p.pos}</span>}
+                  {withPtsBar
+                    ? <SkaterHotCold playerId={p.id} />
+                    : <GoalieHotCold playerId={p.id} />}
                 </span>
               </td>
               {withPtsBar && (
@@ -239,6 +243,16 @@ export const Roster = ({ roster, clubStats, prospects, draftPicks }) => {
         </div>
       </div>
 
+      {/* Main roster table sits directly under the tabs so clicking
+          Forwards/Defense/Goalies actually swaps content at the top of
+          the page instead of way down. The supplemental leaderboards
+          and roster oddities follow. */}
+      <Section title={view === 'forwards' ? 'Forwards' : view === 'defense' ? 'Defense' : 'Goalies'}>
+        <div className="overflow-x-auto">
+          <RosterTable players={list} showSaves={view === 'goalies'} clubStats={clubStats} />
+        </div>
+      </Section>
+
       {clubStats && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           <Leaderboard
@@ -274,12 +288,6 @@ export const Roster = ({ roster, clubStats, prospects, draftPicks }) => {
       <Birthdays roster={roster} />
 
       <Hometowns roster={roster} />
-
-      <Section title={view === 'forwards' ? 'Forwards' : view === 'defense' ? 'Defense' : 'Goalies'}>
-        <div className="overflow-x-auto">
-          <RosterTable players={list} showSaves={view === 'goalies'} clubStats={clubStats} />
-        </div>
-      </Section>
 
       {draftPicks?.length > 0 && <DraftPicksPanel picks={draftPicks} />}
 

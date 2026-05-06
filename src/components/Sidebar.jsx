@@ -175,9 +175,9 @@ export const Sidebar = ({ page, setPage, team, liveGame, metro, roster, lastFetc
                       key={id}
                       onClick={() => handleSetPage(id)}
                       aria-current={active ? 'page' : undefined}
-                      title={collapsed ? `${label}${kbd ? ` (${kbd})` : ''}` : undefined}
+                      title={collapsed ? `${label}${kbd ? ` (${kbd})` : ''}${liveBadge ? ' · LIVE' : ''}` : undefined}
                       className={cx(
-                        'w-full group flex items-center rounded-md transition-all',
+                        'relative w-full group flex items-center rounded-md transition-all',
                         collapsed ? 'justify-center h-9' : 'justify-between px-2 h-7',
                         active ? 'bg-white/[0.06] text-white' : 'text-white/55 hover:text-white hover:bg-white/[0.03]',
                       )}
@@ -193,7 +193,10 @@ export const Sidebar = ({ page, setPage, team, liveGame, metro, roster, lastFetc
                       </div>
                       {!collapsed && !liveBadge && kbd && <Kbd>{kbd}</Kbd>}
                       {collapsed && liveBadge && (
-                        <span className="absolute mt-7 ml-5 w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" aria-hidden />
+                        <span
+                          className="absolute top-1 right-1 w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse"
+                          aria-hidden
+                        />
                       )}
                     </button>
                   );

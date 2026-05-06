@@ -12,6 +12,7 @@ import { FaceoffSplits } from '../components/FaceoffSplits.jsx';
 import { ScoreStateSplits } from '../components/ScoreStateSplits.jsx';
 import { GoalieHeatMap } from '../components/GoalieHeatMap.jsx';
 import { GoalieMatchup } from '../components/GoalieMatchup.jsx';
+import { LiveShotTicker } from '../components/LiveShotTicker.jsx';
 
 const CompareRow = ({ label, us, them, higherBetter = true, suffix = '' }) => {
   if (us == null || them == null) return null;
@@ -274,6 +275,10 @@ export const GameTape = ({ game, loading, pbp, pbpRaw, customGameId, onClearCust
             between the team comparison and the rink graphic so the rink can
             stretch full-width below them. */}
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+          {pbpRaw && (
+            <LiveShotTicker pbpRaw={pbpRaw} isLive={isLive(game.state)} oppAbbr={game.oppAbbr} />
+          )}
+
           {pbp && pbp.events.length > 0 && (
             <Section
               title={<span className="flex items-center gap-2">Live Events {isLive(game.state) && <Chip tone="live" pulse>LIVE</Chip>}</span>}

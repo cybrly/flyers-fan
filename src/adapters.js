@@ -129,28 +129,39 @@ export function adaptGame(boxscore, rightRail, landing) {
     return { us: ts[cat][usSide], them: ts[cat][themSide] };
   };
 
-  // Skater stats
+  // Skater stats — both teams. PHI under .skaters (back-compat), the
+  // opponent under .oppSkaters so the OnIce page can render the full
+  // ice surface. Each skater normalized identically.
+  const normSkater = (p) => ({
+    id: p.playerId,
+    name: p.name?.default,
+    num: p.sweaterNumber,
+    pos: p.position,
+    g: p.goals || 0,
+    a: p.assists || 0,
+    pts: p.points || 0,
+    sog: p.sog || 0,
+    hits: p.hits || 0,
+    blk: p.blockedShots || 0,
+    pm: p.plusMinus || 0,
+    toi: p.toi || '—',
+  });
   const skaters = [];
+  const oppSkaters = [];
   if (boxscore.playerByGameStats?.[`${usSide}Team`]) {
     const t = boxscore.playerByGameStats[`${usSide}Team`];
     [...(t.forwards || []), ...(t.defense || [])].forEach((p) => {
-      skaters.push({
-        id: p.playerId,
-        name: p.name?.default,
-        num: p.sweaterNumber,
-        pos: p.position,
-        g: p.goals || 0,
-        a: p.assists || 0,
-        pts: p.points || 0,
-        sog: p.sog || 0,
-        hits: p.hits || 0,
-        blk: p.blockedShots || 0,
-        pm: p.plusMinus || 0,
-        toi: p.toi || '—',
-      });
+      skaters.push(normSkater(p));
+    });
+  }
+  if (boxscore.playerByGameStats?.[`${themSide}Team`]) {
+    const t = boxscore.playerByGameStats[`${themSide}Team`];
+    [...(t.forwards || []), ...(t.defense || [])].forEach((p) => {
+      oppSkaters.push(normSkater(p));
     });
   }
   skaters.sort((a, b) => (b.pts - a.pts) || (b.sog - a.sog));
+  oppSkaters.sort((a, b) => (b.pts - a.pts) || (b.sog - a.sog));
 
   // Goalies for both teams (saves, save%, decision)
   const goalies = { us: [], them: [] };
@@ -278,6 +289,7 @@ export function adaptGame(boxscore, rightRail, landing) {
     },
     shotsByPeriod: rightRail?.shotsByPeriod || [],
     skaters,
+    oppSkaters,
     goalies,
     timeline,
     stars,

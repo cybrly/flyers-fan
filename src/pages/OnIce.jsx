@@ -67,7 +67,7 @@ const SkaterRow = ({ p, liveShift, accentColor, periodLabel, periodElapsed }) =>
   return (
     <div
       className={cx(
-        'grid grid-cols-[44px_36px_minmax(120px,1fr)_56px_56px_44px_44px] gap-2 items-center px-3 h-12 transition-colors border-l-2',
+        'grid grid-cols-[44px_36px_minmax(120px,1fr)_56px_56px_44px_44px_44px] gap-2 items-center px-3 h-12 transition-colors border-l-2',
         onIce ? 'bg-emerald-500/[0.10] border-emerald-500/70' : 'border-transparent hover:bg-white/[0.02]',
       )}
     >
@@ -212,7 +212,7 @@ const TeamTable = ({ skaters, liveShifts, accentColor, header, periodLabel, peri
   return (
     <div>
       {header}
-      <div className="grid grid-cols-[44px_36px_minmax(120px,1fr)_56px_56px_44px_44px] gap-2 items-center px-3 h-7 text-[9px] font-mono text-white/30 uppercase tracking-wider border-b border-white/[0.04]">
+      <div className="grid grid-cols-[44px_36px_minmax(120px,1fr)_56px_56px_44px_44px_44px] gap-2 items-center px-3 h-7 text-[9px] font-mono text-white/30 uppercase tracking-wider border-b border-white/[0.04]">
         <span className="text-center">On</span>
         <span></span>
         <span>Player</span>
@@ -220,6 +220,7 @@ const TeamTable = ({ skaters, liveShifts, accentColor, header, periodLabel, peri
         <span className="text-center">G·A·P</span>
         <span className="text-center">SOG</span>
         <span className="text-center">+/-</span>
+        <span className="text-center">Hit</span>
       </div>
       <div className="divide-y divide-white/[0.04]">
         {sorted.map((p) => (

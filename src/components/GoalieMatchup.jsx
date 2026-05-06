@@ -54,7 +54,9 @@ const GoalieRow = ({ goalie }) => {
       </div>
       {stats && (
         <div className="flex items-center gap-3 sm:gap-4 tabular-nums shrink-0">
-          <Stat label="W-L" value={`${stats.w}-${stats.l}${stats.otl ? `-${stats.otl}` : ''}`} />
+          {(stats.w + stats.l + stats.otl) > 0 && (
+            <Stat label="W-L" value={`${stats.w}-${stats.l}${stats.otl ? `-${stats.otl}` : ''}`} />
+          )}
           {stats.sv != null && <Stat label="SV%" value={`${(stats.sv * 100).toFixed(1)}`} highlight />}
           {stats.gaa != null && <Stat label="GAA" value={stats.gaa.toFixed(2)} />}
         </div>

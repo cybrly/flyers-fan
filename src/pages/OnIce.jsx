@@ -355,7 +355,7 @@ const TeamTable = ({ skaters, liveShifts, accentColor, header, periodLabel, peri
   );
 };
 
-export const OnIce = ({ game, gameId }) => {
+export const OnIce = ({ game, gameId, liveSnap }) => {
   const liveGame = !!game && isLive(game.state);
   const [tick, setTick] = useState(0);
   useEffect(() => {
@@ -366,13 +366,25 @@ export const OnIce = ({ game, gameId }) => {
 
   const { data: shifts, loading: shiftsLoading } = useShifts(gameId, liveGame ? 15000 : 0);
 
+  // SSE overlay — when the live stream has emitted a fresh snap, prefer
+  // its periodDescriptor + clock so the elapsed-time math (and the
+  // resulting on-ice highlight) tracks within ~2s of the actual play
+  // clock instead of waiting on the 5s polled boxscore.
+  const snapFresh = liveGame && liveSnap?.ts && (Date.now() - liveSnap.ts) < 6000;
+  const liveBase = useMemo(() => {
+    if (snapFresh && liveSnap?.periodDescriptor && liveSnap?.clock) {
+      return { ...game, periodDescriptor: liveSnap.periodDescriptor, clock: liveSnap.clock };
+    }
+    return game;
+  }, [game, liveSnap, snapFresh]);
+
   const periodState = useMemo(() => {
-    if (!game || !liveGame) return null;
-    const isPlayoff = game.gameType === 3;
-    const base = computeElapsed(game, isPlayoff);
+    if (!liveBase || !liveGame) return null;
+    const isPlayoff = liveBase.gameType === 3;
+    const base = computeElapsed(liveBase, isPlayoff);
     if (!base) return null;
     return { ...base, elapsed: Math.min(base.elapsed + tick, PERIOD_REG) };
-  }, [game, liveGame, tick]);
+  }, [liveBase, liveGame, tick]);
 
   const skaters = game?.skaters || [];
   const oppSkaters = game?.oppSkaters || [];

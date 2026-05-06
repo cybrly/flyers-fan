@@ -253,7 +253,7 @@ const GoalieRow = ({ g, isUs, teamAbbr }) => (
   </tr>
 );
 
-export const GameTape = ({ game, loading, pbp, pbpRaw, customGameId, onClearCustom }) => {
+export const GameTape = ({ game, loading, pbp, pbpRaw, liveSnap, customGameId, onClearCustom }) => {
   if (loading && !game) {
     return (
       <div className="p-4 md:p-6 space-y-5">
@@ -280,6 +280,20 @@ export const GameTape = ({ game, loading, pbp, pbpRaw, customGameId, onClearCust
   const liveNow = isLive(game.state);
   const periods = Object.keys(game.periods).map(Number).sort((a, b) => a - b);
 
+  // SSE overlay — when the live stream has emitted a fresh snapshot
+  // (<6s old) prefer its score/period/clock so the header updates in
+  // ~2s instead of waiting on the 5s polled boxscore. Falls back to
+  // the polled `game` data the moment the stream is silent.
+  const snapFresh = liveNow && liveSnap?.ts && (Date.now() - liveSnap.ts) < 6000;
+  const liveScore = snapFresh && liveSnap?.away?.score != null && liveSnap?.home?.score != null
+    ? {
+        us:   game.home ? liveSnap.home.score : liveSnap.away.score,
+        them: game.home ? liveSnap.away.score : liveSnap.home.score,
+      }
+    : game.score;
+  const livePeriod = (snapFresh && liveSnap?.periodDescriptor) || game.periodDescriptor;
+  const liveClock  = (snapFresh && liveSnap?.clock) || game.clock;
+
   return (
     <div className="p-3 md:p-5 space-y-3">
       <div className="flex items-end justify-between flex-wrap gap-3">
@@ -302,7 +316,7 @@ export const GameTape = ({ game, loading, pbp, pbpRaw, customGameId, onClearCust
         <div className="flex items-center gap-2">
           {liveNow ? (
             <Chip tone="live" pulse>
-              LIVE · P{game.periodDescriptor?.number || '?'} {game.clock?.timeRemaining || ''}
+              LIVE · P{livePeriod?.number || '?'} {liveClock?.timeRemaining || ''}
             </Chip>
           ) : (
             <Chip tone={game.score.us > game.score.them ? 'orange' : 'muted'}>
@@ -336,10 +350,10 @@ export const GameTape = ({ game, loading, pbp, pbpRaw, customGameId, onClearCust
             </div>
           </div>
           <div className="text-center">
-            <ScoreReadout us={game.score.us} them={game.score.them} reverse={game.home} />
+            <ScoreReadout us={liveScore.us} them={liveScore.them} reverse={game.home} />
             <div className="text-[10px] font-mono text-white/40 uppercase tracking-wider mt-1">
               {liveNow
-                ? `P${game.periodDescriptor?.number || '?'} · ${game.clock?.timeRemaining || 'live'}`
+                ? `P${livePeriod?.number || '?'} · ${liveClock?.timeRemaining || 'live'}`
                 : `Final${game.periodDescriptor?.periodType === 'OT' ? ' · OT' : game.periodDescriptor?.periodType === 'SO' ? ' · SO' : ''}`}
             </div>
           </div>
@@ -374,7 +388,7 @@ export const GameTape = ({ game, loading, pbp, pbpRaw, customGameId, onClearCust
             <div className="flex items-center justify-between bg-[#F74902]/[0.08] border border-[#F74902]/20 rounded-sm px-3 h-9">
               <span className="text-[10px] font-mono text-[#FF8A4C]/70 uppercase">{liveNow ? 'Now' : 'Final'}</span>
               <span className="font-mono tabular-nums text-[13px] text-[#FF8A4C] font-medium">
-                {game.score.us}–{game.score.them}
+                {liveScore.us}–{liveScore.them}
               </span>
             </div>
           </div>

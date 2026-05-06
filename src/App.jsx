@@ -65,6 +65,7 @@ const Draft    = lazyPage(() => import('./pages/Draft.jsx'),    'Draft');
 const Records  = lazyPage(() => import('./pages/Records.jsx'),  'Records');
 const OnIce    = lazyPage(() => import('./pages/OnIce.jsx'),    'OnIce');
 const Goalies  = lazyPage(() => import('./pages/Goalies.jsx'),  'Goalies');
+const Forecast = lazyPage(() => import('./pages/Forecast.jsx'), 'Forecast');
 
 export default function App() {
   // Route-derived state — URL is the source of truth. /game/123, ?player=8478,
@@ -98,6 +99,7 @@ export default function App() {
       records: 'Records · flyers.fan',
       'on-ice': 'On Ice · flyers.fan',
       goalies: 'Goalies · flyers.fan',
+      forecast: 'Forecast · flyers.fan',
     };
     document.title = titles[page] || 'flyers.fan';
   }, [page]);
@@ -443,7 +445,7 @@ export default function App() {
                 {page === 'dashboard' && <Dashboard schedule={schedule} standings={standings} scoreboard={scoreboard} clubStats={clubStats} roster={roster} liveDetail={isLive(boxscore.data?.gameState) ? game : null} liveSnap={liveSnap} lastGame={game} leagueLeaders={leagueLeaders} loading={scheduleRaw.loading || standingsRaw.loading} onOpenGame={openGame} />}
                 {page === 'schedule'  && <Schedule schedule={schedule} monthSchedule={monthSchedule} onOpenGame={openGame} scoreboard={scoreboard} standings={standings} leagueLeaders={leagueLeaders} />}
                 {page === 'standings' && <Standings standings={standings} />}
-                {page === 'game'      && <GameTape game={game} loading={boxscore.loading} pbp={pbp} pbpRaw={pbpRaw.data} customGameId={routeGameId} onClearCustom={clearSelectedGame} />}
+                {page === 'game'      && <GameTape game={game} loading={boxscore.loading} pbp={pbp} pbpRaw={pbpRaw.data} liveSnap={liveSnap} customGameId={routeGameId} onClearCustom={clearSelectedGame} />}
                 {page === 'playoffs'  && <Playoffs bracket={bracket} onOpenSeries={onOpenSeries} />}
                 {page === 'roster'    && <Roster roster={roster} clubStats={clubStats} prospects={prospects} draftPicks={draftPicks} />}
                 {page === 'player'    && <PlayerProfile playerId={profileId} />}
@@ -452,8 +454,9 @@ export default function App() {
                 {page === 'coaches'   && <Coaches />}
                 {page === 'draft'     && <Draft rankings={draftRankings} loading={drNAS.loading} />}
                 {page === 'records'   && <Records />}
-                {page === 'on-ice'    && <OnIce game={game} gameId={gameId} />}
+                {page === 'on-ice'    && <OnIce game={game} gameId={gameId} liveSnap={liveSnap} />}
                 {page === 'goalies'   && <Goalies clubStats={clubStats} schedule={schedule} goalieLeaders={goalieLeaders} />}
+                {page === 'forecast'  && <Forecast standings={standings} />}
               </Suspense>
             </ErrorBoundary>
           </main>

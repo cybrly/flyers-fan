@@ -14,6 +14,7 @@ import { LeagueLeaders } from '../components/LeagueLeaders.jsx';
 import { ThreeStarsPanel, AwardWatchPanel, RecordsTrackerPanel } from '../components/EngagementPanels.jsx';
 import { InjuryWatch } from '../components/InjuryWatch.jsx';
 import { SpecialTeams } from '../components/SpecialTeams.jsx';
+import { FaceoffSpecialists } from '../components/FaceoffSpecialists.jsx';
 import { SkaterHotCold } from '../components/HotCold.jsx';
 import { AutoNarrative } from '../components/AutoNarrative.jsx';
 import { OpponentScout } from '../components/OpponentScout.jsx';
@@ -393,6 +394,8 @@ export const Dashboard = ({ schedule, standings, scoreboard, clubStats, roster, 
       <ScoringPanel games={games} us={us} />
 
       <SpecialTeams clubStats={clubStats} />
+
+      <FaceoffSpecialists clubStats={clubStats} />
 
       {/* Three Stars from latest finalized game */}
       {lastGame?.stars?.length > 0 && <ThreeStarsPanel lastGame={lastGame} />}

@@ -32,8 +32,16 @@ const CompareRow = ({ label, us, them, higherBetter = true, suffix = '' }) => {
   const themWon = !tied && !usWon;
   const delta = us - them;
 
+  // Fixed-width value cell — both sides reserve the same horizontal
+  // footprint regardless of digit count so the center label column lines
+  // up perfectly down the table. Right-aligned on the PHI side, left-
+  // aligned on the OPP side; the chevron sits on the inboard edge so it
+  // hugs the label.
   const Number = ({ value, isWinner, side }) => (
-    <div className={cx('flex items-baseline gap-1.5 shrink-0 tabular-nums', side === 'right' && 'flex-row-reverse')}>
+    <div className={cx(
+      'flex items-baseline gap-1.5 tabular-nums w-[72px]',
+      side === 'left' ? 'justify-end' : 'justify-start flex-row-reverse',
+    )}>
       {isWinner && <ChevronGlyph dir={side === 'left' ? 'right' : 'left'} />}
       <span
         className={cx(
@@ -48,7 +56,7 @@ const CompareRow = ({ label, us, them, higherBetter = true, suffix = '' }) => {
   );
 
   return (
-    <div className="grid grid-cols-[1fr_auto_minmax(120px,160px)_auto_1fr] items-center gap-4 h-14 px-5 transition-colors hover:bg-white/[0.015] border-b border-white/[0.04] last:border-b-0">
+    <div className="grid grid-cols-[1fr_72px_140px_72px_1fr] items-center gap-4 h-14 px-5 transition-colors hover:bg-white/[0.015] border-b border-white/[0.04] last:border-b-0">
       {/* Outer bar — left side, anchored to the right edge of its cell so
           it grows toward the row edge as PHI's share increases. */}
       <div className="min-w-0">
@@ -376,8 +384,11 @@ export const GameTape = ({ game, loading, pbp, pbpRaw, customGameId, onClearCust
           {/* Header: team logos + abbreviations on each side, balanced
               around the centerline so the panel reads as a head-to-head
               rather than a generic table. */}
-          <div className="grid grid-cols-[1fr_minmax(120px,160px)_1fr] items-center gap-4 h-16 px-5 border-b border-white/[0.05] bg-gradient-to-b from-white/[0.015] to-transparent">
-            <div className="flex items-center justify-end gap-3">
+          {/* Header uses the same 5-column template as the rows so the
+              center axis lines up exactly. Team identity blocks span the
+              left two and right two columns respectively. */}
+          <div className="grid grid-cols-[1fr_72px_140px_72px_1fr] items-center gap-4 h-16 px-5 border-b border-white/[0.05] bg-gradient-to-b from-white/[0.015] to-transparent">
+            <div className="col-span-2 flex items-center justify-end gap-3">
               <div className="text-right">
                 <div className="text-[18px] font-semibold tracking-tight text-[#FF8A4C] leading-none">PHI</div>
                 <div className="text-[10px] font-mono text-white/35 uppercase tracking-wider mt-1">Flyers</div>
@@ -387,7 +398,7 @@ export const GameTape = ({ game, loading, pbp, pbpRaw, customGameId, onClearCust
             <div className="flex flex-col items-center gap-1">
               <span className="text-[9px] font-mono text-white/30 tracking-[0.22em] uppercase">vs</span>
             </div>
-            <div className="flex items-center gap-3">
+            <div className="col-span-2 flex items-center gap-3">
               <TeamLogo abbr={game.oppAbbr} size={36} />
               <div>
                 <div className="text-[18px] font-semibold tracking-tight text-white/90 leading-none">{game.oppAbbr}</div>

@@ -187,12 +187,12 @@ const PlayerCard = ({ slotKey, playerId, label, onClear, onPick }) => {
   );
 };
 
-// One stat row across N players. Each column is graded relative to the
-// others — best value(s) tint green, worst value(s) tint red, middle
-// values stay neutral. For inverted stats (PIM, GAA, losses, giveaways)
-// the LOWEST value wins so green/red flip accordingly. With only one
-// valid value or all-equal values, nothing is colored — there's no
-// comparison to draw.
+// One stat row across N players. Label is centered; values flank it
+// (first ceil(N/2) on the left, the rest on the right) so labels align
+// vertically down the middle of the panel — same axis as the GameTape
+// Team Comparison. Best value(s) tint green, worst value(s) tint red,
+// middle values stay neutral. Inverted stats (PIM, GAA, losses,
+// giveaways) flip polarity so lower wins.
 const StatRow = ({ label, values, higherBetter = true, fmt }) => {
   const nums = values.map((v) => (typeof v === 'number' ? v : (v == null ? null : Number(v))));
   if (nums.every((v) => v == null)) return null;
@@ -202,35 +202,45 @@ const StatRow = ({ label, values, higherBetter = true, fmt }) => {
   const allEqual = best === worst;
   const max = Math.max(1, Math.max(...nums.map((v) => Math.abs(v ?? 0))));
   const f = fmt || ((v) => v);
+
+  const leftCount = Math.ceil(nums.length / 2);
+  const leftNums = nums.slice(0, leftCount);
+  const rightNums = nums.slice(leftCount);
+
+  const renderCell = (n, side) => {
+    const isBest = !allEqual && n != null && n === best && valid.length > 1;
+    const isWorst = !allEqual && n != null && n === worst && valid.length > 1 && !isBest;
+    const pct = n != null ? Math.min(100, (Math.abs(n) / max) * 100) : 0;
+    const barClass = isBest ? 'bg-emerald-500' : isWorst ? 'bg-red-500' : 'bg-white/25';
+    const numClass = isBest ? 'text-emerald-400 font-semibold'
+                    : isWorst ? 'text-red-400 font-semibold'
+                    : 'text-white/70';
+    return (
+      <div className={cx(
+        'flex items-center gap-2 w-full max-w-[140px]',
+        side === 'right' && 'flex-row-reverse',
+      )}>
+        <div className="relative h-1 flex-1 bg-white/[0.04] rounded-full overflow-hidden">
+          <div
+            className={cx('absolute top-0 h-full rounded-full', barClass, side === 'left' ? 'right-0' : 'left-0')}
+            style={{ width: `${pct}%` }}
+          />
+        </div>
+        <span className={cx('text-[12px] font-mono tabular-nums shrink-0 w-10', side === 'left' ? 'text-right' : 'text-left', numClass)}>
+          {n != null ? f(n) : '—'}
+        </span>
+      </div>
+    );
+  };
+
   return (
-    <div className="grid grid-cols-[120px_1fr] items-center gap-3 px-4 h-10 hover:bg-white/[0.02]">
-      <span className="text-[11px] font-mono text-white/55 uppercase tracking-wider">{label}</span>
-      <div
-        className="grid gap-2 items-center"
-        style={{ gridTemplateColumns: `repeat(${nums.length}, minmax(0, 1fr))` }}
-      >
-        {nums.map((n, i) => {
-          const isBest = !allEqual && n != null && n === best && valid.length > 1;
-          const isWorst = !allEqual && n != null && n === worst && valid.length > 1 && !isBest;
-          const pct = n != null ? Math.min(100, (Math.abs(n) / max) * 100) : 0;
-          const barClass = isBest ? 'bg-emerald-500' : isWorst ? 'bg-red-500' : 'bg-white/25';
-          const numClass = isBest ? 'text-emerald-400 font-semibold'
-                          : isWorst ? 'text-red-400 font-semibold'
-                          : 'text-white/70';
-          return (
-            <div key={i} className="flex items-center gap-2">
-              <div className="relative h-1 flex-1 bg-white/[0.04] rounded-full overflow-hidden">
-                <div
-                  className={cx('absolute left-0 top-0 h-full rounded-full', barClass)}
-                  style={{ width: `${pct}%` }}
-                />
-              </div>
-              <span className={cx('text-[12px] font-mono tabular-nums shrink-0 w-12 text-right', numClass)}>
-                {n != null ? f(n) : '—'}
-              </span>
-            </div>
-          );
-        })}
+    <div className="grid grid-cols-[1fr_140px_1fr] items-center gap-4 px-4 h-10 hover:bg-white/[0.02]">
+      <div className="flex items-center justify-end gap-3">
+        {leftNums.map((n, i) => <div key={i} className="flex-1 max-w-[160px]">{renderCell(n, 'left')}</div>)}
+      </div>
+      <span className="text-center text-[11px] font-mono text-white/55 uppercase tracking-wider">{label}</span>
+      <div className="flex items-center gap-3">
+        {rightNums.map((n, i) => <div key={i} className="flex-1 max-w-[160px]">{renderCell(n, 'right')}</div>)}
       </div>
     </div>
   );
@@ -335,21 +345,47 @@ export const PlayerCompare = ({ schedule }) => {
         </div>
       </div>
 
-      <div
-        className="grid gap-3"
-        style={{ gridTemplateColumns: `repeat(${visible.length}, minmax(0, 1fr))` }}
-      >
-        {visible.map((slot, i) => (
-          <PlayerCard
-            key={slot}
-            slotKey={slot}
-            playerId={ids[slot]}
-            label={`Player ${String.fromCharCode(65 + i)}`}
-            onClear={clearId(slot)}
-            onPick={setId(slot)}
-          />
-        ))}
-      </div>
+      {/* Player cards split around the same center axis the stat rows
+          use, so each card sits directly above the column where its
+          stats are rendered. ceil(N/2) cards go left, the rest right;
+          a 140 px center spacer lines up with the centered stat label
+          column. */}
+      {(() => {
+        const leftCount = Math.ceil(visible.length / 2);
+        const leftSlots = visible.slice(0, leftCount);
+        const rightSlots = visible.slice(leftCount);
+        return (
+          <div className="grid grid-cols-[1fr_140px_1fr] items-stretch gap-4">
+            <div className="flex gap-3">
+              {leftSlots.map((slot, i) => (
+                <div key={slot} className="flex-1 min-w-0">
+                  <PlayerCard
+                    slotKey={slot}
+                    playerId={ids[slot]}
+                    label={`Player ${String.fromCharCode(65 + i)}`}
+                    onClear={clearId(slot)}
+                    onPick={setId(slot)}
+                  />
+                </div>
+              ))}
+            </div>
+            <div aria-hidden />
+            <div className="flex gap-3">
+              {rightSlots.map((slot, i) => (
+                <div key={slot} className="flex-1 min-w-0">
+                  <PlayerCard
+                    slotKey={slot}
+                    playerId={ids[slot]}
+                    label={`Player ${String.fromCharCode(65 + leftCount + i)}`}
+                    onClear={clearId(slot)}
+                    onPick={setId(slot)}
+                  />
+                </div>
+              ))}
+            </div>
+          </div>
+        );
+      })()}
 
       {players.length >= 2 && (
         <>

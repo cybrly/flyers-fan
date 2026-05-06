@@ -1,8 +1,9 @@
 import { useMemo } from 'react';
-import { cx } from '../config.js';
+import { cx, TEAM_ABBR } from '../config.js';
 import { Section, Skeleton } from '../components/primitives.jsx';
 import { Headshot } from '../components/Headshot.jsx';
 import { PlayerLink } from '../components/PlayerLink.jsx';
+import { TeamLogo } from '../components/Logo.jsx';
 import { useNHL } from '../api.js';
 
 // Goalie-only tracker. Shows season totals per goalie plus a per-game
@@ -79,7 +80,7 @@ const GoalieRow = ({ goalie, seasonStr }) => {
     <div className="border-b border-white/[0.04] last:border-b-0">
       <div className="grid grid-cols-1 md:grid-cols-[260px_1fr_auto] gap-4 items-center px-4 py-4">
         <div className="flex items-center gap-3 min-w-0">
-          <Headshot playerId={goalie.id} num={goalie.num} size={56} />
+          <Headshot src={goalie.headshot} playerId={goalie.id} num={goalie.num} size={56} />
           <div className="min-w-0">
             <PlayerLink playerId={goalie.id} className="text-[15px] font-medium text-white/90 truncate hover:text-white">
               {goalie.name || '—'}
@@ -168,16 +169,110 @@ const parseToiSeconds = (toi) => {
   return parts[0] * 60 + parts[1];
 };
 
-export const Goalies = ({ clubStats, schedule }) => {
+// One row in a Top-10 NHL board. Highlights PHI goalies even if they're
+// outside the top 10, by re-injecting them with their actual rank.
+const LeaderRow = ({ entry, rank, formatVal, valueLabel, accent }) => {
+  const isPhi = entry.team === TEAM_ABBR;
+  return (
+    <div
+      className={cx(
+        'grid grid-cols-[28px_28px_1fr_auto] items-center gap-2 px-3 h-10',
+        isPhi ? 'bg-[#F74902]/[0.08] border-l-2 border-[#F74902]/70' : 'hover:bg-white/[0.02] border-l-2 border-transparent',
+      )}
+    >
+      <span className={cx('text-[11px] font-mono tabular-nums',
+        rank === 1 ? 'text-amber-300 font-semibold' : isPhi ? 'text-[#FF8A4C] font-semibold' : 'text-white/40'
+      )}>{rank}</span>
+      <Headshot src={entry.headshot} num={entry.num} size={24} />
+      <div className="flex items-center gap-1.5 min-w-0">
+        <PlayerLink playerId={entry.id} className={cx('text-[12px] truncate hover:text-white', isPhi ? 'text-white' : 'text-white/85')}>
+          {entry.name}
+        </PlayerLink>
+        {entry.team && <TeamLogo abbr={entry.team} size={14} />}
+        <span className="text-[9px] font-mono text-white/35 shrink-0">{entry.team}</span>
+      </div>
+      <span className="flex items-baseline gap-1 shrink-0">
+        <span className="text-[12px] font-mono tabular-nums font-medium" style={{ color: accent }}>
+          {formatVal(entry.value)}
+        </span>
+        <span className="text-[9px] font-mono text-white/35 uppercase tracking-wider">{valueLabel}</span>
+      </span>
+    </div>
+  );
+};
+
+// One leaderboard column — top 10 + any PHI goalies outside the top 10
+// re-inserted with their actual league rank so PHI fans can see exactly
+// where their goalies stand without scrolling a 70-row list.
+const LeaderboardColumn = ({ title, sub, list, accent, formatVal, valueLabel, loading }) => {
+  const top10 = (list || []).slice(0, 10);
+  const phiBelow10 = (list || [])
+    .map((entry, i) => ({ entry, rank: i + 1 }))
+    .filter(({ entry, rank }) => entry.team === TEAM_ABBR && rank > 10);
+
+  return (
+    <Section title={title} action={<span className="text-[10px] font-mono text-white/40 uppercase tracking-wider">{sub}</span>}>
+      {loading && top10.length === 0 ? (
+        <div className="p-3 space-y-2">
+          <Skeleton height={32} />
+          <Skeleton height={32} />
+          <Skeleton height={32} />
+        </div>
+      ) : top10.length === 0 ? (
+        <div className="px-4 py-6 text-center text-[11px] font-mono text-white/35">No data yet.</div>
+      ) : (
+        <div className="divide-y divide-white/[0.04]">
+          {top10.map((entry, i) => (
+            <LeaderRow
+              key={entry.id}
+              entry={entry}
+              rank={i + 1}
+              formatVal={formatVal}
+              valueLabel={valueLabel}
+              accent={accent}
+            />
+          ))}
+          {phiBelow10.length > 0 && (
+            <>
+              <div className="px-3 py-1.5 text-[9px] font-mono text-white/30 uppercase tracking-wider bg-white/[0.015]">
+                ··· PHI rank
+              </div>
+              {phiBelow10.map(({ entry, rank }) => (
+                <LeaderRow
+                  key={entry.id}
+                  entry={entry}
+                  rank={rank}
+                  formatVal={formatVal}
+                  valueLabel={valueLabel}
+                  accent={accent}
+                />
+              ))}
+            </>
+          )}
+        </div>
+      )}
+    </Section>
+  );
+};
+
+export const Goalies = ({ clubStats, schedule, goalieLeaders }) => {
   const goalies = clubStats?.goalies || [];
   const seasonStr = useMemo(() => SEASON_FROM_DATE(schedule?.games?.[0]?.date), [schedule]);
+
+  // Goalie-stats-leaders endpoint returns 'savePctg', 'goalsAgainstAverage',
+  // and 'wins' arrays of { id, name, team, value, headshot, ... }. Already
+  // sorted server-side; we just need top 10 + PHI tail.
+  const svList   = goalieLeaders?.savePctg || [];
+  const gaaList  = goalieLeaders?.goalsAgainstAverage || [];
+  const winsList = goalieLeaders?.wins || [];
+  const llLoading = !goalieLeaders || (svList.length === 0 && gaaList.length === 0 && winsList.length === 0);
 
   return (
     <div className="p-3 md:p-5 space-y-3">
       <div>
         <h1 className="text-[20px] font-semibold tracking-tight">Goalies</h1>
         <p className="text-[12px] text-white/45 mt-1 font-mono">
-          Per-game save % and GAA trends · last 10 decisions
+          Per-game save % and GAA trends · last 10 decisions · NHL leaderboards
         </p>
       </div>
 
@@ -197,6 +292,43 @@ export const Goalies = ({ clubStats, schedule }) => {
           </div>
         )}
       </Section>
+
+      <div>
+        <h2 className="text-[14px] font-semibold tracking-tight">NHL Top 10 · Goalies</h2>
+        <p className="text-[10px] font-mono text-white/40 mt-0.5 uppercase tracking-wider">
+          League leaders updated daily · PHI goalies highlighted even outside the top 10
+        </p>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <LeaderboardColumn
+          title="Save %"
+          sub="higher is better"
+          list={svList}
+          accent="#FF8A4C"
+          valueLabel="SV%"
+          formatVal={(v) => v == null ? '—' : `.${Math.round(v * 1000).toString().padStart(3, '0')}`}
+          loading={llLoading}
+        />
+        <LeaderboardColumn
+          title="Goals Against Avg"
+          sub="lower is better"
+          list={gaaList}
+          accent="#EF4444"
+          valueLabel="GAA"
+          formatVal={(v) => v == null ? '—' : v.toFixed(2)}
+          loading={llLoading}
+        />
+        <LeaderboardColumn
+          title="Wins"
+          sub="season totals"
+          list={winsList}
+          accent="#10B981"
+          valueLabel="W"
+          formatVal={(v) => v == null ? '—' : String(v)}
+          loading={llLoading}
+        />
+      </div>
     </div>
   );
 };

@@ -212,6 +212,18 @@ export default function App() {
     llGoalieSV.data, llGoalieGAA.data, llGoalieWins.data,
   ]), [llSkaterPts.data, llSkaterG.data, llSkaterA.data, llSkaterPM.data, llGoalieSV.data, llGoalieGAA.data, llGoalieWins.data]);
 
+  // Goalies page leaderboards — same /goalie-stats-leaders endpoint as the
+  // Dashboard but with a generous limit so we can locate PHI goalies in
+  // the full ranking (NHL has ~70 active goalies). limit=100 covers the
+  // entire league with headroom.
+  const onGoaliesPage = page === 'goalies';
+  const ggSV   = useNHL(onGoaliesPage ? 'v1/goalie-stats-leaders/current?categories=savePctg&limit=100' : null, POLL.standings);
+  const ggGAA  = useNHL(onGoaliesPage ? 'v1/goalie-stats-leaders/current?categories=goalsAgainstAverage&limit=100' : null, POLL.standings);
+  const ggWins = useNHL(onGoaliesPage ? 'v1/goalie-stats-leaders/current?categories=wins&limit=100' : null, POLL.standings);
+  const goalieLeaders = useMemo(() => adaptLeagueLeaders([
+    ggSV.data, ggGAA.data, ggWins.data,
+  ]), [ggSV.data, ggGAA.data, ggWins.data]);
+
   // Prospects — only fetched on Roster page. Cached aggressively (1h TTL).
   const prospectsPath = page === 'roster' ? `v1/prospects/${TEAM_ABBR}` : null;
   const prospectsRaw = useNHL(prospectsPath, POLL.standings);
@@ -434,7 +446,7 @@ export default function App() {
                 {page === 'draft'     && <Draft rankings={draftRankings} loading={drNAS.loading} />}
                 {page === 'records'   && <Records />}
                 {page === 'on-ice'    && <OnIce game={game} gameId={gameId} />}
-                {page === 'goalies'   && <Goalies clubStats={clubStats} schedule={schedule} />}
+                {page === 'goalies'   && <Goalies clubStats={clubStats} schedule={schedule} goalieLeaders={goalieLeaders} />}
               </Suspense>
             </ErrorBoundary>
           </main>

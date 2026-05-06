@@ -1,5 +1,5 @@
-import { useEffect } from 'react';
-import { ChevronRight, Flame, RefreshCw, X } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { ChevronRight, ChevronLeft, Flame, RefreshCw, X } from 'lucide-react';
 import { cx, fmtRelative, connStatus, SEASON_LABEL } from '../config.js';
 import { Kbd, Chip, Label, Skeleton } from './primitives.jsx';
 import { FlyersMark, TeamLogo } from './Logo.jsx';
@@ -7,9 +7,22 @@ import { NAV_ITEMS, NAV_GROUPS } from './nav.js';
 import { navigate, playerHref } from '../router.js';
 import { TeamSwitcherPrank } from './TeamSwitcherPrank.jsx';
 
+const COLLAPSED_KEY = 'flyersfan.sidebar-collapsed';
+
 export const Sidebar = ({ page, setPage, team, liveGame, metro, roster, lastFetch, error, refresh, mobileOpen = false, onCloseMobile }) => {
   const status = connStatus(lastFetch, error);
   const streak = team?.streak;
+  // Collapsed state — desktop only. Mobile drawer is already toggled
+  // via the existing mobileOpen prop. Persisted in localStorage so
+  // the layout choice survives refreshes.
+  const [collapsed, setCollapsed] = useState(() => {
+    try { return localStorage.getItem(COLLAPSED_KEY) === '1'; } catch { return false; }
+  });
+  const toggleCollapsed = () => {
+    const next = !collapsed;
+    setCollapsed(next);
+    try { localStorage.setItem(COLLAPSED_KEY, next ? '1' : '0'); } catch { /* ignore */ }
+  };
 
   // Auto-close drawer on route change (mobile UX) and on ESC.
   useEffect(() => {
@@ -52,68 +65,108 @@ export const Sidebar = ({ page, setPage, team, liveGame, metro, roster, lastFetc
 
     <aside
       style={{
-        // Custom cubic-bezier for a softer, more native-feeling slide.
-        // ease-out alone snaps in too abruptly on touch.
         transitionTimingFunction: 'cubic-bezier(0.32, 0.72, 0, 1)',
-        // Right-edge shadow only when the drawer is on top of content
-        // (mobile, drawer open). On desktop the border alone is enough.
         boxShadow: mobileOpen ? '8px 0 32px -8px rgba(0,0,0,0.6)' : 'none',
+        // Width animates between expanded (244px) and collapsed (56px)
+        // on desktop. Mobile drawer always uses 244px because the
+        // drawer mode itself is what hides/shows the panel.
+        width: collapsed && !mobileOpen ? 56 : 244,
       }}
       className={cx(
-        'flex flex-col w-[244px] shrink-0 border-r border-[#F74902]/[0.22] bg-[#0A0A0A]/95 backdrop-blur-md',
-        // Desktop: standard sticky sidebar
+        'flex flex-col shrink-0 border-r border-[#F74902]/[0.22] bg-[#0A0A0A]/95 backdrop-blur-md',
         'lg:sticky lg:top-0 lg:h-screen',
-        // Mobile: fixed-position drawer that slides in from the left
-        'fixed lg:relative inset-y-0 left-0 h-screen z-50 transition-transform duration-300',
+        'fixed lg:relative inset-y-0 left-0 h-screen z-50 transition-[width,transform] duration-300',
         mobileOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0',
       )}>
-      <div className="h-12 px-4 flex items-center justify-between border-b border-[#F74902]/[0.22]">
-        <TeamSwitcherPrank />
-        <div className="flex items-center gap-1">
+      <div className={cx(
+        'h-12 flex items-center border-b border-[#F74902]/[0.22] gap-1',
+        collapsed ? 'justify-center px-1' : 'justify-between px-3',
+      )}>
+        {collapsed ? (
           <button
-            onClick={refresh}
-            title="Refresh data"
-            aria-label="Refresh data"
-            className="w-7 h-7 flex items-center justify-center text-white/30 hover:text-white/70 transition-colors"
+            onClick={() => navigate('/')}
+            aria-label="flyers.fan home"
+            className="flex items-center justify-center w-8 h-8 rounded-md hover:bg-white/[0.04] transition-colors"
           >
-            <RefreshCw size={13} />
+            <FlyersMark size={20} />
           </button>
-          <button
-            onClick={onCloseMobile}
-            aria-label="Close navigation"
-            className="lg:hidden w-7 h-7 flex items-center justify-center text-white/40 hover:text-white transition-colors"
-          >
-            <X size={16} />
-          </button>
-        </div>
+        ) : (
+          <TeamSwitcherPrank />
+        )}
+        {!collapsed && (
+          <div className="flex items-center gap-1">
+            <button
+              onClick={refresh}
+              title="Refresh data"
+              aria-label="Refresh data"
+              className="w-7 h-7 flex items-center justify-center text-white/30 hover:text-white/70 transition-colors"
+            >
+              <RefreshCw size={13} />
+            </button>
+            <button
+              onClick={toggleCollapsed}
+              title="Collapse sidebar"
+              aria-label="Collapse sidebar"
+              className="hidden lg:flex w-7 h-7 items-center justify-center text-white/30 hover:text-white/70 transition-colors"
+            >
+              <ChevronLeft size={14} />
+            </button>
+            <button
+              onClick={onCloseMobile}
+              aria-label="Close navigation"
+              className="lg:hidden w-7 h-7 flex items-center justify-center text-white/40 hover:text-white transition-colors"
+            >
+              <X size={16} />
+            </button>
+          </div>
+        )}
       </div>
 
-      <div className="px-3 py-3 border-b border-white/[0.05]">
-        <div className="w-full group flex items-center justify-between px-2 py-1.5 rounded-md">
-          <div className="flex items-center gap-2 min-w-0">
-            <div className="w-5 h-5 bg-gradient-to-br from-[#F74902] to-[#A82E00] rounded-sm flex items-center justify-center shrink-0">
-              <span className="text-[9px] font-bold text-black font-mono">PHI</span>
-            </div>
-            <div className="min-w-0 text-left">
-              <div className="text-[11px] font-medium truncate">{SEASON_LABEL} Season</div>
-              <div className="text-[10px] text-white/40 font-mono">
-                {team ? `${team.w}–${team.l} · Metro #${team.divRank}` : <span className="text-white/30">loading…</span>}
+      {collapsed && (
+        <button
+          onClick={toggleCollapsed}
+          title="Expand sidebar"
+          aria-label="Expand sidebar"
+          className="hidden lg:flex w-full items-center justify-center h-8 text-white/30 hover:text-white/70 hover:bg-white/[0.03] border-b border-white/[0.04] transition-colors"
+        >
+          <ChevronRight size={14} />
+        </button>
+      )}
+
+      {!collapsed && (
+        <div className="px-3 py-3 border-b border-white/[0.05]">
+          <div className="w-full group flex items-center justify-between px-2 py-1.5 rounded-md">
+            <div className="flex items-center gap-2 min-w-0">
+              <div className="w-5 h-5 bg-gradient-to-br from-[#F74902] to-[#A82E00] rounded-sm flex items-center justify-center shrink-0">
+                <span className="text-[9px] font-bold text-black font-mono">PHI</span>
+              </div>
+              <div className="min-w-0 text-left">
+                <div className="text-[11px] font-medium truncate">{SEASON_LABEL} Season</div>
+                <div className="text-[10px] text-white/40 font-mono">
+                  {team ? `${team.w}–${team.l} · Metro #${team.divRank}` : <span className="text-white/30">loading…</span>}
+                </div>
               </div>
             </div>
           </div>
         </div>
-      </div>
+      )}
 
-      <nav aria-label="Primary navigation" className="flex-1 overflow-y-auto px-2 py-3">
+      <nav aria-label="Primary navigation" className={cx('flex-1 overflow-y-auto py-3', collapsed ? 'px-1' : 'px-2')}>
         {NAV_GROUPS.map((group) => {
           const items = NAV_ITEMS.filter((n) => n.group === group.id);
           if (items.length === 0) return null;
           return (
             <div key={group.id} className="mb-3 last:mb-0">
-              <div className="px-2 mb-1.5 mt-1 first:mt-0">
-                <Label>{group.label}</Label>
-              </div>
-              <div className="space-y-0.5">
+              {/* Group label hidden when collapsed; replaced with a thin
+                  divider so groups stay visually separated. */}
+              {collapsed ? (
+                <div className="mx-2 mb-1.5 mt-1 first:mt-0 h-px bg-white/[0.05]" />
+              ) : (
+                <div className="px-2 mb-1.5 mt-1 first:mt-0">
+                  <Label>{group.label}</Label>
+                </div>
+              )}
+              <div className={cx(collapsed ? 'space-y-1' : 'space-y-0.5')}>
                 {items.map(({ id, label, icon: Icon, kbd }) => {
                   const active = page === id;
                   const liveBadge = id === 'game' && liveGame;
@@ -122,17 +175,26 @@ export const Sidebar = ({ page, setPage, team, liveGame, metro, roster, lastFetc
                       key={id}
                       onClick={() => handleSetPage(id)}
                       aria-current={active ? 'page' : undefined}
+                      title={collapsed ? `${label}${kbd ? ` (${kbd})` : ''}` : undefined}
                       className={cx(
-                        'w-full group flex items-center justify-between px-2 h-7 rounded-md transition-all',
+                        'w-full group flex items-center rounded-md transition-all',
+                        collapsed ? 'justify-center h-9' : 'justify-between px-2 h-7',
                         active ? 'bg-white/[0.06] text-white' : 'text-white/55 hover:text-white hover:bg-white/[0.03]',
                       )}
                     >
-                      <div className="flex items-center gap-2">
-                        <Icon size={13} strokeWidth={active ? 2 : 1.75} className={active ? 'text-[#F74902]' : ''} />
-                        <span className="text-[12px] font-medium tracking-tight">{label}</span>
-                        {liveBadge && <Chip tone="live" pulse>LIVE</Chip>}
+                      <div className={cx('flex items-center', collapsed ? '' : 'gap-2')}>
+                        <Icon size={collapsed ? 16 : 13} strokeWidth={active ? 2 : 1.75} className={active ? 'text-[#F74902]' : ''} />
+                        {!collapsed && (
+                          <>
+                            <span className="text-[12px] font-medium tracking-tight">{label}</span>
+                            {liveBadge && <Chip tone="live" pulse>LIVE</Chip>}
+                          </>
+                        )}
                       </div>
-                      {!liveBadge && kbd && <Kbd>{kbd}</Kbd>}
+                      {!collapsed && !liveBadge && kbd && <Kbd>{kbd}</Kbd>}
+                      {collapsed && liveBadge && (
+                        <span className="absolute mt-7 ml-5 w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" aria-hidden />
+                      )}
                     </button>
                   );
                 })}
@@ -141,6 +203,7 @@ export const Sidebar = ({ page, setPage, team, liveGame, metro, roster, lastFetc
           );
         })}
 
+        {!collapsed && (
         <div className="mt-6 px-2">
           <div className="flex items-center justify-between mb-2">
             <Label>Metro · Top 4</Label>
@@ -173,45 +236,65 @@ export const Sidebar = ({ page, setPage, team, liveGame, metro, roster, lastFetc
             )}
           </div>
         </div>
+        )}
 
-        <SidebarRoster roster={roster} />
+        {!collapsed && <SidebarRoster roster={roster} />}
       </nav>
 
-      <div className="border-t border-white/[0.05] p-3 space-y-2">
-        <div className="flex items-center justify-between text-[10px] font-mono">
-          <div className={cx('flex items-center gap-1.5',
-            status.tone === 'green' ? 'text-emerald-400' :
-            status.tone === 'amber' ? 'text-amber-400' : 'text-red-400'
-          )}>
-            <span className="relative flex h-1.5 w-1.5">
+      <div className={cx('border-t border-white/[0.05] space-y-2', collapsed ? 'p-2' : 'p-3')}>
+        {collapsed ? (
+          <div
+            className="flex justify-center"
+            title={`${status.label}${streak ? ` · ${streak}` : ''} · ${fmtRelative(lastFetch)}`}
+          >
+            <span className="relative flex h-2 w-2">
               {status.tone === 'green' && (
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-60" />
               )}
-              <span className={cx('relative inline-flex rounded-full h-1.5 w-1.5',
+              <span className={cx('relative inline-flex rounded-full h-2 w-2',
                 status.tone === 'green' ? 'bg-emerald-400' :
                 status.tone === 'amber' ? 'bg-amber-400' : 'bg-red-400'
               )} />
             </span>
-            <span className="uppercase">{status.label}</span>
           </div>
-          <span className="text-white/30">{fmtRelative(lastFetch)}</span>
-        </div>
-        {streak && (
-          <div className="flex items-center justify-between text-[10px] font-mono text-white/40">
-            <span className="flex items-center gap-1.5">
-              <Flame size={9} className={
-                streak.startsWith('W') ? 'text-emerald-400'
-                  : streak.startsWith('L') ? 'text-red-400'
-                  : 'text-[#F74902]'
-              } />
-              Streak
-            </span>
-            <span className={cx('font-medium tabular-nums',
-              streak.startsWith('W') ? 'text-emerald-400'
-                : streak.startsWith('L') ? 'text-red-400'
-                : 'text-[#FF8A4C]'
-            )}>{streak}</span>
-          </div>
+        ) : (
+          <>
+            <div className="flex items-center justify-between text-[10px] font-mono">
+              <div className={cx('flex items-center gap-1.5',
+                status.tone === 'green' ? 'text-emerald-400' :
+                status.tone === 'amber' ? 'text-amber-400' : 'text-red-400'
+              )}>
+                <span className="relative flex h-1.5 w-1.5">
+                  {status.tone === 'green' && (
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-60" />
+                  )}
+                  <span className={cx('relative inline-flex rounded-full h-1.5 w-1.5',
+                    status.tone === 'green' ? 'bg-emerald-400' :
+                    status.tone === 'amber' ? 'bg-amber-400' : 'bg-red-400'
+                  )} />
+                </span>
+                <span className="uppercase">{status.label}</span>
+              </div>
+              <span className="text-white/30">{fmtRelative(lastFetch)}</span>
+            </div>
+            {streak && (
+              <div className="flex items-center justify-between text-[10px] font-mono text-white/40">
+                <span className="flex items-center gap-1.5">
+                  <Flame size={9} className={
+                    streak.startsWith('W') ? 'text-emerald-400'
+                      : streak.startsWith('L') ? 'text-red-400'
+                      : 'text-[#F74902]'
+                  } />
+                  Streak
+                </span>
+                <span className={cx('font-medium tabular-nums',
+                  streak.startsWith('W') ? 'text-emerald-400'
+                    : streak.startsWith('L') ? 'text-red-400'
+                    : 'text-[#FF8A4C]'
+                )}>{streak}</span>
+              </div>
+            )}
+          </>
         )}
       </div>
     </aside>

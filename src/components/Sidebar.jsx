@@ -38,23 +38,35 @@ export const Sidebar = ({ page, setPage, team, liveGame, metro, roster, lastFetc
 
   return (
     <>
-      {/* Mobile backdrop */}
-      {mobileOpen && (
-        <div
-          aria-hidden
-          className="lg:hidden fixed inset-0 z-40 bg-black/60 backdrop-blur-sm"
-          onClick={onCloseMobile}
-        />
-      )}
+      {/* Mobile backdrop — fades in/out alongside the drawer rather than
+          popping. Tap anywhere on the dimmed area to close, matching the
+          native iOS/Android side-drawer pattern. */}
+      <div
+        aria-hidden
+        onClick={onCloseMobile}
+        className={cx(
+          'lg:hidden fixed inset-0 z-40 bg-black/60 backdrop-blur-sm transition-opacity duration-300',
+          mobileOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none',
+        )}
+      />
 
-    <aside className={cx(
-      'flex flex-col w-[244px] shrink-0 border-r border-[#F74902]/[0.22] bg-[#0A0A0A]/95 backdrop-blur-md',
-      // Desktop: standard sticky sidebar
-      'lg:sticky lg:top-0 lg:h-screen',
-      // Mobile: fixed-position drawer that slides in from the left
-      'fixed lg:relative inset-y-0 left-0 h-screen z-50 transition-transform duration-200 ease-out',
-      mobileOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0',
-    )}>
+    <aside
+      style={{
+        // Custom cubic-bezier for a softer, more native-feeling slide.
+        // ease-out alone snaps in too abruptly on touch.
+        transitionTimingFunction: 'cubic-bezier(0.32, 0.72, 0, 1)',
+        // Right-edge shadow only when the drawer is on top of content
+        // (mobile, drawer open). On desktop the border alone is enough.
+        boxShadow: mobileOpen ? '8px 0 32px -8px rgba(0,0,0,0.6)' : 'none',
+      }}
+      className={cx(
+        'flex flex-col w-[244px] shrink-0 border-r border-[#F74902]/[0.22] bg-[#0A0A0A]/95 backdrop-blur-md',
+        // Desktop: standard sticky sidebar
+        'lg:sticky lg:top-0 lg:h-screen',
+        // Mobile: fixed-position drawer that slides in from the left
+        'fixed lg:relative inset-y-0 left-0 h-screen z-50 transition-transform duration-300',
+        mobileOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0',
+      )}>
       <div className="h-12 px-4 flex items-center justify-between border-b border-[#F74902]/[0.22]">
         <TeamSwitcherPrank />
         <div className="flex items-center gap-1">

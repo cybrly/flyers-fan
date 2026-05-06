@@ -1,4 +1,5 @@
-import { ArrowUp, ArrowDown, Minus } from 'lucide-react';
+import { useState } from 'react';
+import { ArrowUp, ArrowDown, Minus, ChevronDown } from 'lucide-react';
 import { cx } from '../config.js';
 import { useFlashOnChange } from '../api.js';
 
@@ -79,6 +80,62 @@ export const SectionBand = ({ label, color = 'orange', sub, action, count }) => 
       <span className="flex-1 h-px bg-gradient-to-r from-white/[0.08] via-white/[0.04] to-transparent" />
       {action}
     </div>
+  );
+};
+
+// Collapsible wrapper for Dashboard bands. Tap the header to fold the
+// content underneath; state is persisted per-band-id in localStorage.
+// Header reuses SectionBand's visual treatment but adds a chevron and
+// makes the whole row a button for tap-to-collapse on mobile.
+const STORAGE_KEY = 'flyersfan.bands-collapsed';
+const readCollapsed = () => {
+  try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}'); } catch { return {}; }
+};
+const writeCollapsed = (state) => {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch { /* ignore */ }
+};
+
+export const CollapsibleBand = ({ id, label, color = 'orange', sub, action, count, children, defaultCollapsed = false }) => {
+  const c = BAND_COLORS[color] || BAND_COLORS.orange;
+  const [collapsed, setCollapsed] = useState(() => {
+    const saved = readCollapsed();
+    return id in saved ? saved[id] : defaultCollapsed;
+  });
+  const toggle = () => {
+    const next = !collapsed;
+    setCollapsed(next);
+    const saved = readCollapsed();
+    saved[id] = next;
+    writeCollapsed(saved);
+  };
+  return (
+    <section>
+      <button
+        type="button"
+        onClick={toggle}
+        aria-expanded={!collapsed}
+        className="w-full flex items-center gap-3 pt-2 group transition-colors text-left"
+      >
+        <span className={cx('w-1 h-5 rounded-sm shrink-0 transition-colors', c.bar, collapsed && 'opacity-60')} />
+        <span className={cx('text-[12px] font-semibold uppercase tracking-[0.18em] transition-opacity', c.text, collapsed && 'opacity-70')}>{label}</span>
+        {count != null && (
+          <span className={cx('text-[10px] font-mono px-1.5 py-[1px] rounded-[3px] border border-current/30', c.text)}>
+            {count}
+          </span>
+        )}
+        {sub && <span className="text-[10px] font-mono text-white/35 uppercase tracking-wider">{sub}</span>}
+        <span className="flex-1 h-px bg-gradient-to-r from-white/[0.08] via-white/[0.04] to-transparent" />
+        {action && <span onClick={(e) => e.stopPropagation()}>{action}</span>}
+        <ChevronDown
+          size={14}
+          strokeWidth={2}
+          className={cx('shrink-0 text-white/35 group-hover:text-white/70 transition-transform duration-200',
+            collapsed ? '-rotate-90' : 'rotate-0',
+          )}
+        />
+      </button>
+      {!collapsed && <div className="space-y-4 pt-3">{children}</div>}
+    </section>
   );
 };
 

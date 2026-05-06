@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { cx, OPP_FULL, fmtDate, fmtDateFull, fmtTime, SEASON_LABEL } from '../config.js';
-import { Chip, Section, SectionBand, Skeleton } from '../components/primitives.jsx';
+import { Chip, Section, SectionBand, CollapsibleBand, Skeleton } from '../components/primitives.jsx';
 import { GoalDiffBars, FormDots, MiniBar } from '../components/charts.jsx';
 import { FlyersMark, TeamLogo } from '../components/Logo.jsx';
 import { KPI } from '../components/KPI.jsx';
@@ -120,20 +120,21 @@ export const Dashboard = ({ schedule, standings, scoreboard, clubStats, roster, 
           playoff series; it's been moved to the Reference band so
           regular-season visitors aren't paying scroll cost for an empty
           slot. */}
-      <SectionBand
+      <CollapsibleBand
+        id="tonight"
         label="Tonight"
         color="orange"
         sub="race · next stretch · standings"
-      />
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        <PlayoffRace standings={standings} />
-        <ScheduleStrength upcoming={schedule?.upcoming || []} standings={standings} />
-        <StandingsPanel standings={standings} />
-      </div>
+      >
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+          <PlayoffRace standings={standings} />
+          <ScheduleStrength upcoming={schedule?.upcoming || []} standings={standings} />
+          <StandingsPanel standings={standings} />
+        </div>
+      </CollapsibleBand>
 
       {/* ─── BAND · SEASON OVERVIEW ───────────────────────────────────────── */}
-      <SectionBand label="Season Overview" color="warm" sub={`${SEASON_LABEL} · all 82`} />
+      <CollapsibleBand id="season-overview" label="Season Overview" color="warm" sub={`${SEASON_LABEL} · all 82`}>
 
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div className="flex items-center gap-2 flex-wrap">
@@ -214,8 +215,10 @@ export const Dashboard = ({ schedule, standings, scoreboard, clubStats, roster, 
         />
       </div>
 
+      </CollapsibleBand>
+
       {/* ─── BAND · RECENT FORM ───────────────────────────────────────────── */}
-      <SectionBand label="Recent Form" color="emerald" sub="Last 20 games" count={games.length} />
+      <CollapsibleBand id="recent-form" label="Recent Form" color="emerald" sub="Last 20 games" count={games.length}>
 
       <Section
         title="Recent Games"
@@ -368,8 +371,10 @@ export const Dashboard = ({ schedule, standings, scoreboard, clubStats, roster, 
         <SplitsPanel games={games} us={us} />
       </div>
 
+      </CollapsibleBand>
+
       {/* ─── BAND · OFFENSE & SCORING ─────────────────────────────────────── */}
-      <SectionBand label="Offense & Scoring" color="orange" sub="rate · top scorers · goals" />
+      <CollapsibleBand id="offense" label="Offense & Scoring" color="orange" sub="rate · top scorers · goals">
 
       <ScoringPanel games={games} us={us} />
 
@@ -447,17 +452,19 @@ export const Dashboard = ({ schedule, standings, scoreboard, clubStats, roster, 
         )}
       </div>
 
-      {/* ─── BAND · LEAGUE ────────────────────────────────────────────────── */}
-      <SectionBand label="League" color="sky" sub="leaders · NHL-wide" />
+      </CollapsibleBand>
 
-      <LeagueLeaders data={leagueLeaders} />
+      {/* ─── BAND · LEAGUE ────────────────────────────────────────────────── */}
+      <CollapsibleBand id="league" label="League" color="sky" sub="leaders · NHL-wide">
+        <LeagueLeaders data={leagueLeaders} />
+      </CollapsibleBand>
 
       {/* ─── BAND · NOTES & NOTABLES ──────────────────────────────────────── */}
       {/* Was previously scattered across Roster & Franchise + standalone
           rows. Collected into one band so all "color and context" content
           lives in one scroll-stop instead of surprising the reader between
           data-heavy sections. */}
-      <SectionBand label="Notes & Notables" color="amber" sub="records · awards · honors · history" />
+      <CollapsibleBand id="notes-notables" label="Notes & Notables" color="amber" sub="records · awards · honors · history" defaultCollapsed>
 
       <RecordsTrackerPanel clubStats={clubStats} />
 
@@ -475,7 +482,9 @@ export const Dashboard = ({ schedule, standings, scoreboard, clubStats, roster, 
           carries the supporting context: head-to-head with the next
           opponent, the active playoff series tracker (only renders when
           relevant), and the upcoming schedule. */}
-      <SectionBand label="Reference" color="sky" sub="head-to-head · series · upcoming" />
+      </CollapsibleBand>
+
+      <CollapsibleBand id="reference" label="Reference" color="sky" sub="head-to-head · series · upcoming" defaultCollapsed>
 
       <SeriesTracker scoreboard={scoreboard} schedule={schedule} onOpenGame={onOpenGame} />
 
@@ -504,6 +513,7 @@ export const Dashboard = ({ schedule, standings, scoreboard, clubStats, roster, 
           onOpenGame={onOpenGame}
         />
       )}
+      </CollapsibleBand>
 
       {/* League ticker — relegated to the bottom so league-wide scores don't
           crowd Flyers content at the top of the dashboard. */}

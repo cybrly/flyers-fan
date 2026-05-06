@@ -1,9 +1,9 @@
-import { useEffect, useMemo, useState } from 'react';
-import { Sparkles, RefreshCw } from 'lucide-react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { Sparkles, Play, RotateCcw } from 'lucide-react';
 import { cx, SEASON, TEAM_ABBR, API } from '../config.js';
 import { Section, Skeleton, Chip } from '../components/primitives.jsx';
 import { TeamLogo, FlyersMark } from '../components/Logo.jsx';
-import { runForecast } from '../lib/forecast.js';
+import { startForecast } from '../lib/forecast.js';
 
 // Forecast — Monte Carlo playoff-odds page.
 //
@@ -12,8 +12,9 @@ import { runForecast } from '../lib/forecast.js';
 // All compute is client-side; the only network cost is 32 small schedule
 // fetches that hit the existing edge cache (60s TTL on club-schedule).
 //
-// Default 10K runs takes ~0.5–1s on a recent laptop. Falls back to a
-// "Run again" button so users can re-roll with no upstream re-fetch.
+// Uses the chunked startForecast runner so the UI updates with live
+// converging probabilities every 500 sims rather than blocking for a
+// second and snapping to a final number.
 
 const isFuture = (state) => state === 'FUT' || state === 'PRE';
 
@@ -24,15 +25,12 @@ const fetchTeamSchedule = async (abbr) => {
 };
 
 const buildRemainingGames = (raws) => {
-  // Each team's schedule includes their own games. The same game appears
-  // on both teams' schedules, so we dedupe by gameId. Keep only future
-  // (un-played) games for the simulator.
   const seen = new Map();
   for (const raw of raws) {
     if (!raw?.games) continue;
     for (const g of raw.games) {
       if (!g.id || !isFuture(g.gameState)) continue;
-      if (g.gameType === 1) continue; // skip preseason
+      if (g.gameType === 1) continue;
       if (seen.has(g.id)) continue;
       const home = g.homeTeam?.abbrev;
       const away = g.awayTeam?.abbrev;
@@ -49,10 +47,12 @@ export const Forecast = ({ standings }) => {
   const [runs, setRuns] = useState(10000);
   const [seed, setSeed] = useState(1);
   const [running, setRunning] = useState(false);
+  const [progress, setProgress] = useState({ done: 0, total: 0 });
   const [result, setResult] = useState(null);
+  const [hasRun, setHasRun] = useState(false);
+  const cancelRef = useRef(null);
 
-  // Fetch every team's schedule in parallel. Edge cache is generous on
-  // club-schedule, so these mostly come back as warm cache hits.
+  // Fetch every team's schedule in parallel.
   useEffect(() => {
     if (!standings?.all?.length) return;
     let cancelled = false;
@@ -75,58 +75,89 @@ export const Forecast = ({ standings }) => {
     return buildRemainingGames(schedRaws);
   }, [schedRaws]);
 
-  // Run the sim. Yields to the event loop first via setTimeout 0 so the
-  // "Running…" state actually paints before the (synchronous) sim blocks.
+  // Auto-run the first time data is ready so the user sees results
+  // without having to click anything. Subsequent runs are user-triggered
+  // via the big Re-roll button.
   useEffect(() => {
+    if (!standings?.all || !remainingGames || hasRun) return;
+    triggerRun();
+    setHasRun(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [standings, remainingGames, hasRun]);
+
+  const triggerRun = (overrideSeed) => {
     if (!standings?.all || !remainingGames) return;
+    if (cancelRef.current) cancelRef.current();
     setRunning(true);
-    const t = setTimeout(() => {
-      const out = runForecast({
-        standingsAll: standings.all,
-        remainingGames,
-        ourAbbr: TEAM_ABBR,
-        runs,
-        seed,
-      });
-      setResult(out);
-      setRunning(false);
-    }, 0);
-    return () => clearTimeout(t);
-  }, [standings, remainingGames, runs, seed]);
+    setProgress({ done: 0, total: runs });
+    setResult(null);
+    const useSeed = overrideSeed != null ? overrideSeed : seed;
+    cancelRef.current = startForecast({
+      standingsAll: standings.all,
+      remainingGames,
+      ourAbbr: TEAM_ABBR,
+      runs,
+      seed: useSeed,
+      chunkSize: 400,
+      onProgress: (snap, done, total) => {
+        setResult(snap);
+        setProgress({ done, total });
+      },
+      onComplete: (snap) => {
+        setResult(snap);
+        setProgress({ done: runs, total: runs });
+        setRunning(false);
+        cancelRef.current = null;
+      },
+    });
+  };
+
+  // Re-running with a new seed. Pass the fresh seed straight through
+  // rather than relying on React state to commit before triggerRun reads
+  // it — closure captures of seed inside setTimeout aren't guaranteed to
+  // see the updated value.
+  const reroll = () => {
+    const next = seed + 1;
+    setSeed(next);
+    triggerRun(next);
+  };
+
+  useEffect(() => () => { cancelRef.current?.(); }, []);
 
   const us = result?.teams?.find((t) => t.abbr === TEAM_ABBR);
+  const pct = progress.total ? (progress.done / progress.total) : 0;
 
   return (
-    <div className="p-3 md:p-5 space-y-3">
+    <div className="p-3 md:p-5 space-y-4">
       <div className="flex items-end justify-between flex-wrap gap-3">
         <div>
           <h1 className="text-[20px] font-semibold tracking-tight flex items-center gap-2">
             <Sparkles size={16} className="text-[#FF8A4C]" /> Forecast
           </h1>
           <p className="text-[12px] text-white/45 mt-1 font-mono">
-            Monte Carlo playoff odds · {result ? `${result.runs.toLocaleString()} simulations · ${result.simulatedGames} remaining games` : 'crunching the season…'}
+            Monte Carlo playoff odds · {remainingGames ? `${remainingGames.length} remaining games · ${runs.toLocaleString()} sims` : 'loading league schedule…'}
           </p>
         </div>
-        <div className="flex items-center gap-2">
-          <div className="flex items-center gap-0.5 p-0.5 border border-white/[0.08] rounded-md bg-white/[0.02]">
-            {[2000, 10000, 50000].map((n) => (
-              <button key={n} onClick={() => setRuns(n)}
-                className={cx('px-2.5 h-6 text-[11px] font-medium rounded-[4px] transition-colors',
-                  runs === n ? 'bg-white/[0.08] text-white' : 'text-white/50 hover:text-white'
-                )}>{n.toLocaleString()}</button>
-            ))}
-          </div>
-          <button
-            onClick={() => setSeed((s) => s + 1)}
-            disabled={running || !remainingGames}
-            title="Re-run with a new random seed"
-            className="flex items-center gap-1.5 px-2.5 h-7 border border-white/[0.08] hover:border-[#F74902]/40 bg-white/[0.02] rounded-md text-[11px] font-mono text-white/65 hover:text-white transition-colors disabled:opacity-50"
-          >
-            <RefreshCw size={12} className={running ? 'animate-spin' : ''} />
-            <span>{running ? 'Running…' : 'Re-roll'}</span>
-          </button>
+        <div className="flex items-center gap-0.5 p-0.5 border border-white/[0.08] rounded-md bg-white/[0.02]">
+          {[2000, 10000, 50000].map((n) => (
+            <button key={n}
+              onClick={() => setRuns(n)}
+              disabled={running}
+              className={cx('px-2.5 h-7 text-[11px] font-medium rounded-[4px] transition-colors disabled:opacity-50',
+                runs === n ? 'bg-white/[0.08] text-white' : 'text-white/50 hover:text-white'
+              )}>{n.toLocaleString()}</button>
+          ))}
         </div>
       </div>
+
+      <ForecastRunBar
+        running={running}
+        pct={pct}
+        progress={progress}
+        onClickRun={reroll}
+        canRun={!!remainingGames && !running}
+        hasResult={!!result}
+      />
 
       {error && (
         <div className="border border-red-500/40 bg-red-500/[0.08] rounded-md p-4 text-[12px] font-mono text-red-300">
@@ -137,7 +168,8 @@ export const Forecast = ({ standings }) => {
       {!result || !us ? (
         <div className="space-y-3">
           <Skeleton height={140} />
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+            <Skeleton height={120} />
             <Skeleton height={120} />
             <Skeleton height={120} />
             <Skeleton height={120} />
@@ -145,7 +177,7 @@ export const Forecast = ({ standings }) => {
         </div>
       ) : (
         <>
-          <PhiHeadline us={us} />
+          <PhiHeadline us={us} running={running} />
           <PhiBreakdown us={us} />
           <PointsHistogram us={us} />
           <ConferenceTable result={result} />
@@ -155,7 +187,55 @@ export const Forecast = ({ standings }) => {
   );
 };
 
-const PhiHeadline = ({ us }) => {
+const ForecastRunBar = ({ running, pct, progress, onClickRun, canRun, hasResult }) => (
+  <div className="border border-[#F74902]/30 bg-[#F74902]/[0.04] rounded-md p-4 relative overflow-hidden">
+    <div className="absolute inset-0 pointer-events-none"
+      style={{ background: 'radial-gradient(circle at 0% 50%, rgba(247,73,2,0.08), transparent 50%)' }} />
+    <div className="relative flex items-center gap-4 flex-wrap">
+      <button
+        onClick={onClickRun}
+        disabled={!canRun}
+        className={cx(
+          'flex items-center justify-center gap-2 h-12 px-6 rounded-md text-[14px] font-semibold tracking-tight transition-all shrink-0',
+          'shadow-lg shadow-[#F74902]/20',
+          canRun
+            ? 'bg-[#F74902] hover:bg-[#FF5A1F] text-white border border-[#FF8A4C]/40 hover:border-[#FF8A4C]/70 cursor-pointer'
+            : 'bg-[#F74902]/40 text-white/70 border border-[#F74902]/30 cursor-not-allowed',
+        )}
+      >
+        {running
+          ? <><span className="w-2.5 h-2.5 rounded-full bg-white/80 animate-pulse" /> Simulating…</>
+          : hasResult
+            ? <><RotateCcw size={16} /> Run again</>
+            : <><Play size={16} fill="currentColor" /> Run forecast</>}
+      </button>
+
+      <div className="flex-1 min-w-[180px]">
+        <div className="flex items-baseline justify-between mb-1.5">
+          <span className="text-[10px] font-mono text-white/40 uppercase tracking-wider">
+            {running ? 'simulating season' : hasResult ? 'simulation complete' : 'ready'}
+          </span>
+          <span className="text-[12px] font-mono tabular-nums text-white/85">
+            {progress.done.toLocaleString()}<span className="text-white/30"> / {progress.total.toLocaleString()}</span>
+          </span>
+        </div>
+        <div className="h-2 bg-white/[0.06] rounded-full overflow-hidden">
+          <div
+            className={cx('h-full rounded-full transition-all duration-150 ease-out',
+              running ? 'bg-[#FF8A4C]' : hasResult ? 'bg-emerald-500/70' : 'bg-white/20',
+            )}
+            style={{ width: `${Math.max(progress.total ? 0 : 0, pct * 100)}%` }}
+          />
+        </div>
+        <div className="text-[10px] font-mono text-white/35 mt-1.5 leading-relaxed">
+          Each simulation plays out every remaining game, scores them with the points-% model + 3.5% home-ice, and tallies final standings. The probabilities below converge as runs accumulate.
+        </div>
+      </div>
+    </div>
+  </div>
+);
+
+const PhiHeadline = ({ us, running }) => {
   const playoff = us.playoffPct;
   const tone =
     playoff >= 0.7 ? 'text-emerald-400'
@@ -170,12 +250,15 @@ const PhiHeadline = ({ us }) => {
         <div className="flex items-center gap-3">
           <FlyersMark size={48} />
           <div>
-            <div className="text-[11px] font-mono text-white/40 uppercase tracking-wider">Philadelphia Flyers</div>
+            <div className="text-[11px] font-mono text-white/40 uppercase tracking-wider flex items-center gap-1.5">
+              Philadelphia Flyers
+              {running && <span className="w-1.5 h-1.5 rounded-full bg-[#FF8A4C] animate-pulse" />}
+            </div>
             <div className="text-[14px] text-white/85">Playoff Probability</div>
           </div>
         </div>
         <div className="flex items-baseline gap-3">
-          <span className={cx('text-[64px] font-semibold tabular-nums tracking-tight leading-none', tone)}>
+          <span className={cx('text-[64px] font-semibold tabular-nums tracking-tight leading-none transition-colors duration-200', tone)}>
             {(playoff * 100).toFixed(1)}%
           </span>
           <span className="text-[12px] font-mono text-white/40">probability of postseason</span>
@@ -206,11 +289,12 @@ const PhiBreakdown = ({ us }) => {
       {cells.map((c) => (
         <div key={c.label} className="border border-white/[0.06] bg-[#0C0C0C]/60 rounded-md p-3">
           <div className="text-[10px] font-mono text-white/40 uppercase tracking-wider">{c.label}</div>
-          <div className="text-[26px] font-semibold tabular-nums mt-1" style={{ color: c.tone }}>
+          <div className="text-[26px] font-semibold tabular-nums mt-1 transition-colors duration-200" style={{ color: c.tone }}>
             {(c.pct * 100).toFixed(1)}%
           </div>
           <div className="mt-2 h-1 w-full bg-white/[0.04] rounded-full overflow-hidden">
-            <div className="h-full rounded-full" style={{ width: `${Math.min(100, c.pct * 100)}%`, background: c.tone, opacity: 0.75 }} />
+            <div className="h-full rounded-full transition-[width] duration-200 ease-out"
+              style={{ width: `${Math.min(100, c.pct * 100)}%`, background: c.tone, opacity: 0.75 }} />
           </div>
           <div className="text-[10px] font-mono text-white/35 mt-1.5">{c.sub}</div>
         </div>
@@ -231,9 +315,6 @@ const PointsHistogram = ({ us }) => {
     buckets.push({ p, count: dist.get(p) || 0 });
   }
   const peak = Math.max(1, ...buckets.map((b) => b.count));
-
-  // Mark the playoff threshold around 95 (typical wild-card cutoff) and PHI's
-  // current points so the user sees their starting line.
   const PLAYOFF_PT = 95;
 
   return (
@@ -251,7 +332,7 @@ const PointsHistogram = ({ us }) => {
                 className="flex-1 flex items-end"
               >
                 <div
-                  className={cx('w-full rounded-sm',
+                  className={cx('w-full rounded-sm transition-[height] duration-150 ease-out',
                     isUs ? 'bg-[#FF8A4C]'
                     : inMode ? 'bg-[#F74902]/60'
                     : 'bg-white/15',
@@ -261,7 +342,6 @@ const PointsHistogram = ({ us }) => {
               </div>
             );
           })}
-          {/* Playoff threshold line */}
           {minPts <= PLAYOFF_PT && PLAYOFF_PT <= maxPts && (
             <div
               className="absolute top-0 bottom-0 w-px bg-emerald-500/45 pointer-events-none"
@@ -280,8 +360,6 @@ const PointsHistogram = ({ us }) => {
 };
 
 const ConferenceTable = ({ result }) => {
-  // Show all 16 Eastern Conference teams sorted by playoff %. Western
-  // doesn't matter for PHI's race; trim it for noise.
   const east = result.teams
     .filter((t) => t.conference === 'Eastern')
     .sort((a, b) => b.playoffPct - a.playoffPct);
@@ -338,7 +416,7 @@ const ConferenceTable = ({ result }) => {
         </table>
       </div>
       <div className="px-4 py-2 border-t border-white/[0.05] text-[10px] font-mono text-white/35 leading-relaxed">
-        Win-probability model: points% differential + 3.5% home-ice. ~22% of sim games go past regulation. Re-roll with the button above to draw a new random seed.
+        Win-probability model: points% differential + 3.5% home-ice. ~22% of sim games go past regulation. Click "Run again" to draw a new random seed.
       </div>
     </Section>
   );

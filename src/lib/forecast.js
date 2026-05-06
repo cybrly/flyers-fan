@@ -1,31 +1,30 @@
 // Monte Carlo playoff-odds engine.
 //
-// Inputs:
-//   • standings.all — every team's current { gp, w, l, ot, pts, pct, gf, ga, abbr, division, conference }
-//   • remainingGames — array of unique scheduled games { home, away } not yet played
-//
-// Output: per-team outcome distribution { divWin, top3, wildcard, missed, ranks, pointsDist, expPts }
-// plus run metadata { runs, ourAbbr, simulatedGames }
+// Two entry points:
+//   • runForecast(opts) — synchronous, returns a full result. Suitable
+//     for unit tests or one-shot calls when you don't need progress.
+//   • startForecast(opts) — chunked async runner that yields to the
+//     event loop between chunks and fires `onProgress` with intermediate
+//     aggregates. Returns a cancel function. This is what the Forecast
+//     page uses so the UI can paint a live-converging probability while
+//     sims accumulate.
 //
 // Win-probability model (deliberately simple):
-//   p(home wins) = clamp(0.06 + (homeStrength - awayStrength) * 0.7 + homeIce, 0.10, 0.90)
-//   where strength is points% (Pts / max(GP*2, 1)) — converges to 0.5 once
-//   GP > 0 so early-season weirdness self-corrects, and .50 is the no-info
-//   fallback for teams without data.
+//   p(home wins) = clamp(0.5 + (homeStrength - awayStrength) * 0.7 + homeIce, 0.10, 0.90)
+//   strength = points% (Pts / max(GP*2, 1)); 0.5 fallback before any GP.
 //
-// Outcome distribution per game (after winner is decided):
-//   ~22% of NHL games go past regulation → loser gets 1 point
-//   ~78% finish in regulation → loser gets 0 points
+// Outcome distribution per game:
+//   ~22% of NHL games go past regulation → loser gets 1 point.
+//   The other ~78% are regulation losses → loser gets 0 points.
 //
-// Ranking:
-//   Within each division, teams are sorted by points then ROW (we don't have
-//   ROW per team in our adapter, so we fall back to wins which is a close
-//   proxy after a full season). Top 3 per division auto-qualify; top 2
-//   non-top-3 in each conference fill the wild-card slots.
+// Ranking: per-division by points (then wins, then GF). Top 3 per division
+// auto-qualify; top 2 conference teams from outside top-3 take the wild
+// cards.
 
 const HOME_ICE = 0.035;
 const OT_PROB  = 0.22;
 const NO_INFO_STRENGTH = 0.5;
+const DEFAULT_CHUNK = 500;
 
 const strength = (team) => {
   if (!team || !team.gp || team.gp <= 0) return NO_INFO_STRENGTH;
@@ -39,9 +38,6 @@ const winProb = (home, away) => {
   return Math.max(0.10, Math.min(0.90, raw));
 };
 
-// Mulberry32 — fast deterministic PRNG. Lets us reproduce results when
-// the user re-runs the sim with the same seed; we don't expose the seed
-// in the UI but it's there if we ever want a "share this scenario" link.
 const mulberry32 = (seed) => () => {
   let t = (seed += 0x6D2B79F5);
   t = Math.imul(t ^ (t >>> 15), t | 1);
@@ -56,12 +52,8 @@ const compareForRank = (a, b) => {
   return 0;
 };
 
-export function runForecast({ standingsAll, remainingGames, ourAbbr, runs = 10000, seed = 1 }) {
-  if (!standingsAll?.length) return null;
-  const rand = mulberry32(seed);
-
-  // Build a cheap lookup: abbr → index in our team array, plus a baseline
-  // record snapshot we'll reset to at the start of each simulation run.
+// Internal: builds the mutable aggregator state we update across runs.
+const buildState = (standingsAll) => {
   const teams = standingsAll.map((t) => ({
     abbr: t.abbr,
     division: t.division,
@@ -74,37 +66,34 @@ export function runForecast({ standingsAll, remainingGames, ourAbbr, runs = 1000
     pct: t.pct || 0,
   }));
   const idx = new Map(teams.map((t, i) => [t.abbr, i]));
+  return {
+    teams,
+    idx,
+    divWin: new Array(teams.length).fill(0),
+    top3: new Array(teams.length).fill(0),
+    wildcard: new Array(teams.length).fill(0),
+    missed: new Array(teams.length).fill(0),
+    expPts: new Array(teams.length).fill(0),
+    expWins: new Array(teams.length).fill(0),
+    pointsDist: teams.map(() => new Map()),
+    completed: 0,
+  };
+};
 
-  // Aggregators per team:
-  //   divWin / top3 / wildcard / missed counts → divide by runs at end
-  //   ranks[i][k] = number of times team k finished at division-rank i+1
-  //   pointsDist sparse map of { points: count } for histogram
-  //   expPts running sum
-  const divWin = new Array(teams.length).fill(0);
-  const top3 = new Array(teams.length).fill(0);
-  const wildcard = new Array(teams.length).fill(0);
-  const missed = new Array(teams.length).fill(0);
-  const expPts = new Array(teams.length).fill(0);
-  const expWins = new Array(teams.length).fill(0);
-  const pointsDist = teams.map(() => new Map());
-
-  // Working arrays reused across runs to avoid GC churn — micro-optimization
-  // but it matters at N=10k sims.
+// Internal: run `n` more simulations into the supplied aggregator.
+const runChunk = (state, remainingGames, n, rand) => {
+  const { teams, idx, divWin, top3, wildcard, missed, expPts, expWins, pointsDist } = state;
   const simPts = new Float64Array(teams.length);
   const simWins = new Float64Array(teams.length);
   const simGF = new Float64Array(teams.length);
   const orderBuf = new Array(teams.length);
 
-  for (let r = 0; r < runs; r++) {
-    // Reset to baseline.
+  for (let r = 0; r < n; r++) {
     for (let i = 0; i < teams.length; i++) {
       simPts[i] = teams[i].pts;
       simWins[i] = teams[i].w;
       simGF[i] = teams[i].gf;
     }
-
-    // Simulate every remaining game. Bail-safe: skip games where one
-    // side's abbr isn't in standings (shouldn't happen, but cheap guard).
     for (const g of remainingGames) {
       const hi = idx.get(g.home);
       const ai = idx.get(g.away);
@@ -115,16 +104,13 @@ export function runForecast({ standingsAll, remainingGames, ourAbbr, runs = 1000
       const loser  = homeWins ? ai : hi;
       simPts[winner] += 2;
       simWins[winner] += 1;
-      // OT/SO loser bonus
       if (rand() < OT_PROB) simPts[loser] += 1;
     }
 
-    // Build sortable view of teams with this run's totals.
+    // Per-division ranking.
     for (let i = 0; i < teams.length; i++) {
       orderBuf[i] = { i, simPts: simPts[i], simWins: simWins[i], simGF: simGF[i] };
     }
-
-    // Per-division ranks
     const divisions = {};
     for (const t of orderBuf) {
       const d = teams[t.i].division;
@@ -134,13 +120,10 @@ export function runForecast({ standingsAll, remainingGames, ourAbbr, runs = 1000
     const divRankByIdx = new Array(teams.length);
     Object.values(divisions).forEach((list) => {
       list.sort(compareForRank);
-      list.forEach((t, rankZero) => {
-        divRankByIdx[t.i] = rankZero + 1;
-      });
+      list.forEach((t, rankZero) => { divRankByIdx[t.i] = rankZero + 1; });
     });
 
-    // Per-conference wild card calculation: take all teams ranked >3 in
-    // their division, sort by points across the conference, top 2 are WC.
+    // Wild card: top 2 conference teams ranked >3 in their division.
     const conferences = {};
     for (let i = 0; i < teams.length; i++) {
       const c = teams[i].conference;
@@ -155,7 +138,6 @@ export function runForecast({ standingsAll, remainingGames, ourAbbr, runs = 1000
       list.slice(0, 2).forEach((t) => { wcByIdx[t.i] = true; });
     });
 
-    // Tally outcomes for this run.
     for (let i = 0; i < teams.length; i++) {
       const dr = divRankByIdx[i];
       const pts = simPts[i];
@@ -165,15 +147,18 @@ export function runForecast({ standingsAll, remainingGames, ourAbbr, runs = 1000
       if (dr <= 3) top3[i]++;
       else if (wcByIdx[i]) wildcard[i]++;
       else missed[i]++;
-      // Bucket points to nearest int for the histogram.
       const k = Math.round(pts);
       pointsDist[i].set(k, (pointsDist[i].get(k) || 0) + 1);
     }
   }
+  state.completed += n;
+};
 
-  // Final shape: array of per-team outcomes plus run meta. Caller pulls
-  // PHI's row for the headline numbers and surfaces the conference table
-  // below it.
+// Internal: snapshot the aggregator into a result shape using whatever
+// number of runs have completed so far. Cheap; makes incremental
+// progress callbacks viable.
+const snapshot = ({ teams, divWin, top3, wildcard, missed, expPts, expWins, pointsDist, completed }, ourAbbr, simulatedGames) => {
+  const runs = completed || 1;
   const teamsOut = teams.map((t, i) => ({
     abbr: t.abbr,
     division: t.division,
@@ -189,11 +174,56 @@ export function runForecast({ standingsAll, remainingGames, ourAbbr, runs = 1000
     playoffPct: (top3[i] + wildcard[i]) / runs,
     pointsDist: pointsDist[i],
   }));
+  return { teams: teamsOut, ourAbbr, runs: completed, simulatedGames };
+};
 
-  return {
-    teams: teamsOut,
-    ourAbbr,
-    runs,
-    simulatedGames: remainingGames.length,
+export function runForecast({ standingsAll, remainingGames, ourAbbr, runs = 10000, seed = 1 }) {
+  if (!standingsAll?.length) return null;
+  const state = buildState(standingsAll);
+  const rand = mulberry32(seed);
+  runChunk(state, remainingGames, runs, rand);
+  return snapshot(state, ourAbbr, remainingGames.length);
+}
+
+// Chunked runner for live-updating UI. Calls onProgress with a snapshot
+// after every chunk of `chunkSize` runs. Returns a cancel function that
+// stops further chunks; in-flight work always finishes its current
+// chunk to keep aggregator state coherent.
+export function startForecast({
+  standingsAll,
+  remainingGames,
+  ourAbbr,
+  runs = 10000,
+  seed = 1,
+  chunkSize = DEFAULT_CHUNK,
+  onProgress,
+  onComplete,
+}) {
+  if (!standingsAll?.length) return () => {};
+  const state = buildState(standingsAll);
+  const rand = mulberry32(seed);
+  let cancelled = false;
+  let timer = null;
+
+  const tick = () => {
+    if (cancelled) return;
+    const remaining = runs - state.completed;
+    if (remaining <= 0) {
+      onComplete?.(snapshot(state, ourAbbr, remainingGames.length));
+      return;
+    }
+    const n = Math.min(chunkSize, remaining);
+    runChunk(state, remainingGames, n, rand);
+    onProgress?.(snapshot(state, ourAbbr, remainingGames.length), state.completed, runs);
+    timer = setTimeout(tick, 0);
+  };
+
+  // Yield once before the first chunk so the caller has a chance to
+  // paint a "Running…" indicator.
+  timer = setTimeout(tick, 0);
+
+  return () => {
+    cancelled = true;
+    if (timer) clearTimeout(timer);
   };
 }

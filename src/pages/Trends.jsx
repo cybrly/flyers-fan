@@ -149,6 +149,54 @@ export const Trends = ({ schedule, roster }) => {
     return { n: window.length, w, l, gf, ga, diff: gf - ga, points, pace: window.length ? +(points / window.length * SEASON_GAMES).toFixed(0) : 0 };
   }, [games, N]);
 
+  // Cross-game situational splits: home/away, rest-day buckets, monthly.
+  // All derived from the same games array we already use elsewhere on the
+  // page — each split is a small accumulator that buckets games and rolls
+  // up record + GF + GA + diff so we can show "where are the points coming
+  // from" instead of just season totals.
+  const splits = useMemo(() => {
+    const empty = () => ({ n: 0, w: 0, gf: 0, ga: 0 });
+    const accumulate = (b, g) => {
+      b.n++;
+      if (g.w) b.w++;
+      b.gf += g.us;
+      b.ga += g.them;
+    };
+    const home = empty(), away = empty();
+    const restB2B = empty(), restStd = empty(), restLong = empty();
+    const months = new Map();
+
+    games.forEach((g, i) => {
+      accumulate(g.home ? home : away, g);
+
+      // Rest days: gap to the prior chronological game (games is asc by date).
+      const prev = games[i - 1];
+      let rest = null;
+      if (prev) {
+        const ms = new Date(g.date).getTime() - new Date(prev.date).getTime();
+        rest = Math.max(0, Math.floor(ms / 86400000));
+      }
+      if (rest != null) {
+        if (rest <= 1) accumulate(restB2B, g);
+        else if (rest <= 3) accumulate(restStd, g);
+        else accumulate(restLong, g);
+      }
+
+      const ym = g.date.slice(0, 7); // YYYY-MM
+      if (!months.has(ym)) months.set(ym, empty());
+      accumulate(months.get(ym), g);
+    });
+
+    const monthList = [...months.entries()]
+      .sort((a, b) => a[0].localeCompare(b[0]))
+      .map(([ym, b]) => {
+        const [y, m] = ym.split('-');
+        return { ym, label: MONTH_ABBR[parseInt(m, 10) - 1] + ' ' + y.slice(2), ...b };
+      });
+
+    return { home, away, restB2B, restStd, restLong, months: monthList };
+  }, [games]);
+
   // Decisions split — REG / OT / SO outcomes from lastPeriodType.
   const decisions = useMemo(() => {
     const acc = { regW: 0, regL: 0, otW: 0, otL: 0, soW: 0, soL: 0 };
@@ -661,6 +709,125 @@ export const Trends = ({ schedule, roster }) => {
           </div>
         </Section>
       </div>
+
+      <SituationalSplits splits={splits} />
+    </div>
+  );
+};
+
+// Cross-game situational splits — three ways to slice the season:
+// venue (home/away), rest days (B2B / standard / 4+), and month-by-month.
+// Each card shows record + diff + GF/GA per game so you can spot where the
+// points are actually coming from instead of just the season totals.
+const SplitCard = ({ label, sub, b }) => {
+  const tot = b?.n || 0;
+  const w = b?.w || 0;
+  const l = tot - w;
+  const gf = b?.gf || 0;
+  const ga = b?.ga || 0;
+  const diff = gf - ga;
+  const gfPg = tot ? gf / tot : 0;
+  const gaPg = tot ? ga / tot : 0;
+  const wPct = tot ? (w / tot) * 100 : 0;
+  return (
+    <div className="border border-white/[0.06] rounded-md p-3 bg-white/[0.01]">
+      <div className="flex items-baseline justify-between gap-2">
+        <span className="text-[10px] font-mono text-white/40 uppercase tracking-wider">{label}</span>
+        <span className="text-[9px] font-mono text-white/30 tabular-nums">{tot} GP</span>
+      </div>
+      <div className="text-[18px] font-semibold tabular-nums mt-1">
+        <span className="text-[#10B981]">{w}</span>
+        <span className="text-white/30 mx-1">–</span>
+        <span className="text-[#EF4444]">{l}</span>
+      </div>
+      {sub && <div className="text-[9px] font-mono text-white/35 mt-0.5">{sub}</div>}
+      <div className="mt-2 h-1 w-full bg-white/[0.04] rounded-full overflow-hidden">
+        <div className="h-full bg-[#10B981]" style={{ width: `${wPct}%` }} />
+      </div>
+      <div className="grid grid-cols-3 gap-1 mt-2 text-[10px] font-mono tabular-nums">
+        <div>
+          <div className="text-white/30 text-[9px] uppercase tracking-wider">GF/g</div>
+          <div className="text-[#10B981]">{gfPg.toFixed(2)}</div>
+        </div>
+        <div>
+          <div className="text-white/30 text-[9px] uppercase tracking-wider">GA/g</div>
+          <div className="text-[#EF4444]">{gaPg.toFixed(2)}</div>
+        </div>
+        <div>
+          <div className="text-white/30 text-[9px] uppercase tracking-wider">Diff</div>
+          <div className={diff > 0 ? 'text-[#FF8A4C]' : diff < 0 ? 'text-red-400' : 'text-white/50'}>
+            {diff > 0 ? '+' : ''}{diff}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const SituationalSplits = ({ splits }) => {
+  const { home, away, restB2B, restStd, restLong, months } = splits;
+  return (
+    <div className="space-y-3">
+      <Section title="Venue Split" action={<span className="text-[10px] font-mono text-white/40">home vs road</span>}>
+        <div className="p-3 grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <SplitCard label="Home" sub="at WFC" b={home} />
+          <SplitCard label="Away" sub="on the road" b={away} />
+        </div>
+      </Section>
+
+      <Section title="Rest Day Split" action={<span className="text-[10px] font-mono text-white/40">days since last game</span>}>
+        <div className="p-3 grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <SplitCard label="Back-to-back" sub="0–1 day rest" b={restB2B} />
+          <SplitCard label="Standard" sub="2–3 days rest" b={restStd} />
+          <SplitCard label="Rested" sub="4+ days rest" b={restLong} />
+        </div>
+      </Section>
+
+      {months.length > 0 && (
+        <Section title="Month-by-Month" action={<span className="text-[10px] font-mono text-white/40">rolling chronological</span>}>
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="text-[10px] font-mono text-white/35 uppercase tracking-wider border-b border-white/[0.05]">
+                  <th className="font-normal text-left px-4 h-9">Month</th>
+                  <th className="font-normal text-right px-2 h-9 w-[44px]">GP</th>
+                  <th className="font-normal text-right px-2 h-9 w-[64px]">Record</th>
+                  <th className="font-normal text-right px-2 h-9 w-[60px]">GF</th>
+                  <th className="font-normal text-right px-2 h-9 w-[60px]">GA</th>
+                  <th className="font-normal text-right px-2 h-9 w-[64px]">Diff</th>
+                  <th className="font-normal text-right px-4 h-9 w-[80px]">Win %</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-white/[0.04]">
+                {months.map((m) => {
+                  const l = m.n - m.w;
+                  const diff = m.gf - m.ga;
+                  const wPct = m.n ? Math.round((m.w / m.n) * 100) : 0;
+                  return (
+                    <tr key={m.ym} className="hover:bg-white/[0.02]">
+                      <td className="px-4 h-10 text-[12px]">{m.label}</td>
+                      <td className="px-2 text-right text-[11px] font-mono tabular-nums text-white/55">{m.n}</td>
+                      <td className="px-2 text-right text-[12px] font-mono tabular-nums">
+                        <span className="text-[#10B981]">{m.w}</span>
+                        <span className="text-white/25">–</span>
+                        <span className="text-[#EF4444]">{l}</span>
+                      </td>
+                      <td className="px-2 text-right text-[11px] font-mono tabular-nums text-[#10B981]">{m.gf}</td>
+                      <td className="px-2 text-right text-[11px] font-mono tabular-nums text-[#EF4444]">{m.ga}</td>
+                      <td className={cx('px-2 text-right text-[11px] font-mono tabular-nums',
+                        diff > 0 ? 'text-[#FF8A4C]' : diff < 0 ? 'text-red-400' : 'text-white/50'
+                      )}>
+                        {diff > 0 ? '+' : ''}{diff}
+                      </td>
+                      <td className="px-4 text-right text-[11px] font-mono tabular-nums text-white/70">{wPct}%</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </Section>
+      )}
     </div>
   );
 };

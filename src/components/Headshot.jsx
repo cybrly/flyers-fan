@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { cx } from '../config.js';
+import { cx, SEASON } from '../config.js';
 
 // NHL serves player mugs at predictable URLs:
 //   https://assets.nhle.com/mugs/nhl/{season}/{teamAbbrev}/{playerId}.png
@@ -9,7 +9,7 @@ import { cx } from '../config.js';
 export const Headshot = ({ src, playerId, teamAbbrev, num, size = 28, className = '' }) => {
   const [failed, setFailed] = useState(false);
   const url = src || (playerId && teamAbbrev
-    ? `https://assets.nhle.com/mugs/nhl/20252026/${teamAbbrev}/${playerId}.png`
+    ? `https://assets.nhle.com/mugs/nhl/${SEASON}/${teamAbbrev}/${playerId}.png`
     : null);
 
   if (!url || failed) {

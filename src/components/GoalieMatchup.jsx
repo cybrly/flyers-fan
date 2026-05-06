@@ -41,9 +41,9 @@ const GoalieRow = ({ goalie }) => {
 
   return (
     <div className="px-4 py-3 grid grid-cols-[44px_1fr_auto] items-center gap-3">
-      <Headshot id={goalie.id} size={44} />
+      <Headshot playerId={goalie.id} size={44} />
       <div className="min-w-0">
-        <PlayerLink id={goalie.id} className="text-[13px] font-medium text-white/90 hover:text-white">
+        <PlayerLink playerId={goalie.id} className="text-[13px] font-medium text-white/90 hover:text-white">
           {goalie.name}
         </PlayerLink>
         <div className="text-[10px] font-mono text-white/40 mt-0.5">

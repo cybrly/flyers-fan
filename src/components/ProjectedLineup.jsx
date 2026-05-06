@@ -115,11 +115,11 @@ const LineupCell = ({ p, center, goalie }) => {
   if (!p) return <span className="h-9 rounded bg-white/[0.02] border border-white/[0.04]" />;
   return (
     <div className="flex items-center gap-2 px-2 py-1.5 rounded bg-white/[0.02] border border-white/[0.04] min-w-0">
-      <Headshot id={p.id} src={p.headshot} size={28} />
+      <Headshot playerId={p.id} src={p.headshot} size={28} />
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-1.5 min-w-0">
           <span className="text-[10px] font-mono text-white/40 tabular-nums shrink-0">#{p.num}</span>
-          <PlayerLink id={p.id} className="text-[12px] text-white/85 truncate hover:text-white">
+          <PlayerLink playerId={p.id} className="text-[12px] text-white/85 truncate hover:text-white">
             {p.name}
           </PlayerLink>
           {center && <span className="text-[9px] font-mono text-[#FF8A4C] uppercase tracking-wider shrink-0">C</span>}

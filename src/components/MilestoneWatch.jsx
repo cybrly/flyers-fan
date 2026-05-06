@@ -104,11 +104,11 @@ export const MilestoneWatch = ({ clubStats }) => {
       <div className="divide-y divide-white/[0.04]">
         {items.map((m, i) => (
           <div key={`${m.id}-${m.stat}-${i}`} className="px-4 py-2.5 flex items-center gap-3">
-            <Headshot id={m.id} src={m.headshot} size={28} />
+            <Headshot playerId={m.id} src={m.headshot} size={28} />
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-1.5 min-w-0">
                 <span className="text-[10px] font-mono text-white/35 tabular-nums shrink-0">#{m.num}</span>
-                <PlayerLink id={m.id} className="text-[12px] text-white/85 truncate hover:text-white">
+                <PlayerLink playerId={m.id} className="text-[12px] text-white/85 truncate hover:text-white">
                   {m.name}
                 </PlayerLink>
               </div>

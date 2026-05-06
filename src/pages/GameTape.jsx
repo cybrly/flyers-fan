@@ -14,36 +14,148 @@ import { GoalieHeatMap } from '../components/GoalieHeatMap.jsx';
 import { GoalieMatchup } from '../components/GoalieMatchup.jsx';
 import { LiveShotTicker } from '../components/LiveShotTicker.jsx';
 
-// One row of the team comparison grid. Better side tints green, worse
-// side tints red; ties stay neutral. Bar fills follow the same polarity
-// so a quick scan shows which team is winning each metric.
-// `higherBetter=false` flips the polarity for stats where lower is
-// better (giveaways, PIM).
+// Team-comparison row, redesigned for executive readability:
+//   - Large 22 px tabular numbers anchored to each team's side
+//   - Two divergent bars meeting at a center axis, filled in team
+//     brand colors (PHI orange on the left, neutral slate on the right)
+//     so identity is conveyed by COLOR, not by polarity-tinted text
+//   - Single thin emerald underline on the leading number — calm
+//     advantage cue without painting the row red
+//   - Faint emerald chevron pointing toward the winning side
+// `higherBetter=false` flips polarity for stats where lower is better
+// (giveaways, PIM).
 const CompareRow = ({ label, us, them, higherBetter = true, suffix = '' }) => {
   if (us == null || them == null) return null;
   const total = us + them;
-  const usPct = total > 0 ? (us / total) * 100 : 50;
+  const usShare = total > 0 ? (us / total) * 100 : 50;
+  const themShare = 100 - usShare;
   const tied = us === them;
   const usWon = !tied && (higherBetter ? us > them : us < them);
   const themWon = !tied && !usWon;
-  const usColor = tied ? 'text-white/55' : usWon ? 'text-emerald-400 font-semibold' : 'text-red-400 font-semibold';
-  const themColor = tied ? 'text-white/55' : themWon ? 'text-emerald-400 font-semibold' : 'text-red-400 font-semibold';
-  const usBarColor = tied ? 'bg-white/30' : usWon ? 'bg-emerald-500/80' : 'bg-red-500/70';
-  const themBarColor = tied ? 'bg-white/30' : themWon ? 'bg-emerald-500/80' : 'bg-red-500/70';
+  const delta = us - them;
+
   return (
-    <div className="grid grid-cols-[60px_1fr_90px_1fr_60px] items-center gap-3 h-9 px-4 hover:bg-white/[0.02] transition-colors">
-      <span className={cx('text-right text-[12px] font-mono tabular-nums', usColor)}>{us}{suffix}</span>
-      <div className="relative h-1 bg-white/[0.04] rounded-full overflow-hidden">
-        <div className={cx('absolute right-1/2 h-full', usBarColor)} style={{ width: `${usPct / 2}%` }} />
+    <div className="grid grid-cols-[1fr_minmax(120px,160px)_1fr] items-center gap-4 h-14 px-5 transition-colors hover:bg-white/[0.015] border-b border-white/[0.04] last:border-b-0">
+      {/* PHI side — number right-anchored, bar grows leftward from center */}
+      <div className="flex items-center justify-end gap-3 min-w-0">
+        <div className="flex-1 max-w-[260px]">
+          <div className="relative h-[3px] bg-white/[0.05] rounded-full overflow-hidden">
+            <div
+              className="absolute right-0 h-full rounded-l-full transition-[width] duration-500 ease-out"
+              style={{
+                width: `${usShare}%`,
+                background: tied
+                  ? 'rgba(255,255,255,0.20)'
+                  : 'linear-gradient(to left, rgba(247,73,2,0.95), rgba(247,73,2,0.55))',
+              }}
+            />
+          </div>
+        </div>
+        <div className="flex items-baseline gap-1.5 shrink-0 tabular-nums">
+          {usWon && <ChevronGlyph dir="left" />}
+          <span className={cx(
+            'text-[22px] font-semibold tracking-tight leading-none transition-colors',
+            tied ? 'text-white/65' : usWon ? 'text-white' : 'text-white/55',
+          )} style={usWon ? { borderBottom: '1px solid #34D399', paddingBottom: '2px' } : undefined}>
+            {us}{suffix}
+          </span>
+        </div>
       </div>
-      <span className="text-center text-[10px] font-mono text-white/45 tracking-wider uppercase">{label}</span>
-      <div className="relative h-1 bg-white/[0.04] rounded-full overflow-hidden">
-        <div className={cx('absolute left-1/2 h-full', themBarColor)} style={{ width: `${(100 - usPct) / 2}%` }} />
+
+      {/* Center label + delta */}
+      <div className="flex flex-col items-center gap-0.5">
+        <span className="text-[10px] font-mono text-white/40 tracking-[0.18em] uppercase whitespace-nowrap">
+          {label}
+        </span>
+        <span className={cx(
+          'text-[10px] font-mono tabular-nums transition-colors',
+          tied ? 'text-white/30' : 'text-white/35',
+        )}>
+          {tied ? 'EVEN' : `${delta > 0 ? '+' : ''}${delta}${suffix}`}
+        </span>
       </div>
-      <span className={cx('text-left text-[12px] font-mono tabular-nums', themColor)}>{them}{suffix}</span>
+
+      {/* OPP side — number left-anchored, bar grows rightward from center */}
+      <div className="flex items-center gap-3 min-w-0">
+        <div className="flex items-baseline gap-1.5 shrink-0 tabular-nums">
+          <span className={cx(
+            'text-[22px] font-semibold tracking-tight leading-none transition-colors',
+            tied ? 'text-white/65' : themWon ? 'text-white' : 'text-white/55',
+          )} style={themWon ? { borderBottom: '1px solid #34D399', paddingBottom: '2px' } : undefined}>
+            {them}{suffix}
+          </span>
+          {themWon && <ChevronGlyph dir="right" />}
+        </div>
+        <div className="flex-1 max-w-[260px]">
+          <div className="relative h-[3px] bg-white/[0.05] rounded-full overflow-hidden">
+            <div
+              className="absolute left-0 h-full rounded-r-full transition-[width] duration-500 ease-out"
+              style={{
+                width: `${themShare}%`,
+                background: tied
+                  ? 'rgba(255,255,255,0.20)'
+                  : 'linear-gradient(to right, rgba(226,232,240,0.85), rgba(148,163,184,0.45))',
+              }}
+            />
+          </div>
+        </div>
+      </div>
     </div>
   );
 };
+
+// Aggregate footer that tallies how many categories each team leads
+// (ties don't count). Single-line "PHI leads 4 · Tied 1 · OPP leads 2"
+// readout that gives the boardroom takeaway in one glance.
+const TeamComparisonFooter = ({ game }) => {
+  const stats = [
+    { us: game.stats.shots.us,        them: game.stats.shots.them,        higher: true  },
+    { us: game.stats.hits.us,         them: game.stats.hits.them,         higher: true  },
+    { us: game.stats.blocks.us,       them: game.stats.blocks.them,       higher: true  },
+    { us: game.stats.faceoffPct.us,   them: game.stats.faceoffPct.them,   higher: true  },
+    { us: game.stats.takeaways.us,    them: game.stats.takeaways.them,    higher: true  },
+    { us: game.stats.giveaways.us,    them: game.stats.giveaways.them,    higher: false },
+    { us: game.stats.pim.us,          them: game.stats.pim.them,          higher: false },
+  ].filter((s) => s.us != null && s.them != null);
+
+  let usWins = 0, themWins = 0, ties = 0;
+  for (const s of stats) {
+    if (s.us === s.them) { ties++; continue; }
+    const usWon = s.higher ? s.us > s.them : s.us < s.them;
+    if (usWon) usWins++; else themWins++;
+  }
+  if (stats.length === 0) return null;
+
+  const edge = usWins - themWins;
+  const verdict = edge > 0 ? 'PHI ahead in the box score' :
+                  edge < 0 ? `${game.oppAbbr || 'Opp'} ahead in the box score` :
+                  'Box score is even';
+
+  return (
+    <div className="border-t border-white/[0.05] px-5 py-3 flex items-center justify-between flex-wrap gap-3 bg-gradient-to-t from-white/[0.012] to-transparent">
+      <div className="flex items-center gap-2 text-[11px] font-mono uppercase tracking-wider">
+        <span className="text-[#FF8A4C] font-semibold tabular-nums">PHI {usWins}</span>
+        <span className="text-white/25">·</span>
+        <span className="text-white/40">Tied {ties}</span>
+        <span className="text-white/25">·</span>
+        <span className="text-white/85 font-semibold tabular-nums">{game.oppAbbr || 'OPP'} {themWins}</span>
+      </div>
+      <span className="text-[11px] font-mono text-white/55">{verdict}</span>
+    </div>
+  );
+};
+
+// Tiny advantage chevron — subtle emerald pointing toward the winning
+// side. Small enough to not be loud, present enough to be glanceable.
+const ChevronGlyph = ({ dir }) => (
+  <svg width="9" height="9" viewBox="0 0 9 9" aria-hidden className="shrink-0 text-emerald-400/85">
+    {dir === 'left' ? (
+      <path d="M6 1 L2 4.5 L6 8" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+    ) : (
+      <path d="M3 1 L7 4.5 L3 8" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+    )}
+  </svg>
+);
 
 const KIND_ICON = {
   goal: { label: 'GOAL', tone: 'orange' },
@@ -262,12 +374,30 @@ export const GameTape = ({ game, loading, pbp, pbpRaw, customGameId, onClearCust
 
       <div className="space-y-4">
         <Section title="Team Comparison">
-          <div className="py-2">
-            <div className="grid grid-cols-[60px_1fr_90px_1fr_60px] items-center gap-3 px-4 h-8 text-[10px] font-mono text-white/35 uppercase tracking-wider">
-              <span className="text-right text-[#FF8A4C]/80">PHI</span>
-              <span /><span className="text-center">Metric</span><span />
-              <span className="text-left text-white/55">{game.oppAbbr}</span>
+          {/* Header: team logos + abbreviations on each side, balanced
+              around the centerline so the panel reads as a head-to-head
+              rather than a generic table. */}
+          <div className="grid grid-cols-[1fr_minmax(120px,160px)_1fr] items-center gap-4 h-16 px-5 border-b border-white/[0.05] bg-gradient-to-b from-white/[0.015] to-transparent">
+            <div className="flex items-center justify-end gap-3">
+              <div className="text-right">
+                <div className="text-[18px] font-semibold tracking-tight text-[#FF8A4C] leading-none">PHI</div>
+                <div className="text-[10px] font-mono text-white/35 uppercase tracking-wider mt-1">Flyers</div>
+              </div>
+              <FlyersMark size={36} />
             </div>
+            <div className="flex flex-col items-center gap-1">
+              <span className="text-[9px] font-mono text-white/30 tracking-[0.22em] uppercase">vs</span>
+            </div>
+            <div className="flex items-center gap-3">
+              <TeamLogo abbr={game.oppAbbr} size={36} />
+              <div>
+                <div className="text-[18px] font-semibold tracking-tight text-white/90 leading-none">{game.oppAbbr}</div>
+                <div className="text-[10px] font-mono text-white/35 uppercase tracking-wider mt-1">Opponent</div>
+              </div>
+            </div>
+          </div>
+
+          <div className="py-1">
             <CompareRow label="Shots"       us={game.stats.shots.us}       them={game.stats.shots.them} />
             <CompareRow label="Hits"        us={game.stats.hits.us}        them={game.stats.hits.them} />
             <CompareRow label="Blocks"      us={game.stats.blocks.us}      them={game.stats.blocks.them} />
@@ -276,6 +406,10 @@ export const GameTape = ({ game, loading, pbp, pbpRaw, customGameId, onClearCust
             <CompareRow label="Giveaways"   us={game.stats.giveaways.us}   them={game.stats.giveaways.them}   higherBetter={false} />
             <CompareRow label="PIM"         us={game.stats.pim.us}         them={game.stats.pim.them}          higherBetter={false} />
           </div>
+
+          {/* Footer: aggregate "edge" tally so the boardroom takeaway is
+              one glance — N of M categories where each side leads. */}
+          <TeamComparisonFooter game={game} />
         </Section>
 
         {/* Live game-state band — Shot Ticker, Live Events, Three Stars,

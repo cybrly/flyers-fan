@@ -13,6 +13,7 @@ import { HeadToHead } from '../components/HeadToHead.jsx';
 import { LeagueLeaders } from '../components/LeagueLeaders.jsx';
 import { ThreeStarsPanel, AwardWatchPanel, RecordsTrackerPanel } from '../components/EngagementPanels.jsx';
 import { InjuryWatch } from '../components/InjuryWatch.jsx';
+import { SpecialTeams } from '../components/SpecialTeams.jsx';
 import { ThisDayInHistory } from '../components/ThisDayInHistory.jsx';
 import { ScheduleStrength } from '../components/ScheduleStrength.jsx';
 import { PlayoffRace } from '../components/PlayoffRace.jsx';
@@ -378,6 +379,8 @@ export const Dashboard = ({ schedule, standings, scoreboard, clubStats, roster, 
       <CollapsibleBand id="offense" label="Offense & Scoring" color="orange" sub="rate · top scorers · goals">
 
       <ScoringPanel games={games} us={us} />
+
+      <SpecialTeams clubStats={clubStats} />
 
       {/* Three Stars from latest finalized game */}
       {lastGame?.stars?.length > 0 && <ThreeStarsPanel lastGame={lastGame} />}

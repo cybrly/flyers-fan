@@ -187,14 +187,19 @@ const PlayerCard = ({ slotKey, playerId, label, onClear, onPick }) => {
   );
 };
 
-// One stat row across N players. Highlight (orange) the leader (or all
-// leaders if tied). For inverted stats (PIM, GAA, losses, giveaways) the
-// LOWEST value wins.
+// One stat row across N players. Each column is graded relative to the
+// others — best value(s) tint green, worst value(s) tint red, middle
+// values stay neutral. For inverted stats (PIM, GAA, losses, giveaways)
+// the LOWEST value wins so green/red flip accordingly. With only one
+// valid value or all-equal values, nothing is colored — there's no
+// comparison to draw.
 const StatRow = ({ label, values, higherBetter = true, fmt }) => {
   const nums = values.map((v) => (typeof v === 'number' ? v : (v == null ? null : Number(v))));
   if (nums.every((v) => v == null)) return null;
   const valid = nums.filter((v) => v != null);
   const best = higherBetter ? Math.max(...valid) : Math.min(...valid);
+  const worst = higherBetter ? Math.min(...valid) : Math.max(...valid);
+  const allEqual = best === worst;
   const max = Math.max(1, Math.max(...nums.map((v) => Math.abs(v ?? 0))));
   const f = fmt || ((v) => v);
   return (
@@ -205,21 +210,24 @@ const StatRow = ({ label, values, higherBetter = true, fmt }) => {
         style={{ gridTemplateColumns: `repeat(${nums.length}, minmax(0, 1fr))` }}
       >
         {nums.map((n, i) => {
-          const isLeader = n != null && n === best && valid.length > 1;
+          const isBest = !allEqual && n != null && n === best && valid.length > 1;
+          const isWorst = !allEqual && n != null && n === worst && valid.length > 1 && !isBest;
           const pct = n != null ? Math.min(100, (Math.abs(n) / max) * 100) : 0;
+          const barClass = isBest ? 'bg-emerald-500' : isWorst ? 'bg-red-500' : 'bg-white/25';
+          const numClass = isBest ? 'text-emerald-400 font-semibold'
+                          : isWorst ? 'text-red-400 font-semibold'
+                          : 'text-white/70';
           return (
             <div key={i} className="flex items-center gap-2">
               <div className="relative h-1 flex-1 bg-white/[0.04] rounded-full overflow-hidden">
                 <div
-                  className={cx('absolute left-0 top-0 h-full rounded-full',
-                    isLeader ? 'bg-[#F74902]' : 'bg-white/25'
-                  )}
+                  className={cx('absolute left-0 top-0 h-full rounded-full', barClass)}
                   style={{ width: `${pct}%` }}
                 />
               </div>
-              <span className={cx('text-[12px] font-mono tabular-nums shrink-0 w-12 text-right',
-                isLeader ? 'text-[#FF8A4C] font-semibold' : 'text-white/70'
-              )}>{n != null ? f(n) : '—'}</span>
+              <span className={cx('text-[12px] font-mono tabular-nums shrink-0 w-12 text-right', numClass)}>
+                {n != null ? f(n) : '—'}
+              </span>
             </div>
           );
         })}

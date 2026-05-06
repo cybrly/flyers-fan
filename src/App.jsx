@@ -109,10 +109,11 @@ export default function App() {
       }
       if (e.metaKey || e.ctrlKey) return;
       if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+      // Keep this in sync with NAV_ITEMS kbd properties in nav.js.
       const map = {
-        '1': 'dashboard', '2': 'schedule', '3': 'standings',
-        '4': 'game', '5': 'playoffs', '6': 'roster',
-        '7': 'trends', '8': 'compare', '9': 'coaches', '0': 'draft',
+        '1': 'dashboard', '2': 'on-ice', '3': 'game',
+        '4': 'schedule', '5': 'standings', '6': 'playoffs',
+        '7': 'roster', '8': 'compare', '9': 'trends', '0': 'coaches',
       };
       if (map[e.key]) navigate(pageHref(map[e.key]));
     };

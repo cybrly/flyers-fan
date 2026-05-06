@@ -100,7 +100,7 @@ export const Dashboard = ({ schedule, standings, scoreboard, clubStats, roster, 
       <SectionBand
         label="Tonight"
         color="orange"
-        sub={liveGame ? 'live' : nextGame ? 'next up' : 'recent'}
+        sub={liveGame ? 'live · race · next stretch' : nextGame ? 'next up · race · next stretch' : 'recent · race · next stretch'}
         count={scoreboard?.games?.length || null}
       />
 
@@ -441,7 +441,7 @@ export const Dashboard = ({ schedule, standings, scoreboard, clubStats, roster, 
       <AwardWatchPanel />
 
       {/* ─── BAND · ROSTER & FRANCHISE ────────────────────────────────────── */}
-      <SectionBand label="Roster & Franchise" color="amber" sub="young guns · honors" />
+      <SectionBand label="Roster & Franchise" color="amber" sub="young guns · honors · history · milestones" />
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <YoungGunsPanel roster={roster} clubStats={clubStats} />

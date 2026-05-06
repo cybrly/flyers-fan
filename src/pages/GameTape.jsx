@@ -271,10 +271,11 @@ export const GameTape = ({ game, loading, pbp, pbpRaw, customGameId, onClearCust
           </div>
         </Section>
 
-        {/* Live Events / Three Stars / Key Numbers — sit in a single row band
-            between the team comparison and the rink graphic so the rink can
-            stretch full-width below them. */}
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+        {/* Live game-state band — Shot Ticker, Live Events, Three Stars,
+            Key Numbers. 2-col on tablet, 4-col on xl so each panel has
+            consistent breathing room and the row doesn't end with a
+            single orphan card. */}
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
           {pbpRaw && (
             <LiveShotTicker pbpRaw={pbpRaw} isLive={isLive(game.state)} oppAbbr={game.oppAbbr} />
           )}

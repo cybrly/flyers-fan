@@ -3,7 +3,7 @@ import { ChevronRight, Flame, RefreshCw, X } from 'lucide-react';
 import { cx, fmtRelative, connStatus, SEASON_LABEL } from '../config.js';
 import { Kbd, Chip, Label, Skeleton } from './primitives.jsx';
 import { FlyersMark, TeamLogo } from './Logo.jsx';
-import { NAV_ITEMS } from './nav.js';
+import { NAV_ITEMS, NAV_GROUPS } from './nav.js';
 import { navigate, playerHref } from '../router.js';
 import { TeamSwitcherPrank } from './TeamSwitcherPrank.jsx';
 
@@ -105,31 +105,41 @@ export const Sidebar = ({ page, setPage, team, liveGame, metro, roster, lastFetc
       </div>
 
       <nav aria-label="Primary navigation" className="flex-1 overflow-y-auto px-2 py-3">
-        <div className="px-2 mb-2"><Label>Workspace</Label></div>
-        <div className="space-y-0.5">
-          {NAV_ITEMS.map(({ id, label, icon: Icon, kbd }) => {
-            const active = page === id;
-            const liveBadge = id === 'game' && liveGame;
-            return (
-              <button
-                key={id}
-                onClick={() => handleSetPage(id)}
-                aria-current={active ? 'page' : undefined}
-                className={cx(
-                  'w-full group flex items-center justify-between px-2 h-7 rounded-md transition-all',
-                  active ? 'bg-white/[0.06] text-white' : 'text-white/55 hover:text-white hover:bg-white/[0.03]',
-                )}
-              >
-                <div className="flex items-center gap-2">
-                  <Icon size={13} strokeWidth={active ? 2 : 1.75} className={active ? 'text-[#F74902]' : ''} />
-                  <span className="text-[12px] font-medium tracking-tight">{label}</span>
-                  {liveBadge && <Chip tone="live" pulse>LIVE</Chip>}
-                </div>
-                {!liveBadge && <Kbd>{kbd}</Kbd>}
-              </button>
-            );
-          })}
-        </div>
+        {NAV_GROUPS.map((group) => {
+          const items = NAV_ITEMS.filter((n) => n.group === group.id);
+          if (items.length === 0) return null;
+          return (
+            <div key={group.id} className="mb-3 last:mb-0">
+              <div className="px-2 mb-1.5 mt-1 first:mt-0">
+                <Label>{group.label}</Label>
+              </div>
+              <div className="space-y-0.5">
+                {items.map(({ id, label, icon: Icon, kbd }) => {
+                  const active = page === id;
+                  const liveBadge = id === 'game' && liveGame;
+                  return (
+                    <button
+                      key={id}
+                      onClick={() => handleSetPage(id)}
+                      aria-current={active ? 'page' : undefined}
+                      className={cx(
+                        'w-full group flex items-center justify-between px-2 h-7 rounded-md transition-all',
+                        active ? 'bg-white/[0.06] text-white' : 'text-white/55 hover:text-white hover:bg-white/[0.03]',
+                      )}
+                    >
+                      <div className="flex items-center gap-2">
+                        <Icon size={13} strokeWidth={active ? 2 : 1.75} className={active ? 'text-[#F74902]' : ''} />
+                        <span className="text-[12px] font-medium tracking-tight">{label}</span>
+                        {liveBadge && <Chip tone="live" pulse>LIVE</Chip>}
+                      </div>
+                      {!liveBadge && kbd && <Kbd>{kbd}</Kbd>}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          );
+        })}
 
         <div className="mt-6 px-2">
           <div className="flex items-center justify-between mb-2">

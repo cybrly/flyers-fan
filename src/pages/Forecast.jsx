@@ -24,13 +24,20 @@ const fetchTeamSchedule = async (abbr) => {
   return r.json();
 };
 
+// Build the un-played REGULAR-SEASON games list. We deliberately exclude
+// preseason (gameType 1) and playoffs (gameType 3) — the simulator
+// awards 2 pts for a win, which is meaningful only for the regular
+// season standings race. Playoff games happen *after* the standings
+// have locked, so including them would (1) misclassify teams already
+// in the postseason as "still racing for it" and (2) inflate simulated
+// point totals for teams that advance.
 const buildRemainingGames = (raws) => {
   const seen = new Map();
   for (const raw of raws) {
     if (!raw?.games) continue;
     for (const g of raw.games) {
       if (!g.id || !isFuture(g.gameState)) continue;
-      if (g.gameType === 1) continue;
+      if (g.gameType !== 2) continue;
       if (seen.has(g.id)) continue;
       const home = g.homeTeam?.abbrev;
       const away = g.awayTeam?.abbrev;
@@ -126,6 +133,7 @@ export const Forecast = ({ standings }) => {
 
   const us = result?.teams?.find((t) => t.abbr === TEAM_ABBR);
   const pct = progress.total ? (progress.done / progress.total) : 0;
+  const seasonOver = remainingGames != null && remainingGames.length === 0;
 
   return (
     <div className="p-3 md:p-5 space-y-4">
@@ -135,7 +143,11 @@ export const Forecast = ({ standings }) => {
             <Sparkles size={16} className="text-[#FF8A4C]" /> Forecast
           </h1>
           <p className="text-[12px] text-white/45 mt-1 font-mono">
-            Monte Carlo playoff odds · {remainingGames ? `${remainingGames.length} remaining games · ${runs.toLocaleString()} sims` : 'loading league schedule…'}
+            Monte Carlo playoff odds · {remainingGames == null
+              ? 'loading league schedule…'
+              : remainingGames.length === 0
+                ? 'regular season complete'
+                : `${remainingGames.length} remaining regular-season games · ${runs.toLocaleString()} sims`}
           </p>
         </div>
         <div className="flex items-center gap-0.5 p-0.5 border border-white/[0.08] rounded-md bg-white/[0.02]">
@@ -150,14 +162,18 @@ export const Forecast = ({ standings }) => {
         </div>
       </div>
 
-      <ForecastRunBar
-        running={running}
-        pct={pct}
-        progress={progress}
-        onClickRun={reroll}
-        canRun={!!remainingGames && !running}
-        hasResult={!!result}
-      />
+      {seasonOver ? (
+        <SeasonOverBanner />
+      ) : (
+        <ForecastRunBar
+          running={running}
+          pct={pct}
+          progress={progress}
+          onClickRun={reroll}
+          canRun={!!remainingGames && !running}
+          hasResult={!!result}
+        />
+      )}
 
       {error && (
         <div className="border border-red-500/40 bg-red-500/[0.08] rounded-md p-4 text-[12px] font-mono text-red-300">
@@ -186,6 +202,26 @@ export const Forecast = ({ standings }) => {
     </div>
   );
 };
+
+const SeasonOverBanner = () => (
+  <div className="border border-emerald-500/30 bg-emerald-500/[0.04] rounded-md p-4 relative overflow-hidden">
+    <div className="absolute inset-0 pointer-events-none"
+      style={{ background: 'radial-gradient(circle at 0% 50%, rgba(16,185,129,0.08), transparent 50%)' }} />
+    <div className="relative flex items-start gap-3">
+      <div className="w-10 h-10 rounded-full bg-emerald-500/15 border border-emerald-500/40 flex items-center justify-center shrink-0">
+        <Sparkles size={18} className="text-emerald-400" />
+      </div>
+      <div className="flex-1 min-w-0">
+        <div className="text-[14px] font-semibold text-white/90">Regular season complete</div>
+        <div className="text-[12px] font-mono text-white/55 mt-1 leading-relaxed">
+          Standings are locked — there are no remaining regular-season games to simulate.
+          The simulator will be active again at next October's season opener; for in-progress
+          playoff series, head over to the <a href="/playoffs" className="text-[#FF8A4C] hover:underline">Playoffs</a> page.
+        </div>
+      </div>
+    </div>
+  </div>
+);
 
 const ForecastRunBar = ({ running, pct, progress, onClickRun, canRun, hasResult }) => (
   <div className="border border-[#F74902]/30 bg-[#F74902]/[0.04] rounded-md p-4 relative overflow-hidden">

@@ -111,7 +111,9 @@ export const Schedule = ({ schedule, monthSchedule, onOpenGame }) => {
 
 
       <Section>
-        <div className="overflow-x-auto">
+        {/* Tablet/desktop — full 11-column table. Hidden on phones in
+            favor of the stacked card layout below. */}
+        <div className="hidden sm:block overflow-x-auto">
           <table className="w-full">
             <thead className="sticky">
               <tr className="text-[10px] font-mono text-white/35 uppercase tracking-wider border-b border-white/[0.05]">
@@ -212,6 +214,74 @@ export const Schedule = ({ schedule, monthSchedule, onOpenGame }) => {
               })}
             </tbody>
           </table>
+          {all.length > 0 && filtered.length === 0 && (
+            <div className="py-12 text-center text-[12px] font-mono text-white/35">No games match.</div>
+          )}
+        </div>
+
+        {/* Phone — stacked card per game. Two-line layout: result + date
+            + opp + score on top, supporting metadata (site / diff / rest
+            / travel / type) below. Goal bars trail the second line. */}
+        <div className="sm:hidden divide-y divide-white/[0.04]">
+          {!all.length && Array.from({ length: 8 }).map((_, i) => (
+            <div key={i} className="px-4 py-3"><Skeleton className="w-full" height={20} /></div>
+          ))}
+          {filtered.map((g) => {
+            const diff = g.us - g.them;
+            const max = Math.max(g.us, g.them);
+            return (
+              <button
+                key={g.id}
+                onClick={() => onOpenGame?.(g.id)}
+                className="w-full text-left px-4 py-3 flex flex-col gap-1.5 hover:bg-white/[0.03] transition-colors"
+              >
+                <div className="flex items-center gap-2">
+                  <span className={cx(
+                    'inline-flex items-center justify-center w-[22px] h-[18px] text-[10px] font-mono font-semibold rounded-[3px] shrink-0',
+                    g.w ? 'bg-[#F74902]/15 text-[#FF8A4C] border border-[#F74902]/30'
+                        : 'bg-white/[0.03] text-white/40 border border-white/10'
+                  )}>{g.w ? 'W' : 'L'}</span>
+                  <TeamLogo abbr={g.opp} size={18} />
+                  <span className="text-[10px] font-mono text-white/35 uppercase shrink-0">{g.home ? 'vs' : '@'}</span>
+                  <span className="text-[14px] text-white/90 truncate flex-1">{OPP_FULL[g.opp] || g.oppName}</span>
+                  <span className="font-mono tabular-nums text-[15px] shrink-0">
+                    <span className={g.w ? 'text-[#FF8A4C] font-medium' : 'text-white/80'}>{g.us}</span>
+                    <span className="text-white/30 mx-1">–</span>
+                    <span className={g.w ? 'text-white/50' : 'text-white/80 font-medium'}>{g.them}</span>
+                  </span>
+                </div>
+                <div className="flex items-center gap-3 text-[10px] font-mono text-white/45 tabular-nums pl-7 flex-wrap">
+                  <span>{g.label}</span>
+                  <span className={cx(
+                    diff > 0 ? 'text-emerald-400' : diff < 0 ? 'text-red-400' : 'text-white/40'
+                  )}>{diff > 0 ? '+' : ''}{diff}</span>
+                  {g.restDays != null && (
+                    <span className={cx(
+                      g.restDays === 0 ? 'text-red-400'
+                      : g.restDays === 1 ? 'text-amber-400'
+                      : g.restDays >= 3 ? 'text-emerald-400'
+                      : 'text-white/55'
+                    )}>{g.restDays === 0 ? 'B2B' : `${g.restDays}d rest`}</span>
+                  )}
+                  {g.travelMiles > 0 && (
+                    <span className={cx(g.travelMiles >= 1500 ? 'text-amber-400' : 'text-white/40')}>
+                      {g.travelMiles.toLocaleString()}mi
+                    </span>
+                  )}
+                  {g.gameType === 3 && <span className="text-[#FF8A4C]">PO</span>}
+                  <span className="ml-auto flex items-center gap-[2px]">
+                    {Array.from({ length: max }).map((_, idx) => (
+                      <span key={`u${idx}`} className={cx('w-1 h-3', idx < g.us ? 'bg-[#F74902]' : 'bg-white/[0.06]')} />
+                    ))}
+                    <span className="w-1" />
+                    {Array.from({ length: max }).map((_, idx) => (
+                      <span key={`t${idx}`} className={cx('w-1 h-3', idx < g.them ? 'bg-white/40' : 'bg-white/[0.06]')} />
+                    ))}
+                  </span>
+                </div>
+              </button>
+            );
+          })}
           {all.length > 0 && filtered.length === 0 && (
             <div className="py-12 text-center text-[12px] font-mono text-white/35">No games match.</div>
           )}

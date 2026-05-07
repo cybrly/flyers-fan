@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo, useCallback, lazy, Suspense } from 'react';
 import { SpeedInsights } from '@vercel/speed-insights/react';
+import { Analytics } from '@vercel/analytics/react';
 
 import { TEAM_ABBR, SEASON, POLL, PLAYOFF_YEAR, UPCOMING_DRAFT_YEAR, PRIOR_DRAFT_YEAR, isLive, isFuture } from './config.js';
 import { useNHL, useClockTick, useLiveStream } from './api.js';
@@ -488,6 +489,7 @@ export default function App() {
           visible; ships LCP/CLS/INP measurements to Vercel for the
           performance dashboard once the deploy is live. */}
       <SpeedInsights />
+      <Analytics />
       <InstallPrompt />
     </div>
     </PlayerCtx.Provider>

@@ -25,7 +25,7 @@ import { KioskMode, KioskTrigger } from '../components/KioskMode.jsx';
 // numbers to the row edges. PHI bar uses the team orange, OPP bar uses
 // neutral slate so identity is conveyed by color, advantage by a thin
 // emerald underline + chevron on the leading number.
-const CompareRow = ({ label, us, them, higherBetter = true, suffix = '' }) => {
+const CompareRow = ({ label, us, them, higherBetter = true, suffix = '', format }) => {
   if (us == null || them == null) return null;
   const total = us + them;
   const usShare = total > 0 ? (us / total) * 100 : 50;
@@ -34,6 +34,11 @@ const CompareRow = ({ label, us, them, higherBetter = true, suffix = '' }) => {
   const usWon = !tied && (higherBetter ? us > them : us < them);
   const themWon = !tied && !usWon;
   const delta = us - them;
+  // Display-only formatting. Default is the value verbatim so existing
+  // integer rows keep rendering identically; pass `format` for stats
+  // that need decimals preserved (e.g. faceoff%, where toFixed(2)
+  // returns '52.70' but a numeric coercion would drop the trailing 0).
+  const fmt = format || ((v) => v);
 
   // Fixed-width value cell — both sides reserve the same horizontal
   // footprint regardless of digit count so the center label column lines
@@ -53,7 +58,7 @@ const CompareRow = ({ label, us, them, higherBetter = true, suffix = '' }) => {
         )}
         style={isWinner ? { borderBottom: '1px solid #34D399', paddingBottom: '2px' } : undefined}
       >
-        {value}{suffix}
+        {fmt(value)}{suffix}
       </span>
     </div>
   );
@@ -88,7 +93,7 @@ const CompareRow = ({ label, us, them, higherBetter = true, suffix = '' }) => {
           'text-[10px] font-mono tabular-nums transition-colors',
           tied ? 'text-white/30' : 'text-white/35',
         )}>
-          {tied ? 'EVEN' : `${delta > 0 ? '+' : ''}${delta}${suffix}`}
+          {tied ? 'EVEN' : `${delta > 0 ? '+' : ''}${fmt(delta)}${suffix}`}
         </span>
       </div>
 
@@ -453,7 +458,7 @@ export const GameTape = ({ game, loading, pbp, pbpRaw, liveSnap, customGameId, o
             <CompareRow label="Shots"       us={game.stats.shots.us}       them={game.stats.shots.them} />
             <CompareRow label="Hits"        us={game.stats.hits.us}        them={game.stats.hits.them} />
             <CompareRow label="Blocks"      us={game.stats.blocks.us}      them={game.stats.blocks.them} />
-            <CompareRow label="Faceoff %"   us={game.stats.faceoffPct.us != null ? +(game.stats.faceoffPct.us).toFixed(2) : null}  them={game.stats.faceoffPct.them != null ? +(game.stats.faceoffPct.them).toFixed(2) : null} suffix="%" />
+            <CompareRow label="Faceoff %"   us={game.stats.faceoffPct.us}  them={game.stats.faceoffPct.them} suffix="%" format={(v) => Number(v).toFixed(2)} />
             <CompareRow label="Takeaways"   us={game.stats.takeaways.us}   them={game.stats.takeaways.them} />
             <CompareRow label="Giveaways"   us={game.stats.giveaways.us}   them={game.stats.giveaways.them}   higherBetter={false} />
             <CompareRow label="PIM"         us={game.stats.pim.us}         them={game.stats.pim.them}          higherBetter={false} />

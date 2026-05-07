@@ -9,6 +9,7 @@ import { navigate, gameHref } from '../router.js';
 import { PLAYER_SOCIALS } from '../data/playerSocials.js';
 import { SkaterHotCold, GoalieHotCold } from '../components/HotCold.jsx';
 import { TeamLogoBg } from '../components/Watermark.jsx';
+import { SignaturePanel } from '../components/SignaturePanel.jsx';
 
 // Inline SVGs for Instagram + X. Drawn small and monochrome so they live
 // quietly in the player hero. Lucide-react v1.8 doesn't ship Instagram or
@@ -215,6 +216,12 @@ export const PlayerProfile = ({ playerId }) => {
               </div>
             )}
             <SocialLinks playerId={playerId} fullName={fullName} />
+          </div>
+          {/* Reference signature — stacks below the bio on phones, sits as
+              a third column on tablet+ so fans can compare it to signed
+              merch without leaving the profile. */}
+          <div className="md:w-[280px] md:shrink-0">
+            <SignaturePanel playerId={playerId} fullName={fullName} />
           </div>
         </div>
       </div>

@@ -228,14 +228,12 @@ export const PlayerProfile = ({ playerId }) => {
         </div>
       </div>
 
-      {/* Contract + signature sit in their own row beneath the hero,
-          side-by-side on tablet+ and stacked on phones. Decoupling them
-          from the hero keeps the headshot/bio block from being stretched
-          vertically to match the rail's height (which left a lot of empty
-          space around a small headshot and short bio on wide screens). */}
+      {/* Contract + gear sit in their own row beneath the hero. Signature
+          lives further down with the game log — the autograph is more of a
+          memorabilia reference than a stat, so it doesn't need top billing. */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
         <ContractPanel playerId={playerId} fullName={fullName} />
-        <SignaturePanel playerId={playerId} fullName={fullName} />
+        <GearPanel playerId={playerId} />
       </div>
 
       {/* Featured stats — current season big numbers */}
@@ -423,7 +421,7 @@ export const PlayerProfile = ({ playerId }) => {
               jump to that game's Game Tape page. */}
           <PlayerGameLog playerId={playerId} isSkater={isSkater} />
 
-          <GearPanel playerId={playerId} />
+          <SignaturePanel playerId={playerId} fullName={fullName} />
         </div>
 
         {/* Side panel — career totals + awards + minor leagues */}

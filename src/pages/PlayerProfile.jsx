@@ -10,6 +10,8 @@ import { PLAYER_SOCIALS } from '../data/playerSocials.js';
 import { SkaterHotCold, GoalieHotCold } from '../components/HotCold.jsx';
 import { TeamLogoBg } from '../components/Watermark.jsx';
 import { SignaturePanel } from '../components/SignaturePanel.jsx';
+import { ContractPanel } from '../components/ContractPanel.jsx';
+import { GearPanel } from '../components/GearPanel.jsx';
 
 // Inline SVGs for Instagram + X. Drawn small and monochrome so they live
 // quietly in the player hero. Lucide-react v1.8 doesn't ship Instagram or
@@ -223,10 +225,11 @@ export const PlayerProfile = ({ playerId }) => {
             )}
             <SocialLinks playerId={playerId} fullName={fullName} />
           </div>
-          {/* Reference signature — stacks below the bio on phones, sits as
-              a third column on tablet+ so fans can compare it to signed
-              merch without leaving the profile. */}
-          <div className="md:w-[280px] md:shrink-0">
+          {/* Right rail — contract terms on top, reference signature
+              below. Stacks under the bio on phones; sits as a third
+              column on tablet+. */}
+          <div className="md:w-[280px] md:shrink-0 space-y-3">
+            <ContractPanel playerId={playerId} fullName={fullName} />
             <SignaturePanel playerId={playerId} fullName={fullName} />
           </div>
         </div>
@@ -416,6 +419,8 @@ export const PlayerProfile = ({ playerId }) => {
               from /v1/player/{id}/game-log/{season}/{type}. Click a row to
               jump to that game's Game Tape page. */}
           <PlayerGameLog playerId={playerId} isSkater={isSkater} />
+
+          <GearPanel playerId={playerId} />
         </div>
 
         {/* Side panel — career totals + awards + minor leagues */}

@@ -16,6 +16,7 @@ import { LiveShotTicker } from '../components/LiveShotTicker.jsx';
 import { ShareGameButton } from '../components/ShareGame.jsx';
 import { TeamLogoBg } from '../components/Watermark.jsx';
 import { KioskMode, KioskTrigger } from '../components/KioskMode.jsx';
+import { Hero } from '../components/Hero.jsx';
 
 // Team-comparison row, executive layout. Order from outer-edge to
 // inner-center on each side:
@@ -260,7 +261,7 @@ const GoalieRow = ({ g, isUs, teamAbbr }) => (
   </tr>
 );
 
-export const GameTape = ({ game, loading, pbp, pbpRaw, liveSnap, customGameId, onClearCustom }) => {
+export const GameTape = ({ game, loading, pbp, pbpRaw, liveSnap, schedule, standings, customGameId, onClearCustom }) => {
   if (loading && !game) {
     return (
       <div className="p-4 md:p-6 space-y-5">
@@ -302,6 +303,33 @@ export const GameTape = ({ game, loading, pbp, pbpRaw, liveSnap, customGameId, o
   const livePeriod = (snapFresh && liveSnap?.periodDescriptor) || game.periodDescriptor;
   const liveClock  = (snapFresh && liveSnap?.clock) || game.clock;
 
+  // Adapt the boxscore-shaped game into the schedule-shape Hero expects.
+  // Hero looks at three slots — liveGame / nextGame / lastResult — and
+  // picks the matching layout. Route the current game into the slot that
+  // matches its actual state.
+  const isFinal = game.state === 'FINAL' || game.state === 'OFF';
+  const gameAsScheduleRow = {
+    id: game.id,
+    opp: game.oppAbbr,
+    oppName: game.oppName,
+    home: game.home,
+    state: game.state,
+    venue: game.venue,
+    gameType: game.gameType,
+    startUTC: game.startTimeUTC,
+    date: game.date,
+    label: game.dateLabel,
+    us: liveScore.us,
+    them: liveScore.them,
+    w: isFinal ? liveScore.us > liveScore.them : false,
+    lastPeriodType: game.periodDescriptor?.periodType,
+  };
+  const heroLive = liveNow ? gameAsScheduleRow : null;
+  const heroLast = !liveNow && isFinal ? gameAsScheduleRow : null;
+  const heroNext = !liveNow && !isFinal ? gameAsScheduleRow : null;
+  const recentForHero = (schedule?.games || []).slice(0, 10);
+  const us = standings?.us;
+
   return (
     <div className="p-3 md:p-5 space-y-3">
       {kioskOpen && (
@@ -339,70 +367,27 @@ export const GameTape = ({ game, loading, pbp, pbpRaw, liveSnap, customGameId, o
         </div>
       </div>
 
-      <div className="border border-[#F74902]/[0.18] bg-[#0C0C0C]/60 rounded-md p-5 relative overflow-hidden">
-        {/* Subtle white edge glow sits on the side where PHI actually is —
-            left when away, right when home. Neutral so it doesn't tint. */}
-        <div className={cx(
-          'absolute -top-20 w-60 h-60 rounded-full pointer-events-none',
-          game.home ? '-right-20' : '-left-20'
-        )}
-          style={{ background: 'radial-gradient(circle, rgba(255,255,255,0.04), transparent 70%)' }} />
-        {/* Team-identity watermarks — anchored to the TOP corners so they
-            sit behind each team's name block at the top of the card and
-            don't bleed down into the periods grid that lives at the
-            bottom. Each logo lands on its team's side of the score
-            readout (away on the left, home on the right). */}
-        {game.oppAbbr && (
-          <TeamLogoBg
-            abbr={game.oppAbbr}
-            size={150}
-            opacity={0.08}
-            position={game.home ? 'top-left' : 'top-right'}
-          />
-        )}
-        <TeamLogoBg
-          abbr="PHI"
-          size={150}
-          opacity={0.08}
-          position={game.home ? 'top-right' : 'top-left'}
-        />
-        {/* Standard hockey scoreboard layout: away team on the left, home team
-            on the right. PHI may be either side depending on game.home. */}
-        <div className="relative grid grid-cols-[1fr_auto_1fr] items-center gap-6">
-          <div className="flex items-center gap-3">
-            {game.home
-              ? <TeamLogo abbr={game.oppAbbr} size={36} />
-              : <FlyersMark size={36} />}
-            <div>
-              <div className="text-[10px] font-mono text-white/40 uppercase tracking-wider">Away</div>
-              <div className={cx('text-[14px] font-medium', game.home && 'text-white/75')}>
-                {game.home ? game.oppName : 'Philadelphia Flyers'}
-              </div>
-            </div>
-          </div>
-          <div className="text-center">
-            <ScoreReadout us={liveScore.us} them={liveScore.them} reverse={game.home} />
-            <div className="text-[10px] font-mono text-white/40 uppercase tracking-wider mt-1">
-              {liveNow
-                ? `P${livePeriod?.number || '?'} · ${liveClock?.timeRemaining || 'live'}`
-                : `Final${game.periodDescriptor?.periodType === 'OT' ? ' · OT' : game.periodDescriptor?.periodType === 'SO' ? ' · SO' : ''}`}
-            </div>
-          </div>
-          <div className="flex items-center gap-3 justify-end">
-            <div className="text-right">
-              <div className="text-[10px] font-mono text-white/40 uppercase tracking-wider">Home</div>
-              <div className={cx('text-[14px] font-medium', !game.home && 'text-white/75')}>
-                {game.home ? 'Philadelphia Flyers' : game.oppName}
-              </div>
-            </div>
-            {game.home
-              ? <FlyersMark size={36} />
-              : <TeamLogo abbr={game.oppAbbr} size={36} />}
-          </div>
-        </div>
+      {/* Hero banner — same broadcast-style card the Dashboard uses,
+          fed with the currently-loaded game's data. Hero handles the
+          live / next / final layout switch internally based on which
+          slot we populate. */}
+      <Hero
+        liveGame={heroLive}
+        liveDetail={heroLive ? game : null}
+        liveSnap={heroLive ? liveSnap : null}
+        nextGame={heroNext}
+        lastResult={heroLast}
+        us={us}
+        recentGames={recentForHero}
+        standings={standings}
+      />
 
+      {/* Periods strip — kept under the Hero since it's a Game Tape
+          specific surface (scoring by period across the full game) and
+          doesn't live on the Dashboard Hero. */}
+      <div className="border border-[#F74902]/[0.18] bg-[#0C0C0C]/60 rounded-md p-4 relative overflow-hidden">
         {periods.length > 0 && (
-          <div className="relative mt-5 pt-4 border-t border-white/[0.05] grid grid-cols-4 gap-2">
+          <div className="relative grid grid-cols-4 gap-2">
             {periods.map((p) => {
               const [u, t] = game.periods[p];
               return (

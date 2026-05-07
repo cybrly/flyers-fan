@@ -446,7 +446,7 @@ export default function App() {
                 {page === 'dashboard' && <Dashboard schedule={schedule} standings={standings} scoreboard={scoreboard} clubStats={clubStats} roster={roster} liveDetail={isLive(boxscore.data?.gameState) ? game : null} liveSnap={liveSnap} lastGame={game} leagueLeaders={leagueLeaders} loading={scheduleRaw.loading || standingsRaw.loading} onOpenGame={openGame} />}
                 {page === 'schedule'  && <Schedule schedule={schedule} monthSchedule={monthSchedule} onOpenGame={openGame} scoreboard={scoreboard} standings={standings} leagueLeaders={leagueLeaders} />}
                 {page === 'standings' && <Standings standings={standings} />}
-                {page === 'game'      && <GameTape game={game} loading={boxscore.loading} pbp={pbp} pbpRaw={pbpRaw.data} liveSnap={liveSnap} customGameId={routeGameId} onClearCustom={clearSelectedGame} />}
+                {page === 'game'      && <GameTape game={game} loading={boxscore.loading} pbp={pbp} pbpRaw={pbpRaw.data} liveSnap={liveSnap} schedule={schedule} standings={standings} customGameId={routeGameId} onClearCustom={clearSelectedGame} />}
                 {page === 'playoffs'  && <Playoffs bracket={bracket} onOpenSeries={onOpenSeries} />}
                 {page === 'roster'    && <Roster roster={roster} clubStats={clubStats} prospects={prospects} draftPicks={draftPicks} />}
                 {page === 'player'    && <PlayerProfile playerId={profileId} />}

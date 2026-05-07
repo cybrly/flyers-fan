@@ -45,6 +45,27 @@ export const PLAYER_SIGNATURES = {
     license: 'For reference only',
     added: '2026-05-07',
   },
+  // Jamie Drysdale (PHI · #9)
+  8482142: {
+    url: '/autographs/drysdale.png',
+    source: 'Site collection',
+    license: 'For reference only',
+    added: '2026-05-07',
+  },
+  // Porter Martone (PHI · #94)
+  8485406: {
+    url: '/autographs/martone.png',
+    source: 'Site collection',
+    license: 'For reference only',
+    added: '2026-05-07',
+  },
+  // Cam York (PHI · #8)
+  8481546: {
+    url: '/autographs/york.png',
+    source: 'Site collection',
+    license: 'For reference only',
+    added: '2026-05-07',
+  },
 };
 
 export const hasSignature = (playerId) => !!PLAYER_SIGNATURES[playerId];

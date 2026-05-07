@@ -15,6 +15,7 @@ import { GoalieMatchup } from '../components/GoalieMatchup.jsx';
 import { LiveShotTicker } from '../components/LiveShotTicker.jsx';
 import { ShareGameButton } from '../components/ShareGame.jsx';
 import { TeamLogoBg } from '../components/Watermark.jsx';
+import { KioskMode, KioskTrigger } from '../components/KioskMode.jsx';
 
 // Team-comparison row, executive layout. Order from outer-edge to
 // inner-center on each side:
@@ -280,6 +281,7 @@ export const GameTape = ({ game, loading, pbp, pbpRaw, liveSnap, customGameId, o
 
   const liveNow = isLive(game.state);
   const periods = Object.keys(game.periods).map(Number).sort((a, b) => a - b);
+  const [kioskOpen, setKioskOpen] = useState(false);
 
   // SSE overlay — when the live stream has emitted a fresh snapshot
   // (<6s old) prefer its score/period/clock so the header updates in
@@ -297,6 +299,9 @@ export const GameTape = ({ game, loading, pbp, pbpRaw, liveSnap, customGameId, o
 
   return (
     <div className="p-3 md:p-5 space-y-3">
+      {kioskOpen && (
+        <KioskMode game={game} onClose={() => setKioskOpen(false)} />
+      )}
       <div className="flex items-end justify-between flex-wrap gap-3">
         <div>
           <div className="flex items-center gap-2">
@@ -324,6 +329,7 @@ export const GameTape = ({ game, loading, pbp, pbpRaw, liveSnap, customGameId, o
               ● {game.score.us > game.score.them ? 'W' : 'L'} · {game.score.us}–{game.score.them}
             </Chip>
           )}
+          <KioskTrigger onClick={() => setKioskOpen(true)} />
           {!liveNow && <ShareGameButton game={game} />}
         </div>
       </div>

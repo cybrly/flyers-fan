@@ -24,15 +24,27 @@
 // these from automatically.
 
 export const PLAYER_SIGNATURES = {
-  // Examples (uncomment + verify URLs before committing real ones):
-  //
-  // 8475167: { // Konecny — example, replace before shipping
-  //   url: 'https://example.com/konecny_signature.svg',
-  //   source: 'Wikipedia Commons',
-  //   sourceUrl: 'https://commons.wikimedia.org/wiki/File:Konecny_signature.svg',
-  //   license: 'CC-BY-SA 4.0',
-  //   added: '2026-05-07',
-  // },
+  // Sean Couturier (PHI · #14)
+  8476461: {
+    url: '/autographs/couturier.png',
+    source: 'Site collection',
+    license: 'For reference only',
+    added: '2026-05-07',
+  },
+  // Travis Konecny (PHI · #11)
+  8478439: {
+    url: '/autographs/konecny.png',
+    source: 'Site collection',
+    license: 'For reference only',
+    added: '2026-05-07',
+  },
+  // Trevor Zegras
+  8482066: {
+    url: '/autographs/zegras.png',
+    source: 'Site collection',
+    license: 'For reference only',
+    added: '2026-05-07',
+  },
 };
 
 export const hasSignature = (playerId) => !!PLAYER_SIGNATURES[playerId];

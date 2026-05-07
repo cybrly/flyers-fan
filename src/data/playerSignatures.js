@@ -38,8 +38,8 @@ export const PLAYER_SIGNATURES = {
     license: 'For reference only',
     added: '2026-05-07',
   },
-  // Trevor Zegras
-  8482066: {
+  // Trevor Zegras (PHI · #46)
+  8481533: {
     url: '/autographs/zegras.png',
     source: 'Site collection',
     license: 'For reference only',

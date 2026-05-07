@@ -4,6 +4,7 @@ import { useScoreBurst } from '../api.js';
 import { Chip } from './primitives.jsx';
 import { FlyersMark, TeamLogo } from './Logo.jsx';
 import { WinProbability, PaceProjection, GoalCelebration } from './LiveTiles.jsx';
+import { KioskMode, KioskTrigger } from './KioskMode.jsx';
 
 // Inline keyframes for the slow rink rotation + puck pulse. Kept here rather
 // than in a global stylesheet because they're only used by the Hero centerpiece.
@@ -297,9 +298,18 @@ const HeroLive = ({ liveGame, liveDetail, liveSnap, oppFull, recentGames, oppRow
   // self-clears after ~2.4s. Prefer the SSE-overlay value so the burst
   // fires at sub-2s latency on goal events.
   const goalBurst = useScoreBurst(usScore);
+  const [kioskOpen, setKioskOpen] = useState(false);
 
   return (
     <>
+      {kioskOpen && (
+        <KioskMode
+          liveGame={liveGame}
+          liveDetail={liveDetail}
+          liveSnap={liveSnap}
+          onClose={() => setKioskOpen(false)}
+        />
+      )}
       <div className="flex items-center gap-2 flex-wrap">
         <Chip tone="live" pulse>LIVE</Chip>
         {periodLabel && (
@@ -310,6 +320,7 @@ const HeroLive = ({ liveGame, liveDetail, liveSnap, oppFull, recentGames, oppRow
             </span>
           </div>
         )}
+        <KioskTrigger onClick={() => setKioskOpen(true)} />
         <span className="text-[11px] font-mono text-white/50 uppercase tracking-wider">
           {liveGame.home ? 'Home' : 'Away'}{liveGame.venue ? ` · ${liveGame.venue}` : ''}
         </span>

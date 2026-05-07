@@ -1,0 +1,96 @@
+// middleware.js — Vercel Edge Middleware.
+//
+// On /game/:id requests we sniff the user-agent. Crawler bots (the ones
+// that build link previews for iMessage, Twitter, Discord, Slack, etc.)
+// don't run JavaScript, so the SPA's static /index.html they'd otherwise
+// receive carries the default og:image and they never see a per-game
+// preview. Instead we serve them a tiny HTML stub with og:image pointing
+// at /api/og?game=:id, which renders a custom score card for that game.
+//
+// Real users (any UA without a known bot signature) pass through to the
+// normal SPA, so there's zero perf cost to the interactive flow.
+
+const BOT_RE = /Twitterbot|facebookexternalhit|Discordbot|Slackbot|LinkedInBot|WhatsApp|Pinterest|Telegram|SkypeUriPreview|GoogleBot|bingbot|Applebot|redditbot|Embedly|iframely/i;
+
+export const config = {
+  matcher: ['/game/:path*'],
+};
+
+export default async function middleware(request) {
+  const ua = request.headers.get('user-agent') || '';
+  if (!BOT_RE.test(ua)) {
+    return; // pass through to SPA for real users
+  }
+
+  const url = new URL(request.url);
+  const m = url.pathname.match(/\/game\/(\d+)/);
+  const gameId = m ? m[1] : null;
+
+  // Try to fetch the boxscore so we can write a precise title/desc; if
+  // it fails the OG image still renders (it falls back inside /api/og).
+  let title = 'flyers.fan · Game Recap';
+  let description = 'Live tracker · stats · forecast · Philadelphia Flyers';
+  if (gameId) {
+    try {
+      const r = await fetch(`https://api-web.nhle.com/v1/gamecenter/${gameId}/boxscore`, {
+        headers: { accept: 'application/json' },
+      });
+      if (r.ok) {
+        const game = await r.json();
+        const a = game.awayTeam;
+        const h = game.homeTeam;
+        const isPhiHome = h?.abbrev === 'PHI';
+        const oppAbbr = isPhiHome ? a?.abbrev : h?.abbrev;
+        const phiScore = isPhiHome ? (h?.score ?? 0) : (a?.score ?? 0);
+        const oppScore = isPhiHome ? (a?.score ?? 0) : (h?.score ?? 0);
+        const isFinal = game.gameState === 'FINAL' || game.gameState === 'OFF';
+        const verb = isFinal
+          ? (phiScore > oppScore ? 'beat' : 'fell to')
+          : 'vs';
+        title = `PHI ${verb} ${oppAbbr || 'OPP'} · ${phiScore}–${oppScore}`;
+        description = `Philadelphia Flyers ${isFinal ? 'final' : 'live'}: ${phiScore}–${oppScore} ${isPhiHome ? 'vs' : '@'} ${oppAbbr || 'OPP'}`;
+      }
+    } catch { /* fall back to defaults */ }
+  }
+
+  const ogPath = gameId ? `/api/og?game=${gameId}` : '/api/og';
+  const html = `<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>${escapeHtml(title)}</title>
+    <meta name="description" content="${escapeHtml(description)}" />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="${escapeHtml(title)}" />
+    <meta property="og:description" content="${escapeHtml(description)}" />
+    <meta property="og:image" content="${url.origin}${ogPath}" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="${escapeHtml(title)}" />
+    <meta name="twitter:description" content="${escapeHtml(description)}" />
+    <meta name="twitter:image" content="${url.origin}${ogPath}" />
+    <link rel="canonical" href="${url.origin}${url.pathname}" />
+  </head>
+  <body>
+    <p>${escapeHtml(title)}</p>
+    <p><a href="${url.origin}${url.pathname}">Open on flyers.fan</a></p>
+  </body>
+</html>`;
+
+  return new Response(html, {
+    headers: {
+      'content-type': 'text/html; charset=utf-8',
+      'cache-control': 'public, s-maxage=60, stale-while-revalidate=300',
+    },
+  });
+}
+
+function escapeHtml(s) {
+  return String(s ?? '')
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;');
+}

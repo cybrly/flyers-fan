@@ -15,7 +15,7 @@ export const InjuryWatch = ({ lastGame }) => {
 
   return (
     <Section
-      title="Out of the Lineup"
+      title="Watching from the Press Box"
       action={
         <span className="text-[10px] font-mono text-white/40 uppercase tracking-wider">
           last game · {lastGame?.dateLabel || 'recent'}

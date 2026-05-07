@@ -15,6 +15,7 @@ import { ThreeStarsPanel, AwardWatchPanel, RecordsTrackerPanel } from '../compon
 import { InjuryWatch } from '../components/InjuryWatch.jsx';
 import { SpecialTeams } from '../components/SpecialTeams.jsx';
 import { FaceoffSpecialists } from '../components/FaceoffSpecialists.jsx';
+import { ConditionalStats } from '../components/ConditionalStats.jsx';
 import { SkaterHotCold } from '../components/HotCold.jsx';
 import { OpponentScout } from '../components/OpponentScout.jsx';
 import { ThisDayInHistory } from '../components/ThisDayInHistory.jsx';
@@ -396,6 +397,8 @@ export const Dashboard = ({ schedule, standings, scoreboard, clubStats, roster, 
 
       <FaceoffSpecialists clubStats={clubStats} />
 
+      <ConditionalStats clubStats={clubStats} schedule={schedule} />
+
       {/* Three Stars from latest finalized game */}
       {lastGame?.stars?.length > 0 && <ThreeStarsPanel lastGame={lastGame} />}
 
@@ -483,7 +486,7 @@ export const Dashboard = ({ schedule, standings, scoreboard, clubStats, roster, 
           rows. Collected into one band so all "color and context" content
           lives in one scroll-stop instead of surprising the reader between
           data-heavy sections. */}
-      <CollapsibleBand id="notes-notables" label="Notes & Notables" color="amber" sub="records · awards · honors · history" defaultCollapsed>
+      <CollapsibleBand id="notes-notables" label="Around the Building" color="amber" sub="records · awards · honors · history" defaultCollapsed>
 
       <InjuryWatch lastGame={lastGame} />
 

@@ -102,8 +102,8 @@ export const WatchabilityPanel = ({ scoreboard, standings, leagueLeaders, ourTea
 
   return (
     <Section
-      title="Worth Watching Tonight"
-      action={<span className="text-[10px] font-mono text-white/40 uppercase tracking-wider">if PHI isn't on</span>}
+      title="On the Other Sheets"
+      action={<span className="text-[10px] font-mono text-white/40 uppercase tracking-wider">around the league tonight</span>}
     >
       <div className="grid grid-cols-1 md:grid-cols-3 gap-px bg-white/[0.04]">
         {top.map((g) => {

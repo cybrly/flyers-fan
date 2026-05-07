@@ -88,7 +88,7 @@ export const SpecialTeams = ({ clubStats }) => {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="text-[14px] font-semibold tracking-tight">Special Teams Personnel</h3>
+          <h3 className="text-[14px] font-semibold tracking-tight">Power Play & Penalty Kill</h3>
           <p className="text-[10px] font-mono text-white/40 mt-0.5 uppercase tracking-wider">
             Average ice time per game · proxy for who plays on PP / PK
           </p>

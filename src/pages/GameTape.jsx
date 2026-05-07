@@ -342,23 +342,24 @@ export const GameTape = ({ game, loading, pbp, pbpRaw, liveSnap, customGameId, o
           game.home ? '-right-20' : '-left-20'
         )}
           style={{ background: 'radial-gradient(circle, rgba(255,255,255,0.04), transparent 70%)' }} />
-        {/* Opponent watermark — anchored opposite the PHI side so neither
-            team logo competes with the score readout. */}
+        {/* Team-identity watermarks — anchored to the TOP corners so they
+            sit behind each team's name block at the top of the card and
+            don't bleed down into the periods grid that lives at the
+            bottom. Each logo lands on its team's side of the score
+            readout (away on the left, home on the right). */}
         {game.oppAbbr && (
           <TeamLogoBg
             abbr={game.oppAbbr}
-            size={224}
-            opacity={0.07}
-            position={game.home ? 'bottom-left' : 'bottom-right'}
+            size={150}
+            opacity={0.08}
+            position={game.home ? 'top-left' : 'top-right'}
           />
         )}
-        {/* PHI watermark on the home side, mirrored. Together they frame
-            the score readout with each team's identity. */}
         <TeamLogoBg
           abbr="PHI"
-          size={224}
-          opacity={0.07}
-          position={game.home ? 'bottom-right' : 'bottom-left'}
+          size={150}
+          opacity={0.08}
+          position={game.home ? 'top-right' : 'top-left'}
         />
         {/* Standard hockey scoreboard layout: away team on the left, home team
             on the right. PHI may be either side depending on game.home. */}
@@ -452,7 +453,7 @@ export const GameTape = ({ game, loading, pbp, pbpRaw, liveSnap, customGameId, o
             <CompareRow label="Shots"       us={game.stats.shots.us}       them={game.stats.shots.them} />
             <CompareRow label="Hits"        us={game.stats.hits.us}        them={game.stats.hits.them} />
             <CompareRow label="Blocks"      us={game.stats.blocks.us}      them={game.stats.blocks.them} />
-            <CompareRow label="Faceoff %"   us={game.stats.faceoffPct.us}  them={game.stats.faceoffPct.them} suffix="%" />
+            <CompareRow label="Faceoff %"   us={game.stats.faceoffPct.us != null ? +(game.stats.faceoffPct.us).toFixed(2) : null}  them={game.stats.faceoffPct.them != null ? +(game.stats.faceoffPct.them).toFixed(2) : null} suffix="%" />
             <CompareRow label="Takeaways"   us={game.stats.takeaways.us}   them={game.stats.takeaways.them} />
             <CompareRow label="Giveaways"   us={game.stats.giveaways.us}   them={game.stats.giveaways.them}   higherBetter={false} />
             <CompareRow label="PIM"         us={game.stats.pim.us}         them={game.stats.pim.them}          higherBetter={false} />
@@ -520,7 +521,7 @@ export const GameTape = ({ game, loading, pbp, pbpRaw, liveSnap, customGameId, o
                 { l: 'Shots on Goal',        v: game.stats.shots.us != null ? `${game.stats.shots.us} / ${game.stats.shots.them}` : '—' },
                 { l: 'Power Play',           v: game.stats.powerPlay.us != null ? `${game.stats.powerPlay.us}${game.stats.powerPlayPctg.us != null ? ` · ${game.stats.powerPlayPctg.us}%` : ''}` : '—' },
                 { l: 'PK Faced',             v: game.stats.powerPlay.them != null ? `${game.stats.powerPlay.them}` : '—' },
-                { l: 'Faceoff %',            v: game.stats.faceoffPct.us != null ? `${game.stats.faceoffPct.us}%` : '—' },
+                { l: 'Faceoff %',            v: game.stats.faceoffPct.us != null ? `${(game.stats.faceoffPct.us).toFixed(2)}%` : '—' },
                 { l: 'Blocks vs Opp',        v: game.stats.blocks.us != null ? `${game.stats.blocks.us} / ${game.stats.blocks.them}` : '—' },
                 { l: 'Hits Differential',    v: game.stats.hits.us != null ? (game.stats.hits.us - game.stats.hits.them) : '—' },
                 { l: 'Giveaways',            v: game.stats.giveaways.us ?? '—' },

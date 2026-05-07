@@ -1,25 +1,23 @@
 // api/og.js
 //
-// Edge function that renders an Open Graph image for any flyers.fan URL.
-// 1200x630 PNG, designed to look great in iMessage / Twitter / Discord /
-// Slack previews. Per-game variant fetches the boxscore and shows the
-// score; the no-game default is a brand card.
+// Edge function that renders an Open Graph image. 1200x630 PNG, designed
+// for iMessage / Twitter / Discord / Slack previews.
 //
 // Usage:
 //   /api/og              → default brand card
 //   /api/og?game=12345   → score-card for that game
 //
-// Powered by @vercel/og (Satori under the hood). Plain .js (no JSX) so
-// Vercel's serverless-function detection picks it up — non-Next projects
-// only auto-detect .js / .mjs / .ts in /api, not .jsx / .tsx.
+// Powered by @vercel/og (Satori). Plain .js (no JSX) so Vercel's
+// serverless-function detection picks it up. Critically, no remote
+// images: Satori has limited SVG-URL support and the NHL CDN doesn't
+// serve CORS-friendly raster versions of team logos. We lean on big
+// typography + color blocks instead, which renders bulletproof.
 
 import { ImageResponse } from '@vercel/og';
 
 export const config = { runtime: 'edge' };
 
 const NHL = 'https://api-web.nhle.com';
-const PHI_LOGO = 'https://assets.nhle.com/logos/nhl/svg/PHI_dark.svg';
-const teamLogo = (abbr) => `https://assets.nhle.com/logos/nhl/svg/${abbr}_dark.svg`;
 
 const fetchGame = async (id) => {
   if (!id) return null;
@@ -34,120 +32,217 @@ const fetchGame = async (id) => {
   }
 };
 
-// Tiny createElement helper — avoids importing React just for the type.
-// @vercel/og only needs the ReactElement-shaped tree, not the runtime.
+// Tiny createElement-shaped helper. @vercel/og passes the tree to Satori,
+// which only needs `{ type, props }` — no React.createElement runtime
+// required, no jsx-runtime, no React import. Children are flattened
+// because Satori is strict about array-of-arrays nesting.
 const h = (type, props, ...children) => ({
   type,
-  props: { ...props, children: children.flat().filter((c) => c != null && c !== false) },
-  key: null,
+  props: {
+    ...(props || {}),
+    children: children.flat(Infinity).filter((c) => c != null && c !== false),
+  },
 });
 
 const div = (props, ...children) => h('div', props, ...children);
-const img = (props) => h('img', props);
 
 export default async function handler(req) {
-  const { searchParams } = new URL(req.url);
-  const gameId = (searchParams.get('game') || '').replace(/[^0-9]/g, '');
+  try {
+    const { searchParams } = new URL(req.url);
+    const gameId = (searchParams.get('game') || '').replace(/[^0-9]/g, '');
+    const game = gameId ? await fetchGame(gameId) : null;
 
-  const game = gameId ? await fetchGame(gameId) : null;
+    const tree = game?.homeTeam && game?.awayTeam
+      ? gameCard(game)
+      : brandCard();
 
-  let body;
-  if (game?.homeTeam && game?.awayTeam) {
-    const a = game.awayTeam;
-    const hh = game.homeTeam;
-    const isPhiHome = hh.abbrev === 'PHI';
-    const oppAbbr = isPhiHome ? a.abbrev : hh.abbrev;
-    const phiScore = isPhiHome ? (hh.score ?? 0) : (a.score ?? 0);
-    const oppScore = isPhiHome ? (a.score ?? 0) : (hh.score ?? 0);
-    const isFinal = game.gameState === 'FINAL' || game.gameState === 'OFF';
-    const isLive = game.gameState === 'LIVE' || game.gameState === 'CRIT';
-    const phiWon = phiScore > oppScore;
-
-    const stateLabel = isLive
-      ? `LIVE · P${game.periodDescriptor?.number || '?'}${game.clock?.timeRemaining ? ` · ${game.clock.timeRemaining}` : ''}`
-      : isFinal
-        ? `FINAL${game.periodDescriptor?.periodType && game.periodDescriptor.periodType !== 'REG' ? ` · ${game.periodDescriptor.periodType}` : ''}`
-        : 'UPCOMING';
-    const resultLabel = isFinal ? (phiWon ? 'W' : 'L') : null;
-    const resultColor = isFinal ? (phiWon ? '#10B981' : '#EF4444') : null;
-
-    body = div(
-      {
-        style: {
-          height: '100%', width: '100%', display: 'flex', flexDirection: 'column',
-          background: 'linear-gradient(180deg, #0A0A0A 0%, #050505 100%)',
-          color: '#E8E8E8', fontFamily: 'system-ui, -apple-system, sans-serif', position: 'relative',
-        },
+    return new ImageResponse(tree, {
+      width: 1200,
+      height: 630,
+      headers: {
+        'cache-control': 'public, s-maxage=60, stale-while-revalidate=300',
       },
-      div({ style: { position: 'absolute', top: 0, left: 0, right: 0, height: 8, background: '#F74902' } }),
-      img({ src: PHI_LOGO, width: 320, height: 320, style: { position: 'absolute', bottom: -40, left: -40, opacity: 0.10 } }),
-      img({ src: teamLogo(oppAbbr), width: 320, height: 320, style: { position: 'absolute', bottom: -40, right: -40, opacity: 0.10 } }),
-
-      // Header
-      div(
-        { style: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '36px 56px 0 56px', fontSize: 18, color: 'rgba(255,255,255,0.55)', letterSpacing: 2 } },
-        div({ style: { display: 'flex' } }, 'FLYERS.FAN · GAME RECAP'),
-        div({ style: { display: 'flex', color: '#FF8A4C' } }, stateLabel),
-      ),
-
-      // Center stage
-      div(
-        { style: { flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 80, padding: '0 56px' } },
-        // PHI
-        div(
-          { style: { display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 } },
-          img({ src: PHI_LOGO, width: 140, height: 140 }),
-          div({ style: { display: 'flex', fontSize: 22, color: '#FF8A4C', fontWeight: 600 } }, 'PHI'),
-          div({ style: { display: 'flex', fontSize: 140, fontWeight: 700, color: '#FF8A4C', lineHeight: 1, letterSpacing: -4 } }, String(phiScore)),
-        ),
-        // Center separator
-        div(
-          { style: { display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 } },
-          div({ style: { display: 'flex', fontSize: 64, color: 'rgba(255,255,255,0.20)', fontWeight: 600 } }, '–'),
-          resultLabel && div(
-            { style: { display: 'flex', alignItems: 'center', justifyContent: 'center', width: 56, height: 36, borderRadius: 8, background: phiWon ? 'rgba(16,185,129,0.18)' : 'rgba(239,68,68,0.18)', color: resultColor, fontSize: 24, fontWeight: 700 } },
-            resultLabel,
-          ),
-        ),
-        // OPP
-        div(
-          { style: { display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 } },
-          img({ src: teamLogo(oppAbbr), width: 140, height: 140 }),
-          div({ style: { display: 'flex', fontSize: 22, color: 'rgba(255,255,255,0.65)', fontWeight: 600 } }, oppAbbr),
-          div({ style: { display: 'flex', fontSize: 140, fontWeight: 700, color: 'rgba(255,255,255,0.85)', lineHeight: 1, letterSpacing: -4 } }, String(oppScore)),
-        ),
-      ),
-
-      // Footer
-      div(
-        { style: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0 56px 36px 56px', fontSize: 15, color: 'rgba(255,255,255,0.40)', letterSpacing: 2 } },
-        div({ style: { display: 'flex' } }, 'flyers.fan'),
-        div({ style: { display: 'flex' } }, 'UNOFFICIAL · NOT AFFILIATED WITH THE NHL'),
-      ),
-    );
-  } else {
-    body = div(
-      {
-        style: {
-          height: '100%', width: '100%', display: 'flex', flexDirection: 'column',
-          background: 'linear-gradient(180deg, #0A0A0A 0%, #050505 100%)',
-          color: '#E8E8E8', fontFamily: 'system-ui, -apple-system, sans-serif', position: 'relative',
-          alignItems: 'center', justifyContent: 'center', gap: 24,
-        },
-      },
-      div({ style: { position: 'absolute', top: 0, left: 0, right: 0, height: 8, background: '#F74902' } }),
-      img({ src: PHI_LOGO, width: 280, height: 280, style: { opacity: 0.95 } }),
-      div({ style: { display: 'flex', fontSize: 88, fontWeight: 700, color: '#FF8A4C', letterSpacing: -2 } }, 'flyers.fan'),
-      div({ style: { display: 'flex', fontSize: 22, color: 'rgba(255,255,255,0.55)', letterSpacing: 4 } }, 'LIVE TRACKER · STATS · FORECAST'),
-      div({ style: { position: 'absolute', bottom: 36, fontSize: 14, color: 'rgba(255,255,255,0.35)', letterSpacing: 2 } }, 'UNOFFICIAL · NOT AFFILIATED WITH THE NHL'),
-    );
+    });
+  } catch (err) {
+    // Render a debug card so the response is never zero-byte. Lets us
+    // see in production what blew up rather than silently 500ing.
+    const tree = errorCard(String(err?.message || err || 'unknown'));
+    return new ImageResponse(tree, { width: 1200, height: 630 });
   }
+}
 
-  return new ImageResponse(body, {
-    width: 1200,
-    height: 630,
-    headers: {
-      'cache-control': 'public, s-maxage=60, stale-while-revalidate=300',
+function gameCard(game) {
+  const a = game.awayTeam;
+  const hh = game.homeTeam;
+  const isPhiHome = hh.abbrev === 'PHI';
+  const oppAbbr = isPhiHome ? a.abbrev : hh.abbrev;
+  const phiScore = isPhiHome ? (hh.score ?? 0) : (a.score ?? 0);
+  const oppScore = isPhiHome ? (a.score ?? 0) : (hh.score ?? 0);
+  const isFinal = game.gameState === 'FINAL' || game.gameState === 'OFF';
+  const isLive = game.gameState === 'LIVE' || game.gameState === 'CRIT';
+  const phiWon = phiScore > oppScore;
+
+  const stateLabel = isLive
+    ? `LIVE · P${game.periodDescriptor?.number || '?'}${game.clock?.timeRemaining ? ` · ${game.clock.timeRemaining}` : ''}`
+    : isFinal
+      ? `FINAL${game.periodDescriptor?.periodType && game.periodDescriptor.periodType !== 'REG' ? ` · ${game.periodDescriptor.periodType}` : ''}`
+      : 'UPCOMING';
+  const resultLabel = isFinal ? (phiWon ? 'W' : 'L') : null;
+  const resultColor = isFinal ? (phiWon ? '#10B981' : '#EF4444') : '#888';
+
+  const sysFont = 'system-ui, -apple-system, sans-serif';
+
+  return div(
+    {
+      style: {
+        height: '100%', width: '100%', display: 'flex', flexDirection: 'column',
+        background: '#050505',
+        color: '#E8E8E8',
+        fontFamily: sysFont,
+        position: 'relative',
+      },
     },
-  });
+    // Top accent bar
+    div({ style: { display: 'flex', position: 'absolute', top: 0, left: 0, right: 0, height: 8, background: '#F74902' } }),
+
+    // Huge stylized 'PHI' on the left half, occupying most of the canvas.
+    div(
+      {
+        style: {
+          display: 'flex',
+          position: 'absolute',
+          left: -20,
+          top: 80,
+          fontSize: 480,
+          fontWeight: 900,
+          color: '#F74902',
+          opacity: 0.18,
+          letterSpacing: -24,
+          fontFamily: sysFont,
+          lineHeight: 1,
+        },
+      },
+      'PHI',
+    ),
+
+    // Mirror: huge OPP abbr on the right half.
+    div(
+      {
+        style: {
+          display: 'flex',
+          position: 'absolute',
+          right: -20,
+          top: 80,
+          fontSize: 480,
+          fontWeight: 900,
+          color: '#FFFFFF',
+          opacity: 0.08,
+          letterSpacing: -24,
+          fontFamily: sysFont,
+          lineHeight: 1,
+        },
+      },
+      oppAbbr,
+    ),
+
+    // Header bar
+    div(
+      {
+        style: {
+          display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+          padding: '36px 56px 0 56px', fontSize: 18, color: 'rgba(255,255,255,0.55)', letterSpacing: 2,
+          position: 'relative', zIndex: 1,
+        },
+      },
+      div({ style: { display: 'flex' } }, 'FLYERS.FAN · GAME RECAP'),
+      div({ style: { display: 'flex', color: '#FF8A4C' } }, stateLabel),
+    ),
+
+    // Center score readout
+    div(
+      {
+        style: {
+          flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center',
+          gap: 80, padding: '0 56px', position: 'relative', zIndex: 1,
+        },
+      },
+      // PHI block
+      div(
+        { style: { display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 } },
+        div({ style: { display: 'flex', fontSize: 26, color: '#FF8A4C', fontWeight: 700, letterSpacing: 6 } }, 'PHI'),
+        div({ style: { display: 'flex', fontSize: 200, fontWeight: 800, color: '#FF8A4C', lineHeight: 1, letterSpacing: -8 } }, String(phiScore)),
+      ),
+
+      // Center separator + result chip
+      div(
+        { style: { display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 } },
+        div({ style: { display: 'flex', fontSize: 80, color: 'rgba(255,255,255,0.20)', fontWeight: 600, lineHeight: 1 } }, '–'),
+        resultLabel && div(
+          {
+            style: {
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              width: 64, height: 40, borderRadius: 8,
+              background: phiWon ? 'rgba(16,185,129,0.18)' : 'rgba(239,68,68,0.18)',
+              color: resultColor, fontSize: 26, fontWeight: 800,
+            },
+          },
+          resultLabel,
+        ),
+      ),
+
+      // OPP block
+      div(
+        { style: { display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 } },
+        div({ style: { display: 'flex', fontSize: 26, color: 'rgba(255,255,255,0.65)', fontWeight: 700, letterSpacing: 6 } }, oppAbbr),
+        div({ style: { display: 'flex', fontSize: 200, fontWeight: 800, color: 'rgba(255,255,255,0.85)', lineHeight: 1, letterSpacing: -8 } }, String(oppScore)),
+      ),
+    ),
+
+    // Footer
+    div(
+      {
+        style: {
+          display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+          padding: '0 56px 36px 56px', fontSize: 15, color: 'rgba(255,255,255,0.40)',
+          letterSpacing: 2, position: 'relative', zIndex: 1,
+        },
+      },
+      div({ style: { display: 'flex' } }, 'flyers.fan'),
+      div({ style: { display: 'flex' } }, 'UNOFFICIAL · NOT AFFILIATED WITH THE NHL'),
+    ),
+  );
+}
+
+function brandCard() {
+  return div(
+    {
+      style: {
+        height: '100%', width: '100%', display: 'flex', flexDirection: 'column',
+        background: '#050505', color: '#E8E8E8',
+        fontFamily: 'system-ui, -apple-system, sans-serif', position: 'relative',
+        alignItems: 'center', justifyContent: 'center', gap: 24,
+      },
+    },
+    div({ style: { display: 'flex', position: 'absolute', top: 0, left: 0, right: 0, height: 8, background: '#F74902' } }),
+    div({ style: { display: 'flex', fontSize: 360, fontWeight: 900, color: '#F74902', letterSpacing: -16, lineHeight: 1 } }, 'PHI'),
+    div({ style: { display: 'flex', fontSize: 88, fontWeight: 700, color: '#FF8A4C', letterSpacing: -2, marginTop: -32 } }, 'flyers.fan'),
+    div({ style: { display: 'flex', fontSize: 22, color: 'rgba(255,255,255,0.55)', letterSpacing: 4 } }, 'LIVE TRACKER · STATS · FORECAST'),
+    div({ style: { display: 'flex', position: 'absolute', bottom: 36, fontSize: 14, color: 'rgba(255,255,255,0.35)', letterSpacing: 2 } }, 'UNOFFICIAL · NOT AFFILIATED WITH THE NHL'),
+  );
+}
+
+function errorCard(msg) {
+  return div(
+    {
+      style: {
+        height: '100%', width: '100%', display: 'flex', flexDirection: 'column',
+        background: '#050505', color: '#E8E8E8',
+        fontFamily: 'system-ui, -apple-system, sans-serif',
+        alignItems: 'center', justifyContent: 'center', gap: 16, padding: 64,
+      },
+    },
+    div({ style: { display: 'flex', fontSize: 64, fontWeight: 700, color: '#F74902' } }, 'flyers.fan'),
+    div({ style: { display: 'flex', fontSize: 22, color: 'rgba(255,255,255,0.55)' } }, 'OG image failed to render'),
+    div({ style: { display: 'flex', fontSize: 18, color: 'rgba(255,255,255,0.35)', maxWidth: 1000, textAlign: 'center' } }, msg.slice(0, 200)),
+  );
 }

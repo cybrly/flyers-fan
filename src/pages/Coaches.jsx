@@ -114,6 +114,46 @@ const SummaryTile = ({ label, value, sub, tone }) => {
   );
 };
 
+// Initials in a circle — graceful fallback when we don't have a real
+// portrait URL for the coach. Sized to match a real headshot so the
+// card doesn't reflow when an image gets added later.
+const CoachInitialsAvatar = ({ name, abbr, size = 56 }) => {
+  const initials = (name || '')
+    .split(' ')
+    .filter(Boolean)
+    .map((part) => part[0])
+    .slice(0, 2)
+    .join('')
+    .toUpperCase();
+  return (
+    <div
+      className="shrink-0 rounded-full bg-white/[0.06] border border-white/[0.10] flex items-center justify-center text-white/70"
+      style={{ width: size, height: size, fontSize: size * 0.36 }}
+      title={`${name} · ${abbr}`}
+    >
+      <span className="font-semibold tracking-tight">{initials || '—'}</span>
+    </div>
+  );
+};
+
+const CoachPortrait = ({ c, size = 56 }) => {
+  if (c.photo) {
+    return (
+      <img
+        src={c.photo}
+        alt={c.name}
+        width={size}
+        height={size}
+        loading="lazy"
+        onError={(e) => { e.currentTarget.replaceWith(e.currentTarget.cloneNode(false)); e.currentTarget.style.display = 'none'; }}
+        className="shrink-0 rounded-full object-cover bg-white/[0.04] border border-white/[0.10]"
+        style={{ width: size, height: size }}
+      />
+    );
+  }
+  return <CoachInitialsAvatar name={c.name} abbr={c.abbr} size={size} />;
+};
+
 const CoachCard = ({ c }) => {
   const isUs = c.abbr === TEAM_ABBR;
   return (
@@ -123,7 +163,7 @@ const CoachCard = ({ c }) => {
     )}>
       <TeamLogoBg abbr={c.abbr} size={180} opacity={isUs ? 0.10 : 0.08} position="bottom-right" />
       <div className="relative flex items-start gap-3">
-        <TeamLogo abbr={c.abbr} size={32} className="mt-0.5" />
+        <TeamLogo abbr={c.abbr} size={28} className="mt-1" />
         <div className="flex-1 min-w-0">
           <div className="flex items-baseline gap-2 flex-wrap">
             <span className={cx('text-[16px] font-semibold tracking-tight', isUs && 'text-[#FF8A4C]')}>
@@ -155,6 +195,10 @@ const CoachCard = ({ c }) => {
             </div>
           )}
         </div>
+        {/* Coach portrait sits between the bio block and the team-logo
+            watermark. Falls back to initials in a circle when no photo
+            URL is set on the coach record. */}
+        <CoachPortrait c={c} size={56} />
       </div>
     </div>
   );

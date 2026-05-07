@@ -75,6 +75,7 @@ export const PLAYER_CONTRACTS = {
   },
   8477989: { // Christian Dvorak — C · #22
     ...cap(5_400_000), termYears: 6, yearsLeft: 6, endYear: 2030,
+    yearByYear: [5_400_000, 5_150_000, 5_150_000, 5_150_000, 5_150_000, 5_150_000],
     expiryStatus: 'UFA', updated: '2026-05-07',
   },
   8480220: { // Noah Cates — C · #27

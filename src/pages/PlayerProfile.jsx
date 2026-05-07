@@ -173,7 +173,7 @@ export const PlayerProfile = ({ playerId }) => {
         <div className="absolute -top-16 -right-16 w-72 h-72 rounded-full pointer-events-none opacity-50"
           style={{ background: 'radial-gradient(circle, rgba(255,255,255,0.03), transparent 65%)' }} />
         <TeamLogoBg abbr={data.currentTeamAbbrev} size={260} opacity={0.06} position="top-right" />
-        <div className="relative flex flex-col sm:flex-row gap-5">
+        <div className="relative grid grid-cols-1 md:grid-cols-[auto_minmax(0,1fr)_320px] gap-5 items-start">
           {data.headshot && (
             <img
               src={data.headshot}
@@ -182,7 +182,7 @@ export const PlayerProfile = ({ playerId }) => {
               onError={(e) => { e.currentTarget.style.display = 'none'; }}
             />
           )}
-          <div className="flex-1 min-w-0">
+          <div className="min-w-0 max-w-2xl">
             <div className="flex items-baseline flex-wrap gap-2">
               <h2 className="text-[28px] sm:text-[32px] font-semibold tracking-tight">{fullName}</h2>
               {data.sweaterNumber && (
@@ -227,8 +227,11 @@ export const PlayerProfile = ({ playerId }) => {
           </div>
           {/* Right rail — contract terms on top, reference signature
               below. Stacks under the bio on phones; sits as a third
-              column on tablet+. */}
-          <div className="md:w-[280px] md:shrink-0 space-y-3">
+              column on tablet+. Sized via the parent grid template
+              (320px) so it sits flush against the bio block instead
+              of being pushed to the panel's right edge with dead
+              space in between. */}
+          <div className="space-y-3">
             <ContractPanel playerId={playerId} fullName={fullName} />
             <SignaturePanel playerId={playerId} fullName={fullName} />
           </div>

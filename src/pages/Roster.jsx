@@ -3,6 +3,7 @@ import { cx } from '../config.js';
 import { Section, Skeleton } from '../components/primitives.jsx';
 import { SkaterHotCold, GoalieHotCold } from '../components/HotCold.jsx';
 import { SalaryCap } from '../components/SalaryCap.jsx';
+import { ContractGrid } from '../components/ContractGrid.jsx';
 import { PlayerLink } from '../components/PlayerLink.jsx';
 import { Headshot } from '../components/Headshot.jsx';
 import { Hometowns } from '../components/Hometowns.jsx';
@@ -245,6 +246,8 @@ export const Roster = ({ roster, clubStats, prospects, draftPicks }) => {
       </div>
 
       <SalaryCap roster={roster} />
+
+      <ContractGrid roster={roster} />
 
       {/* Main roster table sits directly under the tabs so clicking
           Forwards/Defense/Goalies actually swaps content at the top of

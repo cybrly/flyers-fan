@@ -81,10 +81,16 @@ const StatCell = ({ label, value, sub, accent = false }) => (
 // Extract a player's career season-by-season totals — NHL leagueAbbrev='NHL' rows
 // from seasonTotals, plus AHL/junior if useful. We show NHL rows in the main
 // table and tag others as "minors/junior" beneath.
+//
+// NHL ships regular season (gameTypeId=2) and playoffs (gameTypeId=3) as
+// separate rows for the same season-team combination. Without filtering
+// the table renders the same season twice. We surface regular-season
+// rows only — playoff totals get their own toggle in PlayerGameLog.
 const seasonsFromTotals = (totals = []) => {
   if (!totals.length) return { nhl: [], other: [] };
-  const nhl = totals.filter((s) => s.leagueAbbrev === 'NHL').sort((a, b) => b.season - a.season);
-  const other = totals.filter((s) => s.leagueAbbrev !== 'NHL').sort((a, b) => b.season - a.season);
+  const regOnly = totals.filter((s) => s.gameTypeId == null || s.gameTypeId === 2);
+  const nhl = regOnly.filter((s) => s.leagueAbbrev === 'NHL').sort((a, b) => b.season - a.season);
+  const other = regOnly.filter((s) => s.leagueAbbrev !== 'NHL').sort((a, b) => b.season - a.season);
   return { nhl, other };
 };
 

@@ -66,6 +66,69 @@ export const PLAYER_SIGNATURES = {
     license: 'For reference only',
     added: '2026-05-07',
   },
+  // Alex Bump (PHI · #20)
+  8483731: {
+    url: '/autographs/bump.png',
+    source: 'Site collection',
+    license: 'For reference only',
+    added: '2026-05-07',
+  },
+  // Noah Cates (PHI · #27)
+  8480220: {
+    url: '/autographs/cates.png',
+    source: 'Site collection',
+    license: 'For reference only',
+    added: '2026-05-07',
+  },
+  // Garnet Hathaway (PHI · #19)
+  8477903: {
+    url: '/autographs/hathaway.png',
+    source: 'Site collection',
+    license: 'For reference only',
+    added: '2026-05-07',
+  },
+  // Matvei Michkov (PHI · #39)
+  8484387: {
+    url: '/autographs/michkov.png',
+    source: 'Site collection',
+    license: 'For reference only',
+    added: '2026-05-07',
+  },
+  // Rasmus Ristolainen (PHI · #55)
+  8477499: {
+    url: '/autographs/ristolainen.png',
+    source: 'Site collection',
+    license: 'For reference only',
+    added: '2026-05-07',
+  },
+  // Travis Sanheim (PHI · #6)
+  8477948: {
+    url: '/autographs/sanheim.png',
+    source: 'Site collection',
+    license: 'For reference only',
+    added: '2026-05-07',
+  },
+  // Nick Seeler (PHI · #24)
+  8476372: {
+    url: '/autographs/seeler.png',
+    source: 'Site collection',
+    license: 'For reference only',
+    added: '2026-05-07',
+  },
+  // Owen Tippett (PHI · #74)
+  8480015: {
+    url: '/autographs/tippett.png',
+    source: 'Site collection',
+    license: 'For reference only',
+    added: '2026-05-07',
+  },
+  // Dan Vladar (PHI · #80)
+  8478435: {
+    url: '/autographs/vladar.png',
+    source: 'Site collection',
+    license: 'For reference only',
+    added: '2026-05-07',
+  },
 };
 
 export const hasSignature = (playerId) => !!PLAYER_SIGNATURES[playerId];

@@ -80,9 +80,88 @@ export const KioskMode = ({ liveGame, liveDetail, liveSnap, game, onClose }) => 
       role="dialog"
       aria-label="Broadcast view"
     >
-      {/* Background watermarks — large, anchored to corners, very low opacity */}
-      <TeamLogoBg abbr="PHI" size={780} opacity={0.05} position="bottom-left" />
-      <TeamLogoBg abbr={oppAbbr} size={780} opacity={0.05} position="bottom-right" />
+      {/* Layered backdrop — full-bleed team-logo halves, ice-rink lines,
+          center spotlight. Each layer is pointer-events-none and absolute
+          so they stack behind the score without affecting interaction. */}
+      <div aria-hidden className="pointer-events-none absolute inset-0">
+        {/* Vertical seam — colored hairline split between the two halves. */}
+        <div
+          className="absolute top-0 bottom-0 left-1/2 w-px"
+          style={{ background: 'linear-gradient(180deg, transparent 0%, rgba(255,255,255,0.08) 25%, rgba(255,255,255,0.08) 75%, transparent 100%)' }}
+        />
+
+        {/* Faint ice-rink line pattern — horizontal scan lines that read as
+            an arena surface from a distance. Masked at the edges so the
+            pattern fades into the dark frame. */}
+        <div
+          className="absolute inset-0 opacity-[0.08]"
+          style={{
+            backgroundImage: 'repeating-linear-gradient(0deg, rgba(255,255,255,0.45) 0 1px, transparent 1px 84px)',
+            maskImage: 'radial-gradient(ellipse at center, black 25%, transparent 80%)',
+            WebkitMaskImage: 'radial-gradient(ellipse at center, black 25%, transparent 80%)',
+          }}
+        />
+
+        {/* PHI half — huge logo bleeding off the left edge. Higher opacity
+            than the corner-watermark version so the logo reads as the
+            centerpiece of its half rather than a footer. */}
+        <img
+          src="https://assets.nhle.com/logos/nhl/svg/PHI_dark.svg"
+          alt=""
+          className="absolute select-none"
+          style={{
+            top: '50%',
+            left: '-12%',
+            transform: 'translateY(-50%)',
+            width: '70vh',
+            height: '70vh',
+            opacity: 0.16,
+          }}
+          onError={(e) => { e.currentTarget.style.display = 'none'; }}
+        />
+
+        {/* OPP half — same treatment, mirrored. */}
+        {oppAbbr && (
+          <img
+            src={`https://assets.nhle.com/logos/nhl/svg/${oppAbbr}_dark.svg`}
+            alt=""
+            className="absolute select-none"
+            style={{
+              top: '50%',
+              right: '-12%',
+              transform: 'translateY(-50%)',
+              width: '70vh',
+              height: '70vh',
+              opacity: 0.14,
+            }}
+            onError={(e) => { e.currentTarget.style.display = 'none'; }}
+          />
+        )}
+
+        {/* Center spotlight — radial fade so the score readout has clean
+            contrast against the busy logos behind it. Two layered
+            gradients: a tight bright pool and a wider soft halo. */}
+        <div
+          className="absolute inset-0"
+          style={{
+            background:
+              'radial-gradient(ellipse 40% 55% at 50% 50%, rgba(0,0,0,0.55), transparent 70%), ' +
+              'radial-gradient(ellipse 60% 80% at 50% 50%, rgba(0,0,0,0.30), transparent 80%)',
+          }}
+        />
+
+        {/* Edge vignette — pulls focus back to center so the logos don't
+            crowd the corners on wide displays. */}
+        <div
+          className="absolute inset-0"
+          style={{
+            background: 'radial-gradient(ellipse at center, transparent 50%, rgba(0,0,0,0.55) 100%)',
+          }}
+        />
+
+        {/* Top accent bar — broadcast-style title rule. */}
+        <div className="absolute top-0 inset-x-0 h-1 bg-[#F74902]" />
+      </div>
 
       {/* Top bar: status chip + period/clock + close */}
       <div className="absolute top-0 inset-x-0 flex items-center justify-between px-6 sm:px-12 py-5">

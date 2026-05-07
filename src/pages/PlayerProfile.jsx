@@ -173,16 +173,16 @@ export const PlayerProfile = ({ playerId }) => {
         <div className="absolute -top-16 -right-16 w-72 h-72 rounded-full pointer-events-none opacity-50"
           style={{ background: 'radial-gradient(circle, rgba(255,255,255,0.03), transparent 65%)' }} />
         <TeamLogoBg abbr={data.currentTeamAbbrev} size={260} opacity={0.06} position="top-right" />
-        <div className="relative grid grid-cols-1 md:grid-cols-[auto_minmax(0,1fr)_320px] gap-5 items-start">
+        <div className="relative flex flex-col sm:flex-row gap-5 items-start">
           {data.headshot && (
             <img
               src={data.headshot}
               alt={fullName}
-              className="w-28 h-28 sm:w-32 sm:h-32 rounded-md bg-white/[0.04] object-cover shrink-0 border border-white/[0.06]"
+              className="w-32 h-32 sm:w-40 sm:h-40 rounded-md bg-white/[0.04] object-cover shrink-0 border border-white/[0.06]"
               onError={(e) => { e.currentTarget.style.display = 'none'; }}
             />
           )}
-          <div className="min-w-0 max-w-2xl">
+          <div className="flex-1 min-w-0">
             <div className="flex items-baseline flex-wrap gap-2">
               <h2 className="text-[28px] sm:text-[32px] font-semibold tracking-tight">{fullName}</h2>
               {data.sweaterNumber && (
@@ -225,17 +225,17 @@ export const PlayerProfile = ({ playerId }) => {
             )}
             <SocialLinks playerId={playerId} fullName={fullName} />
           </div>
-          {/* Right rail — contract terms on top, reference signature
-              below. Stacks under the bio on phones; sits as a third
-              column on tablet+. Sized via the parent grid template
-              (320px) so it sits flush against the bio block instead
-              of being pushed to the panel's right edge with dead
-              space in between. */}
-          <div className="space-y-3">
-            <ContractPanel playerId={playerId} fullName={fullName} />
-            <SignaturePanel playerId={playerId} fullName={fullName} />
-          </div>
         </div>
+      </div>
+
+      {/* Contract + signature sit in their own row beneath the hero,
+          side-by-side on tablet+ and stacked on phones. Decoupling them
+          from the hero keeps the headshot/bio block from being stretched
+          vertically to match the rail's height (which left a lot of empty
+          space around a small headshot and short bio on wide screens). */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <ContractPanel playerId={playerId} fullName={fullName} />
+        <SignaturePanel playerId={playerId} fullName={fullName} />
       </div>
 
       {/* Featured stats — current season big numbers */}

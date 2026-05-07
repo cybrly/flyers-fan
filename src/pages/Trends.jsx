@@ -50,9 +50,15 @@ export const Trends = ({ schedule, roster }) => {
   const [playerStat, setPlayerStat] = useState('points'); // 'points' | 'goals'
   const svgRef = useRef(null);
 
+  // Trends curves and per-game splits are about the regular-season race,
+  // so we filter out playoff games (gameType 3). Including them would
+  // push the cumulative points curve past the actual final standings
+  // total once the postseason starts, which is misleading.
   const games = useMemo(() => {
     const finished = schedule?.games || [];
-    return [...finished].sort((a, b) => a.date.localeCompare(b.date));
+    return [...finished]
+      .filter((g) => g.gameType !== 3)
+      .sort((a, b) => a.date.localeCompare(b.date));
   }, [schedule]);
 
   const series = useMemo(() => {

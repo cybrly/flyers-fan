@@ -16,7 +16,6 @@ import { InjuryWatch } from '../components/InjuryWatch.jsx';
 import { SpecialTeams } from '../components/SpecialTeams.jsx';
 import { FaceoffSpecialists } from '../components/FaceoffSpecialists.jsx';
 import { SkaterHotCold } from '../components/HotCold.jsx';
-import { AutoNarrative } from '../components/AutoNarrative.jsx';
 import { OpponentScout } from '../components/OpponentScout.jsx';
 import { ThisDayInHistory } from '../components/ThisDayInHistory.jsx';
 import { ScheduleStrength } from '../components/ScheduleStrength.jsx';
@@ -47,9 +46,15 @@ const divTone = (rank) => !rank ? 'default' : rank <= 3 ? 'good' : rank >= 6 ? '
 const ptsPctTone = (pct) => pct >= 0.6 ? 'good' : pct >= 0.5 ? 'warm' : pct <= 0.45 ? 'bad' : 'amber';
 
 export const Dashboard = ({ schedule, standings, scoreboard, clubStats, roster, liveDetail, liveSnap, lastGame, leagueLeaders, loading, onOpenGame }) => {
+  // The Recent Form band intentionally shows the most recent 20 games
+  // regardless of type so fans see playoff results during the postseason.
+  // Anything that frames numbers as regular-season ('Last 10' KPI, season
+  // pace) needs to filter playoffs out — those games don't add standings
+  // points and including them distorts the read.
   const games = schedule?.games?.slice(0, 20) || [];
+  const regGames = games.filter((g) => g.gameType !== 3);
   const chronGames = [...games].reverse();
-  const l10 = games.slice(0, 10);
+  const l10 = regGames.slice(0, 10);
 
   const l10Record = {
     w: l10.filter((g) => g.w).length,
@@ -118,12 +123,6 @@ export const Dashboard = ({ schedule, standings, scoreboard, clubStats, roster, 
         onOpenGame={onOpenGame}
       />
 
-      <AutoNarrative
-        team={us}
-        games={games}
-        nextGame={nextGame}
-        lastGame={lastResult}
-      />
 
       {/* ─── BAND · TONIGHT ───────────────────────────────────────────────── */}
       {/* Hero already covers "what's happening tonight" — this band answers

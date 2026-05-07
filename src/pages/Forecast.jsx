@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Sparkles, Play, RotateCcw } from 'lucide-react';
+import { Play, RotateCcw } from 'lucide-react';
 import { cx, SEASON, TEAM_ABBR, API } from '../config.js';
 import { Section, Skeleton, Chip } from '../components/primitives.jsx';
 import { TeamLogo, FlyersMark } from '../components/Logo.jsx';
@@ -139,9 +139,7 @@ export const Forecast = ({ standings }) => {
     <div className="p-3 md:p-5 space-y-4">
       <div className="flex items-end justify-between flex-wrap gap-3">
         <div>
-          <h1 className="text-[20px] font-semibold tracking-tight flex items-center gap-2">
-            <Sparkles size={16} className="text-[#FF8A4C]" /> Forecast
-          </h1>
+          <h1 className="text-[20px] font-semibold tracking-tight">Forecast</h1>
           <p className="text-[12px] text-white/45 mt-1 font-mono">
             Monte Carlo playoff odds · {remainingGames == null
               ? 'loading league schedule…'
@@ -204,67 +202,51 @@ export const Forecast = ({ standings }) => {
 };
 
 const SeasonOverBanner = () => (
-  <div className="border border-emerald-500/30 bg-emerald-500/[0.04] rounded-md p-4 relative overflow-hidden">
-    <div className="absolute inset-0 pointer-events-none"
-      style={{ background: 'radial-gradient(circle at 0% 50%, rgba(16,185,129,0.08), transparent 50%)' }} />
-    <div className="relative flex items-start gap-3">
-      <div className="w-10 h-10 rounded-full bg-emerald-500/15 border border-emerald-500/40 flex items-center justify-center shrink-0">
-        <Sparkles size={18} className="text-emerald-400" />
-      </div>
-      <div className="flex-1 min-w-0">
-        <div className="text-[14px] font-semibold text-white/90">Regular season complete</div>
-        <div className="text-[12px] font-mono text-white/55 mt-1 leading-relaxed">
-          Standings are locked — there are no remaining regular-season games to simulate.
-          The simulator will be active again at next October's season opener; for in-progress
-          playoff series, head over to the <a href="/playoffs" className="text-[#FF8A4C] hover:underline">Playoffs</a> page.
-        </div>
-      </div>
+  <div className="border border-white/[0.08] bg-[#0C0C0C]/60 rounded-md p-4">
+    <div className="text-[13px] text-white/85 font-medium">Regular season complete</div>
+    <div className="text-[11px] font-mono text-white/55 mt-1 leading-relaxed">
+      Standings are locked — there are no remaining regular-season games to simulate.
+      For in-progress playoff series, see the <a href="/playoffs" className="text-[#FF8A4C] hover:underline">Playoffs</a> page.
     </div>
   </div>
 );
 
 const ForecastRunBar = ({ running, pct, progress, onClickRun, canRun, hasResult }) => (
-  <div className="border border-[#F74902]/30 bg-[#F74902]/[0.04] rounded-md p-4 relative overflow-hidden">
-    <div className="absolute inset-0 pointer-events-none"
-      style={{ background: 'radial-gradient(circle at 0% 50%, rgba(247,73,2,0.08), transparent 50%)' }} />
-    <div className="relative flex items-center gap-4 flex-wrap">
+  <div className="border border-white/[0.08] bg-[#0C0C0C]/60 rounded-md p-4">
+    <div className="flex items-center gap-4 flex-wrap">
       <button
         onClick={onClickRun}
         disabled={!canRun}
         className={cx(
-          'flex items-center justify-center gap-2 h-12 px-6 rounded-md text-[14px] font-semibold tracking-tight transition-all shrink-0',
-          'shadow-lg shadow-[#F74902]/20',
+          'flex items-center justify-center gap-2 h-11 px-5 rounded-md text-[13px] font-semibold tracking-tight transition-colors shrink-0',
           canRun
-            ? 'bg-[#F74902] hover:bg-[#FF5A1F] text-white border border-[#FF8A4C]/40 hover:border-[#FF8A4C]/70 cursor-pointer'
-            : 'bg-[#F74902]/40 text-white/70 border border-[#F74902]/30 cursor-not-allowed',
+            ? 'bg-[#F74902] hover:bg-[#FF5A1F] text-white cursor-pointer'
+            : 'bg-[#F74902]/40 text-white/70 cursor-not-allowed',
         )}
       >
         {running
-          ? <><span className="w-2.5 h-2.5 rounded-full bg-white/80 animate-pulse" /> Simulating…</>
+          ? <><span className="w-2 h-2 rounded-full bg-white/80 animate-pulse" /> Simulating</>
           : hasResult
-            ? <><RotateCcw size={16} /> Run again</>
-            : <><Play size={16} fill="currentColor" /> Run forecast</>}
+            ? <><RotateCcw size={14} /> Run again</>
+            : <><Play size={14} fill="currentColor" /> Run forecast</>}
       </button>
 
       <div className="flex-1 min-w-[180px]">
         <div className="flex items-baseline justify-between mb-1.5">
-          <span className="text-[10px] font-mono text-white/40 uppercase tracking-wider">
-            {running ? 'simulating season' : hasResult ? 'simulation complete' : 'ready'}
+          <span className="text-[11px] text-white/55">
+            {running ? 'Simulating season' : hasResult ? 'Simulation complete' : 'Ready to run'}
           </span>
           <span className="text-[12px] font-mono tabular-nums text-white/85">
             {progress.done.toLocaleString()}<span className="text-white/30"> / {progress.total.toLocaleString()}</span>
           </span>
         </div>
-        <div className="h-2 bg-white/[0.06] rounded-full overflow-hidden">
+        <div className="h-1.5 bg-white/[0.06] rounded-full overflow-hidden">
           <div
-            className={cx('h-full rounded-full transition-all duration-150 ease-out',
+            className={cx('h-full transition-[width] duration-150 ease-out',
               running ? 'bg-[#FF8A4C]' : hasResult ? 'bg-emerald-500/70' : 'bg-white/20',
             )}
-            style={{ width: `${Math.max(progress.total ? 0 : 0, pct * 100)}%` }}
+            style={{ width: `${pct * 100}%` }}
           />
-        </div>
-        <div className="text-[10px] font-mono text-white/35 mt-1.5 leading-relaxed">
-          Each simulation plays out every remaining game, scores them with the points-% model + 3.5% home-ice, and tallies final standings. The probabilities below converge as runs accumulate.
         </div>
       </div>
     </div>
@@ -279,33 +261,31 @@ const PhiHeadline = ({ us, running }) => {
     : playoff >= 0.20 ? 'text-amber-300'
     : 'text-red-400';
   return (
-    <div className="border border-[#F74902]/30 bg-[#F74902]/[0.04] rounded-md p-5 relative overflow-hidden">
-      <div className="absolute -top-16 -right-16 w-48 h-48 rounded-full pointer-events-none"
-        style={{ background: 'radial-gradient(circle, rgba(247,73,2,0.10), transparent 70%)' }} />
-      <div className="relative grid grid-cols-1 md:grid-cols-[auto_1fr_auto] items-center gap-6">
+    <div className="border border-white/[0.08] bg-[#0C0C0C]/60 rounded-md p-5">
+      <div className="grid grid-cols-1 md:grid-cols-[auto_1fr_auto] items-center gap-6">
         <div className="flex items-center gap-3">
-          <FlyersMark size={48} />
+          <FlyersMark size={40} />
           <div>
-            <div className="text-[11px] font-mono text-white/40 uppercase tracking-wider flex items-center gap-1.5">
+            <div className="text-[11px] text-white/55 flex items-center gap-1.5">
               Philadelphia Flyers
               {running && <span className="w-1.5 h-1.5 rounded-full bg-[#FF8A4C] animate-pulse" />}
             </div>
-            <div className="text-[14px] text-white/85">Playoff Probability</div>
+            <div className="text-[14px] text-white/90 font-medium">Playoff probability</div>
           </div>
         </div>
         <div className="flex items-baseline gap-3">
-          <span className={cx('text-[64px] font-semibold tabular-nums tracking-tight leading-none transition-colors duration-200', tone)}>
+          <span className={cx('text-[52px] font-semibold tabular-nums tracking-tight leading-none transition-colors duration-200', tone)}>
             {(playoff * 100).toFixed(1)}%
           </span>
-          <span className="text-[12px] font-mono text-white/40">probability of postseason</span>
+          <span className="text-[12px] text-white/45">chance of making the postseason</span>
         </div>
         <div className="text-right">
-          <div className="text-[11px] font-mono text-white/40 uppercase tracking-wider">Expected Points</div>
-          <div className="text-[28px] font-semibold tabular-nums tracking-tight text-white/85">
+          <div className="text-[11px] text-white/55">Expected points</div>
+          <div className="text-[24px] font-semibold tabular-nums tracking-tight text-white/85 mt-0.5">
             {us.expPts.toFixed(1)}
           </div>
-          <div className="text-[10px] font-mono text-white/40 mt-0.5">
-            now {us.pts} pts · {us.gp} GP
+          <div className="text-[11px] text-white/45 mt-0.5">
+            currently {us.pts} pts in {us.gp} GP
           </div>
         </div>
       </div>

@@ -335,6 +335,23 @@ export const GameTape = ({ game, loading, pbp, pbpRaw, liveSnap, customGameId, o
           game.home ? '-right-20' : '-left-20'
         )}
           style={{ background: 'radial-gradient(circle, rgba(255,255,255,0.04), transparent 70%)' }} />
+        {/* Opponent watermark — anchored opposite the PHI side so neither
+            team logo competes with the score readout. ~7% opacity keeps
+            the score legible. */}
+        {game.oppAbbr && (
+          <img
+            src={`https://assets.nhle.com/logos/nhl/svg/${game.oppAbbr}_dark.svg`}
+            alt=""
+            aria-hidden="true"
+            loading="lazy"
+            className={cx(
+              'absolute -bottom-12 w-56 h-56 object-contain pointer-events-none select-none',
+              game.home ? '-left-10' : '-right-10',
+            )}
+            style={{ opacity: 0.07 }}
+            onError={(e) => { e.currentTarget.style.display = 'none'; }}
+          />
+        )}
         {/* Standard hockey scoreboard layout: away team on the left, home team
             on the right. PHI may be either side depending on game.home. */}
         <div className="relative grid grid-cols-[1fr_auto_1fr] items-center gap-6">

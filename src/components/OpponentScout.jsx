@@ -120,7 +120,17 @@ export const OpponentScout = ({ nextGame }) => {
       ) : !hasData ? (
         <div className="p-6 text-center text-[11px] font-mono text-white/35">No scouting data yet.</div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-px bg-white/[0.04]">
+        <div className="relative overflow-hidden">
+          <img
+            src={`https://assets.nhle.com/logos/nhl/svg/${opp}_dark.svg`}
+            alt=""
+            aria-hidden="true"
+            loading="lazy"
+            className="absolute -bottom-16 -right-16 w-56 h-56 object-contain pointer-events-none select-none z-0"
+            style={{ opacity: 0.06 }}
+            onError={(e) => { e.currentTarget.style.display = 'none'; }}
+          />
+        <div className="relative grid grid-cols-1 md:grid-cols-3 gap-px bg-white/[0.04] z-10">
           {/* L5 form */}
           <div className="bg-[#0C0C0C] p-4">
             <div className="text-[9px] font-mono text-white/40 uppercase tracking-wider mb-2">Last 5</div>
@@ -217,6 +227,7 @@ export const OpponentScout = ({ nextGame }) => {
               Highest season SV % — projection, not confirmed
             </div>
           </div>
+        </div>
         </div>
       )}
     </Section>

@@ -47,9 +47,18 @@ export const HeadToHead = ({ schedule, onOpenGame }) => {
       }
       action={<span className="text-[10px] font-mono text-white/40">{meetings.length} meeting{meetings.length === 1 ? '' : 's'}</span>}
     >
-      <div className="p-3.5 space-y-3">
+      <div className="relative overflow-hidden p-3.5 space-y-3">
+        <img
+          src={`https://assets.nhle.com/logos/nhl/svg/${oppAbbr}_dark.svg`}
+          alt=""
+          aria-hidden="true"
+          loading="lazy"
+          className="absolute -bottom-10 -right-10 w-44 h-44 object-contain pointer-events-none select-none"
+          style={{ opacity: 0.06 }}
+          onError={(e) => { e.currentTarget.style.display = 'none'; }}
+        />
         {/* Big record + opp name */}
-        <div className="flex items-center justify-between gap-3">
+        <div className="relative flex items-center justify-between gap-3">
           <div className="flex items-center gap-2.5 min-w-0">
             <TeamLogo abbr={oppAbbr} size={28} />
             <div className="min-w-0">
@@ -74,7 +83,7 @@ export const HeadToHead = ({ schedule, onOpenGame }) => {
         </div>
 
         {/* GF/GA + reg/po split */}
-        <div className="grid grid-cols-3 gap-2 pt-3 border-t border-white/[0.05] text-center">
+        <div className="relative grid grid-cols-3 gap-2 pt-3 border-t border-white/[0.05] text-center">
           <div>
             <div className="text-[9px] font-mono text-white/40 uppercase tracking-wider">Goals For</div>
             <div className="text-[16px] font-mono tabular-nums text-[#FF8A4C] mt-0.5">{gf}</div>
@@ -93,7 +102,7 @@ export const HeadToHead = ({ schedule, onOpenGame }) => {
 
         {/* Reg/PO split chips if both exist */}
         {(po.length > 0 && reg.length > 0) && (
-          <div className="flex items-center gap-2 pt-2 border-t border-white/[0.05]">
+          <div className="relative flex items-center gap-2 pt-2 border-t border-white/[0.05]">
             <span className="text-[10px] font-mono text-white/40">Splits:</span>
             <Chip tone="muted">REG {reg.filter((g) => g.w).length}–{reg.filter((g) => !g.w).length}</Chip>
             <Chip tone="orange">PO {po.filter((g) => g.w).length}–{po.filter((g) => !g.w).length}</Chip>
@@ -101,7 +110,7 @@ export const HeadToHead = ({ schedule, onOpenGame }) => {
         )}
 
         {/* Last meeting */}
-        <div className="pt-2 border-t border-white/[0.05]">
+        <div className="relative pt-2 border-t border-white/[0.05]">
           <div className="text-[9px] font-mono text-white/40 uppercase tracking-wider mb-1">Last meeting</div>
           <button
             onClick={() => onOpenGame?.(last.id)}
@@ -131,7 +140,7 @@ export const HeadToHead = ({ schedule, onOpenGame }) => {
 
         {/* Compact dot strip — last 8 results */}
         {meetings.length > 1 && (
-          <div className="pt-2 border-t border-white/[0.05] flex items-center gap-2">
+          <div className="relative pt-2 border-t border-white/[0.05] flex items-center gap-2">
             <span className="text-[9px] font-mono text-white/40 uppercase tracking-wider">All</span>
             <div className="flex items-center gap-1 flex-wrap">
               {meetings.slice(-12).map((g) => (

@@ -240,9 +240,18 @@ export const Schedule = ({ schedule, monthSchedule, onOpenGame, scoreboard, stan
               <button
                 key={g.id}
                 onClick={() => onOpenGame?.(g.id)}
-                className="w-full text-left px-4 py-3 flex flex-col gap-1.5 hover:bg-white/[0.03] transition-colors"
+                className="relative overflow-hidden w-full text-left px-4 py-3 flex flex-col gap-1.5 hover:bg-white/[0.03] transition-colors"
               >
-                <div className="flex items-center gap-2">
+                <img
+                  src={`https://assets.nhle.com/logos/nhl/svg/${g.opp}_dark.svg`}
+                  alt=""
+                  aria-hidden="true"
+                  loading="lazy"
+                  className="absolute -bottom-6 -right-6 w-24 h-24 object-contain pointer-events-none select-none"
+                  style={{ opacity: 0.06 }}
+                  onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                />
+                <div className="relative flex items-center gap-2">
                   <span className={cx(
                     'inline-flex items-center justify-center w-[22px] h-[18px] text-[10px] font-mono font-semibold rounded-[3px] shrink-0',
                     g.w ? 'bg-[#F74902]/15 text-[#FF8A4C] border border-[#F74902]/30'
@@ -257,7 +266,7 @@ export const Schedule = ({ schedule, monthSchedule, onOpenGame, scoreboard, stan
                     <span className={g.w ? 'text-white/50' : 'text-white/80 font-medium'}>{g.them}</span>
                   </span>
                 </div>
-                <div className="flex items-center gap-3 text-[10px] font-mono text-white/45 tabular-nums pl-7 flex-wrap">
+                <div className="relative flex items-center gap-3 text-[10px] font-mono text-white/45 tabular-nums pl-7 flex-wrap">
                   <span>{g.label}</span>
                   <span className={cx(
                     diff > 0 ? 'text-emerald-400' : diff < 0 ? 'text-red-400' : 'text-white/40'

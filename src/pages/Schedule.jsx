@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { cx, OPP_FULL, TEAM_ABBR, arenaMiles, fmtTime } from '../config.js';
 import { Label, Section, Skeleton } from '../components/primitives.jsx';
 import { TeamLogo } from '../components/Logo.jsx';
+import { TeamLogoBg } from '../components/Watermark.jsx';
 import { WatchabilityPanel } from '../components/WatchabilityPanel.jsx';
 
 // Annotate every finished game with rest days (since the prior PHI game) and
@@ -242,15 +243,7 @@ export const Schedule = ({ schedule, monthSchedule, onOpenGame, scoreboard, stan
                 onClick={() => onOpenGame?.(g.id)}
                 className="relative overflow-hidden w-full text-left px-4 py-3 flex flex-col gap-1.5 hover:bg-white/[0.03] transition-colors"
               >
-                <img
-                  src={`https://assets.nhle.com/logos/nhl/svg/${g.opp}_dark.svg`}
-                  alt=""
-                  aria-hidden="true"
-                  loading="lazy"
-                  className="absolute -bottom-6 -right-6 w-24 h-24 object-contain pointer-events-none select-none"
-                  style={{ opacity: 0.06 }}
-                  onError={(e) => { e.currentTarget.style.display = 'none'; }}
-                />
+                <TeamLogoBg abbr={g.opp} size={96} opacity={0.06} position="bottom-right" />
                 <div className="relative flex items-center gap-2">
                   <span className={cx(
                     'inline-flex items-center justify-center w-[22px] h-[18px] text-[10px] font-mono font-semibold rounded-[3px] shrink-0',

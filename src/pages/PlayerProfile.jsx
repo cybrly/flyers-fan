@@ -8,6 +8,7 @@ import { Sparkline } from '../components/charts.jsx';
 import { navigate, gameHref } from '../router.js';
 import { PLAYER_SOCIALS } from '../data/playerSocials.js';
 import { SkaterHotCold, GoalieHotCold } from '../components/HotCold.jsx';
+import { TeamLogoBg } from '../components/Watermark.jsx';
 
 // Inline SVGs for Instagram + X. Drawn small and monochrome so they live
 // quietly in the player hero. Lucide-react v1.8 doesn't ship Instagram or
@@ -162,6 +163,7 @@ export const PlayerProfile = ({ playerId }) => {
       <div className="border border-[#F74902]/[0.20] bg-gradient-to-br from-[#141414] via-[#101010] to-[#0A0A0A] rounded-md p-5 sm:p-6 relative overflow-hidden">
         <div className="absolute -top-16 -right-16 w-72 h-72 rounded-full pointer-events-none opacity-50"
           style={{ background: 'radial-gradient(circle, rgba(255,255,255,0.03), transparent 65%)' }} />
+        <TeamLogoBg abbr={data.currentTeamAbbrev} size={260} opacity={0.06} position="top-right" />
         <div className="relative flex flex-col sm:flex-row gap-5">
           {data.headshot && (
             <img

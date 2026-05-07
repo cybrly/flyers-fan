@@ -3,6 +3,7 @@ import { Play, RotateCcw } from 'lucide-react';
 import { cx, SEASON, TEAM_ABBR, API } from '../config.js';
 import { Section, Skeleton, Chip } from '../components/primitives.jsx';
 import { TeamLogo, FlyersMark } from '../components/Logo.jsx';
+import { TeamLogoBg } from '../components/Watermark.jsx';
 import { startForecast } from '../lib/forecast.js';
 
 // Forecast — Monte Carlo playoff-odds page.
@@ -261,8 +262,9 @@ const PhiHeadline = ({ us, running }) => {
     : playoff >= 0.20 ? 'text-amber-300'
     : 'text-red-400';
   return (
-    <div className="border border-white/[0.08] bg-[#0C0C0C]/60 rounded-md p-5">
-      <div className="grid grid-cols-1 md:grid-cols-[auto_1fr_auto] items-center gap-6">
+    <div className="relative overflow-hidden border border-white/[0.08] bg-[#0C0C0C]/60 rounded-md p-5">
+      <TeamLogoBg abbr="PHI" size={220} opacity={0.06} position="bottom-right" />
+      <div className="relative grid grid-cols-1 md:grid-cols-[auto_1fr_auto] items-center gap-6">
         <div className="flex items-center gap-3">
           <FlyersMark size={40} />
           <div>

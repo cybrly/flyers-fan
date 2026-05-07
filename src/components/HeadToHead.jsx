@@ -1,6 +1,7 @@
 import { Swords } from 'lucide-react';
 import { cx, OPP_FULL, fmtDate } from '../config.js';
 import { Section, Chip } from './primitives.jsx';
+import { TeamLogoBg } from './Watermark.jsx';
 import { TeamLogo } from './Logo.jsx';
 
 // Season series vs the most relevant opponent — live game's opp, then next
@@ -48,15 +49,7 @@ export const HeadToHead = ({ schedule, onOpenGame }) => {
       action={<span className="text-[10px] font-mono text-white/40">{meetings.length} meeting{meetings.length === 1 ? '' : 's'}</span>}
     >
       <div className="relative overflow-hidden p-3.5 space-y-3">
-        <img
-          src={`https://assets.nhle.com/logos/nhl/svg/${oppAbbr}_dark.svg`}
-          alt=""
-          aria-hidden="true"
-          loading="lazy"
-          className="absolute -bottom-10 -right-10 w-44 h-44 object-contain pointer-events-none select-none"
-          style={{ opacity: 0.06 }}
-          onError={(e) => { e.currentTarget.style.display = 'none'; }}
-        />
+        <TeamLogoBg abbr={oppAbbr} size={176} opacity={0.06} position="bottom-right" />
         {/* Big record + opp name */}
         <div className="relative flex items-center justify-between gap-3">
           <div className="flex items-center gap-2.5 min-w-0">

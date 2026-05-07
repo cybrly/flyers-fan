@@ -5,6 +5,7 @@ import { Section, Skeleton, Chip } from './primitives.jsx';
 import { TeamLogo } from './Logo.jsx';
 import { Headshot } from './Headshot.jsx';
 import { PlayerLink } from './PlayerLink.jsx';
+import { TeamLogoBg } from './Watermark.jsx';
 
 // Pre-game opponent scouting. Renders only when there's a next-game on
 // the schedule. Fetches opp club-stats and full season schedule, then
@@ -121,15 +122,7 @@ export const OpponentScout = ({ nextGame }) => {
         <div className="p-6 text-center text-[11px] font-mono text-white/35">No scouting data yet.</div>
       ) : (
         <div className="relative overflow-hidden">
-          <img
-            src={`https://assets.nhle.com/logos/nhl/svg/${opp}_dark.svg`}
-            alt=""
-            aria-hidden="true"
-            loading="lazy"
-            className="absolute -bottom-16 -right-16 w-56 h-56 object-contain pointer-events-none select-none z-0"
-            style={{ opacity: 0.06 }}
-            onError={(e) => { e.currentTarget.style.display = 'none'; }}
-          />
+          <TeamLogoBg abbr={opp} size={224} opacity={0.06} position="bottom-right" />
         <div className="relative grid grid-cols-1 md:grid-cols-3 gap-px bg-white/[0.04] z-10">
           {/* L5 form */}
           <div className="bg-[#0C0C0C] p-4">

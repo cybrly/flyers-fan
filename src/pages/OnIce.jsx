@@ -6,6 +6,7 @@ import { Headshot } from '../components/Headshot.jsx';
 import { PlayerLink } from '../components/PlayerLink.jsx';
 import { TeamLogo } from '../components/Logo.jsx';
 import { FlyersMark } from '../components/Logo.jsx';
+import { TeamLogoBg } from '../components/Watermark.jsx';
 
 // Live "who's on the ice right now" view. Pulls the shift-charts feed
 // for the active game and cross-references each shift's start/end
@@ -253,16 +254,17 @@ const LiveMatchup = ({ phiOn, oppOn, oppAbbr, periodLabel, periodElapsed }) => {
       }
     >
       <div className="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-white/[0.05]">
-        <MatchupSide skaters={phiOn} label="PHI" logo={<FlyersMark size={20} />} accent="text-[#FF8A4C]" />
-        <MatchupSide skaters={oppOn} label={oppAbbr || 'OPP'} logo={<TeamLogo abbr={oppAbbr} size={20} />} accent="text-white/85" />
+        <MatchupSide skaters={phiOn} label="PHI" logo={<FlyersMark size={20} />} accent="text-[#FF8A4C]" abbr="PHI" side="left" />
+        <MatchupSide skaters={oppOn} label={oppAbbr || 'OPP'} logo={<TeamLogo abbr={oppAbbr} size={20} />} accent="text-white/85" abbr={oppAbbr} side="right" />
       </div>
     </Section>
   );
 };
 
-const MatchupSide = ({ skaters, label, logo, accent }) => (
-  <div className="p-4">
-    <div className="flex items-center gap-2 mb-3">
+const MatchupSide = ({ skaters, label, logo, accent, abbr, side }) => (
+  <div className="relative overflow-hidden p-4">
+    {abbr && <TeamLogoBg abbr={abbr} size={150} opacity={0.06} position={side === 'left' ? 'bottom-left' : 'bottom-right'} />}
+    <div className="relative flex items-center gap-2 mb-3">
       {logo}
       <span className={cx('text-[14px] font-semibold tracking-tight', accent)}>{label}</span>
       <span className="text-[10px] font-mono text-white/40 tabular-nums ml-auto">
@@ -270,9 +272,9 @@ const MatchupSide = ({ skaters, label, logo, accent }) => (
       </span>
     </div>
     {skaters.length === 0 ? (
-      <div className="text-[11px] font-mono text-white/30 italic py-2">No players on ice</div>
+      <div className="relative text-[11px] font-mono text-white/30 italic py-2">No players on ice</div>
     ) : (
-      <div className="space-y-1.5">
+      <div className="relative space-y-1.5">
         {skaters.map((p) => (
           <div key={p.id} className="flex items-center gap-2 px-2 py-1 rounded bg-white/[0.02] border border-white/[0.04]">
             <Headshot playerId={p.id} num={p.num} size={28} />

@@ -3,6 +3,7 @@ import { cx } from '../config.js';
 import { Chip, Label, Section, Skeleton } from '../components/primitives.jsx';
 import { MiniBar } from '../components/charts.jsx';
 import { FlyersMark, TeamLogo } from '../components/Logo.jsx';
+import { TeamLogoBg } from '../components/Watermark.jsx';
 
 const clinchChip = (c) => {
   if (c === 'z') return <Chip tone="amber">PRES</Chip>;
@@ -50,6 +51,7 @@ export const Standings = ({ standings }) => {
           <div className="md:col-span-1 border border-[#F74902]/30 bg-[#F74902]/[0.05] rounded-md p-4 relative overflow-hidden">
             <div className="absolute -top-12 -right-12 w-32 h-32 rounded-full pointer-events-none"
               style={{ background: 'radial-gradient(circle, rgba(255,255,255,0.04), transparent 70%)' }} />
+            <TeamLogoBg abbr="PHI" size={180} opacity={0.07} position="bottom-right" />
             <div className="relative flex items-center gap-2 mb-3">
               <FlyersMark size={16} />
               <span className="text-[11px] font-medium">Philadelphia Flyers</span>

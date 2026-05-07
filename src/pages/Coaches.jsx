@@ -3,6 +3,7 @@ import { Award, Search } from 'lucide-react';
 import { cx, TEAM_ABBR, OPP_FULL } from '../config.js';
 import { Section, Chip } from '../components/primitives.jsx';
 import { TeamLogo } from '../components/Logo.jsx';
+import { TeamLogoBg } from '../components/Watermark.jsx';
 import { COACHES } from '../data/coaches.js';
 
 // NHL head coaches view — 32 cards in a sortable / searchable grid. The
@@ -115,26 +116,12 @@ const SummaryTile = ({ label, value, sub, tone }) => {
 
 const CoachCard = ({ c }) => {
   const isUs = c.abbr === TEAM_ABBR;
-  // Watermark — large team logo anchored bottom-right of the card,
-  // semi-transparent and pointer-events-none so it never interferes with
-  // hover/clicks. Card sets overflow:hidden so the logo crops cleanly
-  // when it bleeds outside the panel edge. Slightly higher opacity for
-  // PHI's own card since the orange tint already biases bright.
-  const logoSrc = `https://assets.nhle.com/logos/nhl/svg/${c.abbr}_dark.svg`;
   return (
     <div className={cx(
       'relative overflow-hidden p-4 transition-colors',
       isUs ? 'bg-[#F74902]/[0.06]' : 'bg-[#0A0A0A] hover:bg-[#0E0E0E]',
     )}>
-      <img
-        src={logoSrc}
-        alt=""
-        aria-hidden="true"
-        loading="lazy"
-        className="absolute -bottom-8 -right-8 w-44 h-44 object-contain pointer-events-none select-none"
-        style={{ opacity: isUs ? 0.10 : 0.08 }}
-        onError={(e) => { e.currentTarget.style.display = 'none'; }}
-      />
+      <TeamLogoBg abbr={c.abbr} size={180} opacity={isUs ? 0.10 : 0.08} position="bottom-right" />
       <div className="relative flex items-start gap-3">
         <TeamLogo abbr={c.abbr} size={32} className="mt-0.5" />
         <div className="flex-1 min-w-0">

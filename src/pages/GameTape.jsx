@@ -14,6 +14,7 @@ import { GoalieHeatMap } from '../components/GoalieHeatMap.jsx';
 import { GoalieMatchup } from '../components/GoalieMatchup.jsx';
 import { LiveShotTicker } from '../components/LiveShotTicker.jsx';
 import { ShareGameButton } from '../components/ShareGame.jsx';
+import { TeamLogoBg } from '../components/Watermark.jsx';
 
 // Team-comparison row, executive layout. Order from outer-edge to
 // inner-center on each side:
@@ -336,22 +337,23 @@ export const GameTape = ({ game, loading, pbp, pbpRaw, liveSnap, customGameId, o
         )}
           style={{ background: 'radial-gradient(circle, rgba(255,255,255,0.04), transparent 70%)' }} />
         {/* Opponent watermark — anchored opposite the PHI side so neither
-            team logo competes with the score readout. ~7% opacity keeps
-            the score legible. */}
+            team logo competes with the score readout. */}
         {game.oppAbbr && (
-          <img
-            src={`https://assets.nhle.com/logos/nhl/svg/${game.oppAbbr}_dark.svg`}
-            alt=""
-            aria-hidden="true"
-            loading="lazy"
-            className={cx(
-              'absolute -bottom-12 w-56 h-56 object-contain pointer-events-none select-none',
-              game.home ? '-left-10' : '-right-10',
-            )}
-            style={{ opacity: 0.07 }}
-            onError={(e) => { e.currentTarget.style.display = 'none'; }}
+          <TeamLogoBg
+            abbr={game.oppAbbr}
+            size={224}
+            opacity={0.07}
+            position={game.home ? 'bottom-left' : 'bottom-right'}
           />
         )}
+        {/* PHI watermark on the home side, mirrored. Together they frame
+            the score readout with each team's identity. */}
+        <TeamLogoBg
+          abbr="PHI"
+          size={224}
+          opacity={0.07}
+          position={game.home ? 'bottom-right' : 'bottom-left'}
+        />
         {/* Standard hockey scoreboard layout: away team on the left, home team
             on the right. PHI may be either side depending on game.home. */}
         <div className="relative grid grid-cols-[1fr_auto_1fr] items-center gap-6">

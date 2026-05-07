@@ -975,7 +975,7 @@ const StandingsPanel = ({ standings }) => {
           const outOfPlayoffs = isMetro ? i >= 6 : false;
           return (
             <div key={t.abbr} className={cx(
-              'grid grid-cols-[20px_36px_1fr_auto] gap-2 items-center px-3.5 h-7',
+              'grid grid-cols-[20px_18px_36px_1fr_auto] gap-2 items-center px-3.5 h-8',
               t.us ? 'bg-[#F74902]/[0.06]' : 'hover:bg-white/[0.02]',
             )}>
               <span className={cx('text-[10px] font-mono tabular-nums',
@@ -984,6 +984,7 @@ const StandingsPanel = ({ standings }) => {
                   : outOfPlayoffs ? 'text-red-400/70'
                   : 'text-white/45'
               )}>{i + 1}</span>
+              <TeamLogo abbr={t.abbr} size={16} className={cx(outOfPlayoffs && !t.us && 'opacity-60')} />
               <span className="text-[12px] font-mono font-medium text-white/75">{t.abbr}</span>
               <MiniBar
                 value={t.w}

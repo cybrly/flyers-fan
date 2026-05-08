@@ -15,6 +15,7 @@ import { GearPanel } from '../components/GearPanel.jsx';
 import { SkaterEdgePanel, GoalieEdgePanel } from '../components/EdgeStats.jsx';
 import { ShareButton } from '../components/SharePanel.jsx';
 import { per60, parseTOI, fmtPer60 } from '../lib/stats.js';
+import { adaptClubStats } from '../adapters.js';
 
 // Inline SVGs for Instagram + X. Drawn small and monochrome so they live
 // quietly in the player hero. Lucide-react v1.8 doesn't ship Instagram or
@@ -255,6 +256,9 @@ export const PlayerProfile = ({ playerId }) => {
       {/* NHL Edge tracking data — speed, distance, shot speed, zone time */}
       {playerId && data.position !== 'G' && <SkaterEdgePanel playerId={playerId} />}
       {playerId && data.position === 'G' && <GoalieEdgePanel playerId={playerId} />}
+
+      {/* Shift Profile — avg shift length, shifts/game, TOI vs position avg */}
+      {playerId && isSkater && <ShiftProfile playerId={playerId} position={data.position} />}
 
       {/* Featured stats — current season big numbers */}
       {sub && (
@@ -574,6 +578,152 @@ const Stat = ({ row, v }) => (
     <span className="text-[12px] font-mono tabular-nums text-white/85">{v ?? '—'}</span>
   </div>
 );
+
+// Shift Profile — derives avg shift length, avg shifts/game, avg TOI/game
+// from club stats and compares to the team positional average. Only renders
+// for skaters on the current PHI roster (club stats are scoped to PHI).
+const ShiftProfile = ({ playerId, position }) => {
+  const teamAbbr = 'PHI';
+  const path = `v1/club-stats/${teamAbbr}/now`;
+  const { data: raw, loading } = useNHL(path, 0);
+  const clubStats = useMemo(() => adaptClubStats(raw), [raw]);
+
+  if (loading && !clubStats) return null;
+  if (!clubStats?.skaters?.length) return null;
+
+  const player = clubStats.skaters.find((s) => s.id === Number(playerId) || s.id === playerId);
+  if (!player || player.avgToi == null || player.avgShifts == null) return null;
+
+  // Avg shift length in seconds = avgToi / avgShifts
+  const avgShiftSec = player.avgShifts > 0 ? player.avgToi / player.avgShifts : 0;
+
+  // Format seconds as M:SS
+  const fmtSec = (sec) => {
+    if (!sec || sec <= 0) return '—';
+    const m = Math.floor(sec / 60);
+    const s = Math.round(sec % 60);
+    return `${m}:${String(s).padStart(2, '0')}`;
+  };
+
+  // Positional averages — compare to players at the same position group.
+  // F = forward (C/LW/RW), D = defenseman.
+  const posGroup = position === 'D' ? 'D' : 'F';
+  const peers = clubStats.skaters.filter((s) => {
+    if (posGroup === 'D') return s.pos === 'D';
+    return s.pos === 'C' || s.pos === 'L' || s.pos === 'R' || s.pos === 'LW' || s.pos === 'RW';
+  }).filter((s) => s.avgToi != null && s.avgShifts != null && s.avgShifts > 0);
+
+  const posAvgToi = peers.length > 0
+    ? peers.reduce((sum, s) => sum + s.avgToi, 0) / peers.length
+    : null;
+  const posAvgShifts = peers.length > 0
+    ? peers.reduce((sum, s) => sum + s.avgShifts, 0) / peers.length
+    : null;
+  const posAvgShiftLen = posAvgToi && posAvgShifts
+    ? posAvgToi / posAvgShifts
+    : null;
+
+  // Rank among team skaters by TOI
+  const toiRanked = [...clubStats.skaters]
+    .filter((s) => s.avgToi != null)
+    .sort((a, b) => b.avgToi - a.avgToi);
+  const toiRank = toiRanked.findIndex((s) => s.id === player.id) + 1;
+
+  // Delta styling helper
+  const delta = (val, avg) => {
+    if (val == null || avg == null) return { text: '', cls: 'text-white/35' };
+    const diff = val - avg;
+    const sign = diff >= 0 ? '+' : '';
+    return {
+      text: `${sign}${fmtSec(Math.abs(diff))}`,
+      cls: diff > 0 ? 'text-emerald-400' : diff < 0 ? 'text-red-400' : 'text-white/45',
+    };
+  };
+
+  const shiftDelta = delta(avgShiftSec, posAvgShiftLen);
+
+  return (
+    <Section
+      title="Shift Profile"
+      action={
+        <div className="flex items-center gap-2">
+          <Chip tone="muted">{posGroup === 'D' ? 'DEFENSE' : 'FORWARD'}</Chip>
+          {toiRank > 0 && (
+            <span className="text-[10px] font-mono text-white/40">#{toiRank} TOI on team</span>
+          )}
+        </div>
+      }
+    >
+      <div className="p-4 grid grid-cols-3 gap-3">
+        {/* Avg Shift Length */}
+        <div className="border border-white/[0.06] rounded-md p-3 bg-white/[0.01]">
+          <Label>Avg Shift Length</Label>
+          <div className="text-[20px] font-semibold tabular-nums mt-1 text-[#FF8A4C]">
+            {fmtSec(avgShiftSec)}
+          </div>
+          {posAvgShiftLen != null && (
+            <div className="text-[9px] font-mono text-white/35 mt-0.5">
+              {posGroup} avg {fmtSec(posAvgShiftLen)}
+              {' '}
+              <span className={shiftDelta.cls}>{shiftDelta.text}</span>
+            </div>
+          )}
+        </div>
+
+        {/* Avg Shifts / Game */}
+        <div className="border border-white/[0.06] rounded-md p-3 bg-white/[0.01]">
+          <Label>Shifts / Game</Label>
+          <div className="text-[20px] font-semibold tabular-nums mt-1 text-white/85">
+            {player.avgShifts != null ? player.avgShifts.toFixed(1) : '—'}
+          </div>
+          {posAvgShifts != null && (
+            <div className="text-[9px] font-mono text-white/35 mt-0.5">
+              {posGroup} avg {posAvgShifts.toFixed(1)}
+            </div>
+          )}
+        </div>
+
+        {/* Avg TOI / Game */}
+        <div className="border border-white/[0.06] rounded-md p-3 bg-white/[0.01]">
+          <Label>TOI / Game</Label>
+          <div className="text-[20px] font-semibold tabular-nums mt-1 text-white/85">
+            {fmtSec(player.avgToi)}
+          </div>
+          {posAvgToi != null && (
+            <div className="text-[9px] font-mono text-white/35 mt-0.5">
+              {posGroup} avg {fmtSec(posAvgToi)}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Situation breakdown — even-strength, PP, PK if available */}
+      {(player.avgEvToi != null || player.avgPpToi != null || player.avgShToi != null) && (
+        <div className="px-4 pb-4 pt-1 space-y-1.5">
+          <Label>TOI Breakdown</Label>
+          {player.avgEvToi != null && (
+            <div className="flex items-center justify-between">
+              <span className="text-[11px] font-mono text-white/45">Even Strength</span>
+              <span className="text-[12px] font-mono tabular-nums text-white/85">{fmtSec(player.avgEvToi)}</span>
+            </div>
+          )}
+          {player.avgPpToi != null && (
+            <div className="flex items-center justify-between">
+              <span className="text-[11px] font-mono text-white/45">Power Play</span>
+              <span className="text-[12px] font-mono tabular-nums text-emerald-400">{fmtSec(player.avgPpToi)}</span>
+            </div>
+          )}
+          {player.avgShToi != null && (
+            <div className="flex items-center justify-between">
+              <span className="text-[11px] font-mono text-white/45">Shorthanded</span>
+              <span className="text-[12px] font-mono tabular-nums text-amber-300">{fmtSec(player.avgShToi)}</span>
+            </div>
+          )}
+        </div>
+      )}
+    </Section>
+  );
+};
 
 // SVG career arc chart. For skaters it stacks G + A bars per season with a
 // points-line overlay; for goalies it draws a SV% line with a reference at

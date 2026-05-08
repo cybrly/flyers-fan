@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { ArrowLeft, AlertCircle } from 'lucide-react';
 import { cx, isLive } from '../config.js';
+import { useNHL } from '../api.js';
 import { Chip, Section, Skeleton, ScoreReadout } from '../components/primitives.jsx';
 import { FlyersMark, TeamLogo } from '../components/Logo.jsx';
 import { PlayerLink } from '../components/PlayerLink.jsx';
@@ -297,6 +298,11 @@ export const GameTape = ({ game, loading, pbp, pbpRaw, liveSnap, liveConnected, 
   const periods = Object.keys(game.periods).map(Number).sort((a, b) => a - b);
   const [kioskOpen, setKioskOpen] = useState(false);
 
+  // NHL official game story — only fetch for finished games.
+  const gameFinished = game.state === 'FINAL' || game.state === 'OFF';
+  const storyPath = gameFinished && game.id ? `v1/wsc/game-story/${game.id}` : null;
+  const { data: storyData } = useNHL(storyPath, 0);
+
   // SSE overlay — when the live stream has emitted a fresh snapshot
   // (<6s old) prefer its score/period/clock so the header updates in
   // ~2s instead of waiting on the 5s polled boxscore. Falls back to
@@ -392,6 +398,33 @@ export const GameTape = ({ game, loading, pbp, pbpRaw, liveSnap, liveConnected, 
         recentGames={recentForHero}
         standings={standings}
       />
+
+      {/* Official NHL game recap from game-story endpoint */}
+      {storyData && (() => {
+        // The game-story payload nests the recap under various shapes;
+        // normalise to a simple title + body pair.
+        const recap = storyData.summary?.recap
+          || storyData.recap
+          || storyData.editorial?.recap?.items?.[0];
+        const title = recap?.headline || recap?.title || null;
+        const body = recap?.subhead
+          || recap?.seoDescription
+          || recap?.description
+          || (typeof recap === 'string' ? recap : null);
+        if (!title && !body) return null;
+        return (
+          <Section branded title="Game Recap" action={<span className="text-[10px] font-mono text-white/40">NHL.com</span>}>
+            <div className="px-4 py-4 space-y-2">
+              {title && (
+                <h3 className="text-[14px] font-semibold text-white/90 leading-snug">{title}</h3>
+              )}
+              {body && (
+                <p className="text-[12px] text-white/60 leading-relaxed">{body}</p>
+              )}
+            </div>
+          </Section>
+        );
+      })()}
 
       {/* Post-game narrative recap */}
       {!liveNow && game && pbp?.events?.length > 0 && (() => {
@@ -654,7 +687,7 @@ export const GameTape = ({ game, loading, pbp, pbpRaw, liveSnap, liveConnected, 
               <div className="divide-y divide-white/[0.04]">
                 {game.timeline.map((g, i) => (
                   <div key={i} className={cx(
-                    'grid grid-cols-[36px_56px_1fr_84px_28px] items-center gap-3 px-4 h-12',
+                    'grid grid-cols-[36px_56px_1fr_84px_auto] items-center gap-3 px-4 py-2 min-h-[48px]',
                     g.us ? 'bg-[#F74902]/[0.04]' : 'hover:bg-white/[0.02]',
                   )}>
                     <span className="text-[10px] font-mono text-white/40 uppercase">
@@ -700,10 +733,11 @@ export const GameTape = ({ game, loading, pbp, pbpRaw, liveSnap, liveConnected, 
                         target="_blank"
                         rel="noopener noreferrer"
                         title="Watch highlight on NHL.com"
-                        className="flex items-center justify-center w-6 h-6 rounded-md text-white/40 hover:text-[#FF8A4C] hover:bg-white/[0.04] transition-colors"
+                        className="inline-flex items-center gap-1 px-2 py-1 rounded-md border border-[#F74902]/30 bg-[#F74902]/10 text-[#FF8A4C] hover:bg-[#F74902]/20 hover:border-[#F74902]/50 transition-colors text-[10px] font-mono leading-none whitespace-nowrap"
                         aria-label="Watch highlight"
                       >
-                        <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z" /></svg>
+                        <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor" className="shrink-0"><path d="M8 5v14l11-7z" /></svg>
+                        Watch
                       </a>
                     ) : <span />}
                   </div>

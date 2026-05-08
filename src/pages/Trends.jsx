@@ -6,6 +6,7 @@ import { navigate, gameHref } from '../router.js';
 import { rollingWindow, rollingAvg } from '../lib/stats.js';
 import { HISTORICAL_SEASONS } from '../data/historicalSeasons.js';
 import { adaptTeamEdge, PHI_TEAM_ID } from '../adapters-edge.js';
+import { HistoricalStandings } from '../components/HistoricalStandings.jsx';
 
 // Season trajectory chart — multi-line plot of GF / GA / Diff (cumulative),
 // 5-game rolling form, points pace, plus an optional per-player cumulative
@@ -46,7 +47,7 @@ const pathFrom = (values, yMin, yMax, n) => {
 const xForIndex = (i, n) => PAD.left + (n <= 1 ? 0 : (i / (n - 1)) * PLOT_W);
 const yForCum = (v, scale) => PAD.top + PLOT_H - ((v - scale.min) / Math.max(1, scale.max - scale.min)) * PLOT_H;
 
-export const Trends = ({ schedule, roster, clubStats }) => {
+export const Trends = ({ schedule, standings, roster, clubStats }) => {
   const [active, setActive] = useState({ diff: true, gf: true, ga: true, form: false, pts: true });
   const [hoverIdx, setHoverIdx] = useState(null);
   const [playerId, setPlayerId] = useState('');
@@ -856,6 +857,7 @@ export const Trends = ({ schedule, roster, clubStats }) => {
 
       <SituationalSplits splits={splits} clubStats={clubStats} />
       <TeamEdgeZoneTime />
+      {standings?.us && <HistoricalStandings currentUs={standings.us} />}
     </div>
   );
 };

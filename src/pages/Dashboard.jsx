@@ -26,6 +26,7 @@ import { teamRanks } from '../lib/stats.js';
 import { dashboardNarrative, playoffRaceNarrative } from '../lib/narrative.js';
 import { StreakAlerts } from '../components/StreakAlerts.jsx';
 import { TeamEdgePanel } from '../components/EdgeStats.jsx';
+import { OfficialMilestones } from '../components/OfficialMilestones.jsx';
 
 // Dashboard is laid out as a single linear flow split into named bands
 // (Tonight / Season / Recent / Offense / Roster / Reference). Each band
@@ -530,6 +531,7 @@ export const Dashboard = ({ schedule, standings, scoreboard, clubStats, roster, 
         <HonorsPanel />
         <ThisDayInHistory />
         <MilestoneWatch clubStats={clubStats} />
+        <OfficialMilestones />
       </div>
 
       {/* ─── BAND · REFERENCE ─────────────────────────────────────────────── */}

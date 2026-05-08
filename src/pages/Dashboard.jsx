@@ -25,6 +25,7 @@ import { navigate } from '../router.js';
 import { teamRanks } from '../lib/stats.js';
 import { dashboardNarrative, playoffRaceNarrative } from '../lib/narrative.js';
 import { StreakAlerts } from '../components/StreakAlerts.jsx';
+import { TeamEdgePanel } from '../components/EdgeStats.jsx';
 
 // Dashboard is laid out as a single linear flow split into named bands
 // (Tonight / Season / Recent / Offense / Roster / Reference). Each band
@@ -258,6 +259,9 @@ export const Dashboard = ({ schedule, standings, scoreboard, clubStats, roster, 
       </div>
 
       </CollapsibleBand>
+
+      {/* ─── NHL EDGE TRACKING ──────────────────────────────────────────── */}
+      <TeamEdgePanel />
 
       {/* ─── BAND · RECENT FORM ───────────────────────────────────────────── */}
       <CollapsibleBand id="recent-form" label="Recent Form" color="emerald" sub="Last 20 games" count={games.length}>

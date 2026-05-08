@@ -33,6 +33,9 @@ const cacheFor = (path) => {
   if (path.startsWith('v1/club-stats'))                                return 120;
   if (path.startsWith('v1/roster/'))                                   return 3600; // hourly — roster doesn't churn
   if (path.startsWith('v1/player/'))                                   return 600;  // 10 min — player landing
+  if (path.startsWith('v1/edge/'))                                     return 300;  // 5 min — NHL Edge tracking data
+  if (path.startsWith('v1/skater-stats-leaders'))                      return 300;
+  if (path.startsWith('v1/goalie-stats-leaders'))                      return 300;
   return 30;
 };
 

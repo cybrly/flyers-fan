@@ -5,6 +5,7 @@ import { Headshot } from '../components/Headshot.jsx';
 import { PlayerLink } from '../components/PlayerLink.jsx';
 import { TeamLogo } from '../components/Logo.jsx';
 import { useNHL } from '../api.js';
+import { GoalieEdgePanel } from '../components/EdgeStats.jsx';
 
 // Goalie-only tracker. Shows season totals per goalie plus a per-game
 // trend of save% and GAA derived from /v1/player/{id}/game-log. Two
@@ -302,6 +303,11 @@ export const Goalies = ({ clubStats, schedule, goalieLeaders }) => {
           </div>
         )}
       </Section>
+
+      {/* NHL Edge tracking data for each goalie */}
+      {goalies.filter((g) => g.id).slice(0, 2).map((g) => (
+        <GoalieEdgePanel key={g.id} playerId={g.id} />
+      ))}
 
       <div>
         <h2 className="text-[14px] font-semibold tracking-tight">NHL Top 10 · Goalies</h2>

@@ -5,6 +5,10 @@ import { useNHL } from '../api.js';
 import { navigate, gameHref } from '../router.js';
 import { rollingWindow, rollingAvg } from '../lib/stats.js';
 import { HISTORICAL_SEASONS } from '../data/historicalSeasons.js';
+import { adaptTeamEdge, PHI_TEAM_ID } from '../adapters-edge.js';
+import { SEASON } from '../config.js';
+import { Chip } from '../components/primitives.jsx';
+import { Label } from '../components/primitives.jsx';
 
 // Season trajectory chart — multi-line plot of GF / GA / Diff (cumulative),
 // 5-game rolling form, points pace, plus an optional per-player cumulative
@@ -853,6 +857,7 @@ export const Trends = ({ schedule, roster, clubStats }) => {
       </div>
 
       <SituationalSplits splits={splits} clubStats={clubStats} />
+      <TeamEdgeZoneTime />
     </div>
   );
 };
@@ -1027,5 +1032,46 @@ const SituationalSplits = ({ splits, clubStats }) => {
         </Section>
       )}
     </div>
+  );
+};
+
+// Team Edge zone time — fetches once on mount, shows OZ/NZ/DZ distribution
+// compared to league average. Standalone component so the fetch doesn't
+// block the rest of Trends from rendering.
+const TeamEdgeZoneTime = () => {
+  const { data: raw } = useNHL(`v1/edge/team-comparison/${PHI_TEAM_ID}/${SEASON}/2`, 0);
+  const edge = useMemo(() => adaptTeamEdge(raw), [raw]);
+
+  if (!edge?.zoneTime) return null;
+
+  return (
+    <Section
+      title="Zone Time · NHL Edge"
+      action={<Chip tone="orange">NHL EDGE</Chip>}
+    >
+      <div className="p-4 space-y-3">
+        <div className="flex h-6 w-full rounded-md overflow-hidden">
+          <div className="bg-[#FF8A4C] flex items-center justify-center text-[10px] font-mono text-black font-semibold" style={{ width: `${edge.zoneTime.offensive || 0}%` }}>
+            {edge.zoneTime.offensive}%
+          </div>
+          <div className="bg-white/20 flex items-center justify-center text-[10px] font-mono text-white/70 font-medium" style={{ width: `${edge.zoneTime.neutral || 0}%` }}>
+            {edge.zoneTime.neutral}%
+          </div>
+          <div className="bg-sky-400/60 flex items-center justify-center text-[10px] font-mono text-white font-semibold" style={{ width: `${edge.zoneTime.defensive || 0}%` }}>
+            {edge.zoneTime.defensive}%
+          </div>
+        </div>
+        <div className="flex items-center justify-between text-[10px] font-mono text-white/45">
+          <span className="flex items-center gap-1"><span className="w-2 h-2 bg-[#FF8A4C] rounded-sm" /> Offensive Zone</span>
+          <span className="flex items-center gap-1"><span className="w-2 h-2 bg-white/20 rounded-sm" /> Neutral Zone</span>
+          <span className="flex items-center gap-1"><span className="w-2 h-2 bg-sky-400/60 rounded-sm" /> Defensive Zone</span>
+        </div>
+        {edge.zoneTime.leagueAvgOffensive != null && (
+          <div className="text-[10px] font-mono text-white/35">
+            League average OZ time: {edge.zoneTime.leagueAvgOffensive}% · PHI is {edge.zoneTime.offensive > edge.zoneTime.leagueAvgOffensive ? 'above' : 'below'} average
+          </div>
+        )}
+      </div>
+    </Section>
   );
 };

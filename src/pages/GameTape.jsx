@@ -17,6 +17,7 @@ import { ShareGameButton } from '../components/ShareGame.jsx';
 import { TeamLogoBg } from '../components/Watermark.jsx';
 import { KioskMode, KioskTrigger } from '../components/KioskMode.jsx';
 import { Hero } from '../components/Hero.jsx';
+import { LiveFreshness } from '../components/LiveFreshness.jsx';
 
 // Team-comparison row, executive layout. Order from outer-edge to
 // inner-center on each side:
@@ -261,7 +262,7 @@ const GoalieRow = ({ g, isUs, teamAbbr }) => (
   </tr>
 );
 
-export const GameTape = ({ game, loading, pbp, pbpRaw, liveSnap, schedule, standings, customGameId, onClearCustom }) => {
+export const GameTape = ({ game, loading, pbp, pbpRaw, liveSnap, liveConnected, boxscoreLastFetch, schedule, standings, customGameId, onClearCustom }) => {
   if (loading && !game) {
     return (
       <div className="p-4 md:p-6 space-y-5">
@@ -351,6 +352,9 @@ export const GameTape = ({ game, loading, pbp, pbpRaw, liveSnap, schedule, stand
           <p className="text-[12px] text-white/45 mt-1 font-mono">
             {liveNow ? 'Live game' : customGameId ? 'Selected game' : 'Last game'} · {game.dateLabel} · vs {game.oppName}
           </p>
+          <div className="mt-1.5">
+            <LiveFreshness liveGame={liveNow} liveSnap={liveSnap} liveConnected={liveConnected} lastFetch={boxscoreLastFetch} />
+          </div>
         </div>
         <div className="flex items-center gap-2">
           {liveNow ? (

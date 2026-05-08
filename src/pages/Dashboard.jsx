@@ -140,9 +140,8 @@ export const Dashboard = ({ schedule, standings, scoreboard, clubStats, roster, 
         color="orange"
         sub="race · next stretch · standings"
       >
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           <PlayoffRace standings={standings} />
-          <ScheduleStrength upcoming={schedule?.upcoming || []} standings={standings} />
           <StandingsPanel standings={standings} />
         </div>
         {nextGame && <OpponentScout nextGame={nextGame} />}
@@ -516,6 +515,8 @@ export const Dashboard = ({ schedule, standings, scoreboard, clubStats, roster, 
         <HeadToHead schedule={schedule} onOpenGame={onOpenGame} />
         <UpcomingPanel upcoming={schedule?.upcoming || []} />
       </div>
+
+      <ScheduleStrength upcoming={schedule?.upcoming || []} standings={standings} />
 
       {/* Latest result — useful as a "what just happened" recap when the
           Hero is busy showing the live or upcoming game. Hidden when the

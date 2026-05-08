@@ -171,7 +171,7 @@ export default function App() {
   // schedule liveGame because schedule polls slower (5 min) and we want
   // the stream to spin up at puck drop, not at the next standings tick.
   const liveActive = !!(boxscore.data && isLive(boxscore.data.gameState));
-  const { snap: liveSnap } = useLiveStream(liveActive ? gameId : null, liveActive);
+  const { snap: liveSnap, connected: liveConnected } = useLiveStream(liveActive ? gameId : null, liveActive);
 
   const game = useMemo(
     () => adaptGame(boxscore.data, rightRail.data, landing.data),
@@ -446,7 +446,7 @@ export default function App() {
                 {page === 'dashboard' && <Dashboard schedule={schedule} standings={standings} scoreboard={scoreboard} clubStats={clubStats} roster={roster} liveDetail={isLive(boxscore.data?.gameState) ? game : null} liveSnap={liveSnap} lastGame={game} leagueLeaders={leagueLeaders} loading={scheduleRaw.loading || standingsRaw.loading} onOpenGame={openGame} />}
                 {page === 'schedule'  && <Schedule schedule={schedule} monthSchedule={monthSchedule} onOpenGame={openGame} scoreboard={scoreboard} standings={standings} leagueLeaders={leagueLeaders} />}
                 {page === 'standings' && <Standings standings={standings} />}
-                {page === 'game'      && <GameTape game={game} loading={boxscore.loading} pbp={pbp} pbpRaw={pbpRaw.data} liveSnap={liveSnap} schedule={schedule} standings={standings} customGameId={routeGameId} onClearCustom={clearSelectedGame} />}
+                {page === 'game'      && <GameTape game={game} loading={boxscore.loading} pbp={pbp} pbpRaw={pbpRaw.data} liveSnap={liveSnap} liveConnected={liveConnected} boxscoreLastFetch={boxscore.lastFetch} schedule={schedule} standings={standings} customGameId={routeGameId} onClearCustom={clearSelectedGame} />}
                 {page === 'playoffs'  && <Playoffs bracket={bracket} onOpenSeries={onOpenSeries} />}
                 {page === 'roster'    && <Roster roster={roster} clubStats={clubStats} prospects={prospects} draftPicks={draftPicks} />}
                 {page === 'player'    && <PlayerProfile playerId={profileId} />}
@@ -455,7 +455,7 @@ export default function App() {
                 {page === 'coaches'   && <Coaches />}
                 {page === 'draft'     && <Draft rankings={draftRankings} loading={drNAS.loading} />}
                 {page === 'records'   && <Records />}
-                {page === 'on-ice'    && <OnIce game={game} gameId={gameId} liveSnap={liveSnap} />}
+                {page === 'on-ice'    && <OnIce game={game} gameId={gameId} liveSnap={liveSnap} liveConnected={liveConnected} boxscoreLastFetch={boxscore.lastFetch} />}
                 {page === 'goalies'   && <Goalies clubStats={clubStats} schedule={schedule} goalieLeaders={goalieLeaders} />}
                 {page === 'forecast'  && <Forecast standings={standings} />}
               </Suspense>

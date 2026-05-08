@@ -7,6 +7,7 @@ import { PlayerLink } from '../components/PlayerLink.jsx';
 import { TeamLogo } from '../components/Logo.jsx';
 import { FlyersMark } from '../components/Logo.jsx';
 import { TeamLogoBg } from '../components/Watermark.jsx';
+import { LiveFreshness } from '../components/LiveFreshness.jsx';
 
 // Live "who's on the ice right now" view. Pulls the shift-charts feed
 // for the active game and cross-references each shift's start/end
@@ -357,7 +358,7 @@ const TeamTable = ({ skaters, liveShifts, accentColor, header, periodLabel, peri
   );
 };
 
-export const OnIce = ({ game, gameId, liveSnap }) => {
+export const OnIce = ({ game, gameId, liveSnap, liveConnected, boxscoreLastFetch }) => {
   const liveGame = !!game && isLive(game.state);
   const [tick, setTick] = useState(0);
   useEffect(() => {
@@ -430,6 +431,7 @@ export const OnIce = ({ game, gameId, liveSnap }) => {
         color="emerald"
         sub={liveGame ? 'live · auto-updating' : 'final game · last known state'}
         count={skaters.length + oppSkaters.length}
+        action={<LiveFreshness liveGame={liveGame} liveSnap={liveSnap} liveConnected={liveConnected} lastFetch={boxscoreLastFetch} />}
       />
 
       {/* Live matchup — only meaningful while a game is in progress. */}

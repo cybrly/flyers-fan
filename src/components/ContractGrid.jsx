@@ -87,19 +87,19 @@ const Group = ({ title, players, totals, seasons, color }) => {
   if (players.length === 0) return null;
   return (
     <div>
-      <div className="flex items-center justify-between px-3 py-2 border-y border-white/[0.05] bg-white/[0.015]">
+      <div className="grid grid-cols-[44px_1fr_repeat(5,minmax(74px,1fr))_56px] items-center gap-2 px-3 py-2 border-y border-white/[0.05] bg-white/[0.015]">
+        <span />
         <div className="flex items-center gap-2">
           <span className={cx('w-1.5 h-1.5 rounded-full', color)} />
           <span className="text-[11px] font-mono text-white/65 uppercase tracking-wider">{title}</span>
           <span className="text-[10px] font-mono text-white/35">{players.length}</span>
         </div>
-        <div className="flex items-center gap-3">
-          {totals.map((t, i) => (
-            <span key={i} className="text-[11px] font-mono tabular-nums text-white/55 hidden md:inline">
-              {fmtMillions(t)}
-            </span>
-          ))}
-        </div>
+        {totals.map((t, i) => (
+          <span key={i} className="text-[11px] font-mono tabular-nums text-white/55 text-right hidden md:inline">
+            {fmtMillions(t)}
+          </span>
+        ))}
+        <span />
       </div>
       <div>
         {players.map(({ player, contract }) => (

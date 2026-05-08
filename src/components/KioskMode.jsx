@@ -102,11 +102,12 @@ export const KioskMode = ({ liveGame, liveDetail, liveSnap, game, onClose }) => 
           }}
         />
 
-        {/* PHI half — huge logo bleeding off the left edge. Higher opacity
-            than the corner-watermark version so the logo reads as the
-            centerpiece of its half rather than a footer. */}
+        {/* Away half — huge logo bleeding off the left edge. The center
+            stage uses away-on-left / home-on-right so the backdrop tracks
+            the same convention: when PHI is home, the opp logo sits behind
+            the away column on the left and the PHI logo sits on the right. */}
         <img
-          src="https://assets.nhle.com/logos/nhl/svg/PHI_dark.svg"
+          src={`https://assets.nhle.com/logos/nhl/svg/${isHome ? oppAbbr : 'PHI'}_dark.svg`}
           alt=""
           className="absolute select-none"
           style={{
@@ -115,28 +116,27 @@ export const KioskMode = ({ liveGame, liveDetail, liveSnap, game, onClose }) => 
             transform: 'translateY(-50%)',
             width: '70vh',
             height: '70vh',
-            opacity: 0.16,
+            opacity: isHome ? 0.14 : 0.16,
           }}
           onError={(e) => { e.currentTarget.style.display = 'none'; }}
         />
 
-        {/* OPP half — same treatment, mirrored. */}
-        {oppAbbr && (
-          <img
-            src={`https://assets.nhle.com/logos/nhl/svg/${oppAbbr}_dark.svg`}
-            alt=""
-            className="absolute select-none"
-            style={{
-              top: '50%',
-              right: '-12%',
-              transform: 'translateY(-50%)',
-              width: '70vh',
-              height: '70vh',
-              opacity: 0.14,
-            }}
-            onError={(e) => { e.currentTarget.style.display = 'none'; }}
-          />
-        )}
+        {/* Home half — same treatment, mirrored. PHI when PHI is home,
+            otherwise the opp. */}
+        <img
+          src={`https://assets.nhle.com/logos/nhl/svg/${isHome ? 'PHI' : oppAbbr}_dark.svg`}
+          alt=""
+          className="absolute select-none"
+          style={{
+            top: '50%',
+            right: '-12%',
+            transform: 'translateY(-50%)',
+            width: '70vh',
+            height: '70vh',
+            opacity: isHome ? 0.16 : 0.14,
+          }}
+          onError={(e) => { e.currentTarget.style.display = 'none'; }}
+        />
 
         {/* Center spotlight — radial fade so the score readout has clean
             contrast against the busy logos behind it. Two layered

@@ -5,6 +5,7 @@ import { useNHL } from '../api.js';
 import { adaptSeries } from '../adapters.js';
 import { Chip, Label, Section, Skeleton } from './primitives.jsx';
 import { TeamLogo } from './Logo.jsx';
+import { navigate, gameHref } from '../router.js';
 
 export const SeriesModal = ({ letter, onClose }) => {
   const path = letter ? `v1/schedule/playoff-series/${SEASON}/${letter.toLowerCase()}` : null;
@@ -92,7 +93,17 @@ export const SeriesModal = ({ letter, onClose }) => {
                     ? (g.home.score > g.away.score ? 'home' : 'away')
                     : null;
                   return (
-                    <div key={g.id} className="grid grid-cols-[44px_1fr_auto] items-center gap-3 px-4 h-12">
+                    <div
+                      key={g.id}
+                      role={played ? 'button' : undefined}
+                      tabIndex={played ? 0 : undefined}
+                      onClick={played ? () => { onClose(); navigate(gameHref(g.id)); } : undefined}
+                      onKeyDown={played ? (e) => { if (e.key === 'Enter') { onClose(); navigate(gameHref(g.id)); } } : undefined}
+                      className={cx(
+                        'grid grid-cols-[44px_1fr_auto] items-center gap-3 px-4 h-12',
+                        played && 'cursor-pointer hover:bg-white/[0.04] transition-colors',
+                      )}
+                    >
                       <div className="text-[11px] font-mono text-white/55">G{g.number}</div>
                       <div className="min-w-0">
                         <div className="flex items-center gap-2 text-[12px]">
@@ -117,10 +128,13 @@ export const SeriesModal = ({ letter, onClose }) => {
                           {played && g.lastPeriodType && g.lastPeriodType !== 'REG' && ` · ${g.lastPeriodType}`}
                         </div>
                       </div>
-                      <div className="text-right">
+                      <div className="text-right flex items-center gap-2">
                         {!played
                           ? (g.ifNecessary ? <Chip tone="muted">If nec.</Chip> : <Chip tone="default">Upcoming</Chip>)
-                          : <Chip tone={winner === 'home' || winner === 'away' ? 'orange' : 'muted'}>FINAL</Chip>
+                          : <>
+                              <Chip tone={winner === 'home' || winner === 'away' ? 'orange' : 'muted'}>FINAL</Chip>
+                              <span className="text-[9px] font-mono text-white/30 hidden sm:inline">open tape →</span>
+                            </>
                         }
                       </div>
                     </div>

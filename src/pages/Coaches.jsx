@@ -117,24 +117,15 @@ const SummaryTile = ({ label, value, sub, tone }) => {
 // Initials in a circle — graceful fallback when we don't have a real
 // portrait URL for the coach. Sized to match a real headshot so the
 // card doesn't reflow when an image gets added later.
-const CoachInitialsAvatar = ({ name, abbr, size = 56 }) => {
-  const initials = (name || '')
-    .split(' ')
-    .filter(Boolean)
-    .map((part) => part[0])
-    .slice(0, 2)
-    .join('')
-    .toUpperCase();
-  return (
-    <div
-      className="shrink-0 rounded-full bg-white/[0.06] border border-white/[0.10] flex items-center justify-center text-white/70"
-      style={{ width: size, height: size, fontSize: size * 0.36 }}
-      title={`${name} · ${abbr}`}
-    >
-      <span className="font-semibold tracking-tight">{initials || '—'}</span>
-    </div>
-  );
-};
+const CoachInitialsAvatar = ({ name, abbr, size = 56 }) => (
+  <div
+    className="shrink-0 rounded-full bg-white/[0.06] border border-white/[0.10] flex items-center justify-center overflow-hidden"
+    style={{ width: size, height: size }}
+    title={`${name} · ${abbr}`}
+  >
+    <TeamLogo abbr={abbr} size={size * 0.6} />
+  </div>
+);
 
 const CoachPortrait = ({ c, size = 56 }) => {
   if (c.photo) {

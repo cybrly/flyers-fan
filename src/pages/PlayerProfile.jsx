@@ -12,6 +12,7 @@ import { TeamLogoBg } from '../components/Watermark.jsx';
 import { SignaturePanel } from '../components/SignaturePanel.jsx';
 import { ContractPanel } from '../components/ContractPanel.jsx';
 import { GearPanel } from '../components/GearPanel.jsx';
+import { SkaterEdgePanel, GoalieEdgePanel } from '../components/EdgeStats.jsx';
 
 // Inline SVGs for Instagram + X. Drawn small and monochrome so they live
 // quietly in the player hero. Lucide-react v1.8 doesn't ship Instagram or
@@ -235,6 +236,10 @@ export const PlayerProfile = ({ playerId }) => {
         <ContractPanel playerId={playerId} fullName={fullName} />
         <GearPanel playerId={playerId} />
       </div>
+
+      {/* NHL Edge tracking data — speed, distance, shot speed, zone time */}
+      {playerId && data.position !== 'G' && <SkaterEdgePanel playerId={playerId} />}
+      {playerId && data.position === 'G' && <GoalieEdgePanel playerId={playerId} />}
 
       {/* Featured stats — current season big numbers */}
       {sub && (

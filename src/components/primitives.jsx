@@ -41,10 +41,17 @@ export const Label = ({ children, className = '' }) => (
 // neutral white tint so the panels feel brand-aligned without painting
 // the surface (low-opacity orange FILLS perceive as brown on dark — only
 // 1px STROKES preserve the orange hue cleanly).
-export const Section = ({ title, action, children, className = '' }) => (
-  <div className={cx('border border-[#F74902]/[0.18] bg-[#0C0C0C]/60 rounded-md backdrop-blur-sm', className)}>
+export const Section = ({ title, action, children, className = '', branded = false }) => (
+  <div className={cx(
+    'bg-[#0C0C0C]/60 rounded-md backdrop-blur-sm border',
+    branded ? 'border-[#F74902]/[0.18]' : 'border-white/[0.07]',
+    className,
+  )}>
     {(title || action) && (
-      <div className="flex items-center justify-between px-3.5 h-8 border-b border-[#F74902]/[0.25]">
+      <div className={cx(
+        'flex items-center justify-between px-3.5 h-8 border-b',
+        branded ? 'border-[#F74902]/[0.25]' : 'border-white/[0.06]',
+      )}>
         <span className="text-[11px] font-medium text-white/85 tracking-tight">{title}</span>
         {action}
       </div>

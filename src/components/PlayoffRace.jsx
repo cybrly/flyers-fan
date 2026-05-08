@@ -38,7 +38,7 @@ export const PlayoffRace = ({ standings }) => {
 
   if (!data) {
     return (
-      <Section title="Playoff Race" action={<span className="text-[10px] font-mono text-white/40">Eastern Conference</span>}>
+      <Section branded title="Playoff Race" action={<span className="text-[10px] font-mono text-white/40">Eastern Conference</span>}>
         <div className="p-6 text-center text-[11px] font-mono text-white/35">
           Standings not loaded.
         </div>

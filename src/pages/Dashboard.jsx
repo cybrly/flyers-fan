@@ -435,7 +435,7 @@ export const Dashboard = ({ schedule, standings, scoreboard, clubStats, roster, 
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {topScorers.length > 0 && (
-          <Section title="Top Scorers · PHI" action={<span className="text-[10px] font-mono text-white/40">season</span>}>
+          <Section branded title="Top Scorers · PHI" action={<span className="text-[10px] font-mono text-white/40">season</span>}>
             <div className="divide-y divide-white/[0.04]">
               {topScorers.map((p, i) => (
                 <div key={p.id} className="grid grid-cols-[18px_1fr_auto] gap-2 items-center px-3 h-9 hover:bg-white/[0.02]">
@@ -665,7 +665,7 @@ const SecondaryStat = ({ label, value, sub, tone = 'default' }) => {
 const LiveOrNextCard = ({ liveGame, liveDetail, nextGame, onOpenGame }) => {
   if (liveGame) {
     return (
-      <Section title={<span className="flex items-center gap-2">Live Now <Chip tone="live" pulse>LIVE</Chip></span>}>
+      <Section branded title={<span className="flex items-center gap-2">Live Now <Chip tone="live" pulse>LIVE</Chip></span>}>
         <div className="p-4 space-y-3">
           {liveDetail?.periodDescriptor && (
             <div className="flex items-center justify-between px-2.5 h-9 border border-[#F74902]/25 bg-[#F74902]/[0.06] rounded-md">

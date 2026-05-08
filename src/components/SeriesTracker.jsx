@@ -55,6 +55,7 @@ export const SeriesTracker = ({ scoreboard, schedule, onOpenGame }) => {
 
   return (
     <Section
+      branded
       title={
         <span className="flex items-center gap-2">
           <Trophy size={12} className="text-[#FF8A4C]" />

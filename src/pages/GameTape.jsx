@@ -441,7 +441,7 @@ export const GameTape = ({ game, loading, pbp, pbpRaw, liveSnap, liveConnected, 
       </div>
 
       <div className="space-y-4">
-        <Section title="Team Comparison">
+        <Section branded title="Team Comparison">
           {/* Header: team logos + abbreviations on each side, balanced
               around the centerline so the panel reads as a head-to-head
               rather than a generic table. */}
@@ -506,7 +506,7 @@ export const GameTape = ({ game, loading, pbp, pbpRaw, liveSnap, liveConnected, 
           )}
 
           {game.stars.length > 0 && (
-            <Section title="Three Stars">
+            <Section branded title="Three Stars">
               <div className="divide-y divide-white/[0.04]">
                 {game.stars.map((s) => (
                   <div key={s.star} className="flex items-center gap-3 px-4 py-3">

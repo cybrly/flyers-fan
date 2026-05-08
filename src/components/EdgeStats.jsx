@@ -84,7 +84,7 @@ export const SkaterEdgePanel = ({ playerId, gameType = 2 }) => {
 
   if (loading && !edge) {
     return (
-      <Section title="NHL Edge · Tracking" action={<Chip tone="muted">NHL EDGE</Chip>}>
+      <Section branded title="NHL Edge · Tracking" action={<Chip tone="muted">NHL EDGE</Chip>}>
         <div className="p-4 space-y-3">
           <Skeleton height={20} />
           <Skeleton height={20} />
@@ -213,7 +213,7 @@ export const TeamEdgePanel = () => {
 
   if (loading && !edge) {
     return (
-      <Section title="NHL Edge · Team Tracking" action={<Chip tone="muted">NHL EDGE</Chip>}>
+      <Section branded title="NHL Edge · Team Tracking" action={<Chip tone="muted">NHL EDGE</Chip>}>
         <div className="p-4"><Skeleton height={80} /></div>
       </Section>
     );
@@ -315,7 +315,7 @@ export const GoalieEdgePanel = ({ playerId, gameType = 2 }) => {
 
   if (loading && !edge) {
     return (
-      <Section title="NHL Edge · Goalie Tracking" action={<Chip tone="muted">NHL EDGE</Chip>}>
+      <Section branded title="NHL Edge · Goalie Tracking" action={<Chip tone="muted">NHL EDGE</Chip>}>
         <div className="p-4"><Skeleton height={60} /></div>
       </Section>
     );

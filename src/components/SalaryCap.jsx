@@ -66,7 +66,6 @@ export const SalaryCap = ({ roster }) => {
       action={<span className="text-[10px] font-mono text-white/40 uppercase tracking-wider">via PuckPedia · hand-curated</span>}
     >
       <div className="relative overflow-hidden p-4 space-y-4">
-        <TeamLogoBg abbr="PHI" size={224} opacity={0.06} position="bottom-right" />
 
         {/* Headline: cap hit vs ceiling */}
         <div className="relative flex items-baseline gap-3 flex-wrap">

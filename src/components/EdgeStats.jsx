@@ -235,10 +235,11 @@ export const TeamEdgePanel = () => {
           )}
           {edge.shotDifferential && (
             <EdgeTile
-              label="Shot Diff"
-              value={edge.shotDifferential.differential != null ? (edge.shotDifferential.differential >= 0 ? `+${edge.shotDifferential.differential}` : edge.shotDifferential.differential) : null}
-              sub={`${edge.shotDifferential.shotsFor || 0} for · ${edge.shotDifferential.shotsAgainst || 0} against`}
-              tone={edge.shotDifferential.differential >= 0 ? 'green' : undefined}
+              label="SOG Diff %"
+              value={edge.shotDifferential.sogDiff != null ? `${edge.shotDifferential.sogDiff >= 0 ? '+' : ''}${edge.shotDifferential.sogDiff}` : null}
+              unit="%"
+              sub={edge.shotDifferential.shotAttemptDiff != null ? `attempt diff ${edge.shotDifferential.shotAttemptDiff >= 0 ? '+' : ''}${edge.shotDifferential.shotAttemptDiff}%` : undefined}
+              tone={edge.shotDifferential.sogDiff >= 0 ? 'green' : undefined}
             />
           )}
         </div>
@@ -248,26 +249,32 @@ export const TeamEdgePanel = () => {
           <div className="space-y-2">
             <Label>Shooting Efficiency by Location</Label>
             <div className="divide-y divide-white/[0.04]">
-              <div className="grid grid-cols-[1fr_60px_50px_70px_70px] gap-2 py-1 text-[9px] font-mono text-white/30 uppercase tracking-wider">
+              <div className="grid grid-cols-[1fr_60px_50px_70px] gap-2 py-1 text-[9px] font-mono text-white/30 uppercase tracking-wider">
                 <span>Zone</span><span className="text-right">SOG</span><span className="text-right">G</span>
-                <span className="text-right">SH%</span><span className="text-right">Lg Avg</span>
+                <span className="text-right">SH%</span>
               </div>
               {edge.shotLocations.map((loc, i) => {
-                const better = loc.shootingPct != null && loc.leagueAvgPct != null && loc.shootingPct > loc.leagueAvgPct;
+                const overall = edge.shotLocationTotals?.all?.pct;
+                const aboveAvg = overall != null && loc.shootingPct != null && loc.shootingPct > overall;
                 return (
-                  <div key={i} className="grid grid-cols-[1fr_60px_50px_70px_70px] gap-2 py-1.5 items-center">
+                  <div key={i} className="grid grid-cols-[1fr_60px_50px_70px] gap-2 py-1.5 items-center">
                     <span className="text-[11px] text-white/55">{loc.zone}</span>
                     <span className="text-[11px] font-mono tabular-nums text-white/50 text-right">{loc.sog}</span>
                     <span className="text-[11px] font-mono tabular-nums text-[#FF8A4C] text-right">{loc.goals}</span>
-                    <span className={cx('text-[11px] font-mono tabular-nums text-right', better ? 'text-emerald-400' : 'text-white/55')}>
+                    <span className={cx('text-[11px] font-mono tabular-nums text-right', aboveAvg ? 'text-emerald-400' : 'text-white/55')}>
                       {loc.shootingPct != null ? `${loc.shootingPct}%` : '—'}
-                    </span>
-                    <span className="text-[10px] font-mono tabular-nums text-white/30 text-right">
-                      {loc.leagueAvgPct != null ? `${loc.leagueAvgPct}%` : '—'}
                     </span>
                   </div>
                 );
               })}
+              {edge.shotLocationTotals?.all && (
+                <div className="grid grid-cols-[1fr_60px_50px_70px] gap-2 py-1.5 items-center border-t border-white/[0.06] mt-1 pt-1.5">
+                  <span className="text-[11px] text-white/70 font-medium">Total</span>
+                  <span className="text-[11px] font-mono tabular-nums text-white/70 text-right">{edge.shotLocationTotals.all.sog}</span>
+                  <span className="text-[11px] font-mono tabular-nums text-[#FF8A4C] font-medium text-right">{edge.shotLocationTotals.all.goals}</span>
+                  <span className="text-[11px] font-mono tabular-nums text-white/70 text-right">{edge.shotLocationTotals.all.pct}%</span>
+                </div>
+              )}
             </div>
           </div>
         )}

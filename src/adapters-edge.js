@@ -105,22 +105,25 @@ export function adaptTeamEdge(raw) {
       leagueAvgPerGame: imperial(raw.skatingDistanceDetails.avgPerGame?.leagueAvg),
     } : null,
     zoneTime: raw.zoneTimeDetails ? {
-      offensive: raw.zoneTimeDetails.offensiveZone?.pctg != null ? Math.round(raw.zoneTimeDetails.offensiveZone.pctg * 100) : null,
-      neutral: raw.zoneTimeDetails.neutralZone?.pctg != null ? Math.round(raw.zoneTimeDetails.neutralZone.pctg * 100) : null,
-      defensive: raw.zoneTimeDetails.defensiveZone?.pctg != null ? Math.round(raw.zoneTimeDetails.defensiveZone.pctg * 100) : null,
-      leagueAvgOffensive: raw.zoneTimeDetails.offensiveZone?.leagueAvg?.pctg != null ? Math.round(raw.zoneTimeDetails.offensiveZone.leagueAvg.pctg * 100) : null,
+      offensive: raw.zoneTimeDetails.offensiveZonePctg != null ? Math.round(raw.zoneTimeDetails.offensiveZonePctg * 100) : null,
+      neutral: raw.zoneTimeDetails.neutralZonePctg != null ? Math.round(raw.zoneTimeDetails.neutralZonePctg * 100) : null,
+      defensive: raw.zoneTimeDetails.defensiveZonePctg != null ? Math.round(raw.zoneTimeDetails.defensiveZonePctg * 100) : null,
+      leagueAvgOffensive: raw.zoneTimeDetails.offensiveZoneLeagueAvg != null ? Math.round(raw.zoneTimeDetails.offensiveZoneLeagueAvg * 100) : null,
     } : null,
     shotLocations: (raw.shotLocationDetails || []).map((loc) => ({
-      zone: loc.label?.default || loc.label || '—',
-      sog: loc.shotsOnGoal ?? 0,
+      zone: loc.area || '—',
+      sog: loc.sog ?? 0,
       goals: loc.goals ?? 0,
       shootingPct: loc.shootingPctg != null ? +(loc.shootingPctg * 100).toFixed(1) : null,
-      leagueAvgPct: loc.leagueAvg?.shootingPctg != null ? +(loc.leagueAvg.shootingPctg * 100).toFixed(1) : null,
+      leagueAvgPct: null, // league avg is in shotLocationTotals, not per-zone
     })),
+    shotLocationTotals: (raw.shotLocationTotals || []).reduce((acc, t) => {
+      acc[t.locationCode] = { sog: t.sog, goals: t.goals, pct: t.shootingPctg != null ? +(t.shootingPctg * 100).toFixed(1) : null };
+      return acc;
+    }, {}),
     shotDifferential: raw.shotDifferential ? {
-      shotsFor: raw.shotDifferential.shotsFor ?? null,
-      shotsAgainst: raw.shotDifferential.shotsAgainst ?? null,
-      differential: raw.shotDifferential.differential ?? null,
+      shotAttemptDiff: raw.shotDifferential.shotAttemptDifferential != null ? +(raw.shotDifferential.shotAttemptDifferential * 100).toFixed(1) : null,
+      sogDiff: raw.shotDifferential.sogDifferential != null ? +(raw.shotDifferential.sogDifferential * 100).toFixed(1) : null,
     } : null,
   };
 }

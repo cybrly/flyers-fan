@@ -8,6 +8,9 @@ import { useNHL } from '../api.js';
 import { Section, Label, Skeleton, Chip } from './primitives.jsx';
 import { adaptSkaterEdge, adaptTeamEdge, adaptGoalieEdge, PHI_TEAM_ID } from '../adapters-edge.js';
 
+// Safe string coercion — prevents React #310 from objects/arrays leaking into JSX.
+const safe = (v) => (v != null && typeof v !== 'object') ? v : '—';
+
 /* ═══════════════════════════════════════════════════════════════
    SHARED PRIMITIVES
    ═══════════════════════════════════════════════════════════════ */
@@ -64,9 +67,9 @@ const EdgeTile = ({ label, value, sub, unit = '', tone }) => (
       tone === 'green' ? 'text-emerald-400' :
       tone === 'sky' ? 'text-sky-400' : 'text-white/85',
     )}>
-      {value != null ? `${value}${unit}` : '—'}
+      {safe(value) !== '—' ? `${safe(value)}${unit}` : '—'}
     </div>
-    {sub && <div className="text-[9px] font-mono text-white/35 mt-0.5">{sub}</div>}
+    {sub && <div className="text-[9px] font-mono text-white/35 mt-0.5">{safe(sub)}</div>}
   </div>
 );
 

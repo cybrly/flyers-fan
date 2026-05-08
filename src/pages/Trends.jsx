@@ -1,14 +1,11 @@
 import { useMemo, useState, useRef } from 'react';
-import { cx } from '../config.js';
-import { Section } from '../components/primitives.jsx';
+import { cx, SEASON } from '../config.js';
+import { Section, Chip, Label } from '../components/primitives.jsx';
 import { useNHL } from '../api.js';
 import { navigate, gameHref } from '../router.js';
 import { rollingWindow, rollingAvg } from '../lib/stats.js';
 import { HISTORICAL_SEASONS } from '../data/historicalSeasons.js';
 import { adaptTeamEdge, PHI_TEAM_ID } from '../adapters-edge.js';
-import { SEASON } from '../config.js';
-import { Chip } from '../components/primitives.jsx';
-import { Label } from '../components/primitives.jsx';
 
 // Season trajectory chart — multi-line plot of GF / GA / Diff (cumulative),
 // 5-game rolling form, points pace, plus an optional per-player cumulative

@@ -291,11 +291,8 @@ export const PlayerProfile = ({ playerId }) => {
       </div>
 
       {/* NHL Edge tracking data — speed, distance, shot speed, zone time */}
-      {isSkater ? (
-        <SkaterEdgePanel playerId={playerId} />
-      ) : (
-        <GoalieEdgePanel playerId={playerId} />
-      )}
+      {playerId && isSkater && <SkaterEdgePanel playerId={playerId} />}
+      {playerId && !isSkater && <GoalieEdgePanel playerId={playerId} />}
 
       {/* Featured stats — current season big numbers */}
       {sub && (

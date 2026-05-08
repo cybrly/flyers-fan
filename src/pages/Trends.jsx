@@ -119,6 +119,8 @@ export const Trends = ({ schedule, roster, clubStats }) => {
     ? `${playerLogRaw.data.firstName?.default || ''} ${playerLogRaw.data.lastName?.default || ''}`.trim() || 'Player'
     : 'Player';
 
+  const N = games.length;
+
   // Rolling points% series from stats.js — uses the rolling-window toggle.
   const rollingPtsPct = useMemo(() => {
     if (games.length < rollWindow) return [];
@@ -136,7 +138,6 @@ export const Trends = ({ schedule, roster, clubStats }) => {
 
   // Projected pace — extend cumulative points to game 82 using the current
   // points-per-game rate. Drawn as a faint dashed extension of the pts line.
-  const N = games.length;
   const pace = useMemo(() => {
     if (N === 0) return null;
     const ppg = series.pts[N - 1] / N;

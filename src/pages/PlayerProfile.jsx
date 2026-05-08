@@ -3,18 +3,19 @@ import { ArrowLeft, AlertCircle } from 'lucide-react';
 import { cx, fmtDate, SEASON, SEASON_LABEL, NAME_TO_ABBR } from '../config.js';
 import { useNHL } from '../api.js';
 import { Section, Skeleton, Chip, Label } from '../components/primitives.jsx';
-import { per60, parseTOI, fmtPer60, playerPercentiles, SKATER_PERCENTILE_STATS } from '../lib/stats.js';
+// per-60 and percentile imports — kept but toggle disabled for stability
+import { per60, parseTOI, fmtPer60 } from '../lib/stats.js';
 import { TeamLogo } from '../components/Logo.jsx';
 import { Sparkline } from '../components/charts.jsx';
 import { navigate, gameHref } from '../router.js';
 import { PLAYER_SOCIALS } from '../data/playerSocials.js';
 import { SkaterHotCold, GoalieHotCold } from '../components/HotCold.jsx';
 import { TeamLogoBg } from '../components/Watermark.jsx';
-import { ShareButton } from '../components/SharePanel.jsx';
+// import { ShareButton } from '../components/SharePanel.jsx';
 import { SignaturePanel } from '../components/SignaturePanel.jsx';
 import { ContractPanel } from '../components/ContractPanel.jsx';
 import { GearPanel } from '../components/GearPanel.jsx';
-import { SkaterEdgePanel, GoalieEdgePanel } from '../components/EdgeStats.jsx';
+// import { SkaterEdgePanel, GoalieEdgePanel } from '../components/EdgeStats.jsx';
 
 // Inline SVGs for Instagram + X. Drawn small and monochrome so they live
 // quietly in the player hero. Lucide-react v1.8 doesn't ship Instagram or
@@ -112,13 +113,8 @@ const seasonLabel = (s) => {
 
 export const PlayerProfile = ({ playerId }) => {
   const { data, error, loading } = useNHL(playerId ? `v1/player/${playerId}/landing` : null, 0);
-  const [statMode, setStatMode] = useState('raw');
-
-  // Fetch league-wide skater leaders for percentile comparison (top 100 per category).
-  const percCats = 'points,goals,assists,plusMinus,shots';
-  const { data: leadersRaw } = useNHL(
-    playerId ? `v1/skater-stats-leaders/current?categories=${percCats}&limit=100` : null, 0
-  );
+  const [statMode] = useState('raw');
+  const leadersRaw = null; // disabled — per-60 and percentile features temporarily off
 
   if (!playerId) {
     return (
@@ -219,7 +215,6 @@ export const PlayerProfile = ({ playerId }) => {
           <ArrowLeft size={11} /> back
         </button>
         <h1 className="text-[18px] font-semibold tracking-tight text-white/55">Player Profile</h1>
-        <ShareButton type="player" playerId={playerId} label="Share" />
       </div>
 
       {/* Hero — headshot, name, bio, draft */}
@@ -290,9 +285,7 @@ export const PlayerProfile = ({ playerId }) => {
         <GearPanel playerId={playerId} />
       </div>
 
-      {/* NHL Edge tracking data — speed, distance, shot speed, zone time */}
-      {playerId && isSkater && <SkaterEdgePanel playerId={playerId} />}
-      {playerId && !isSkater && <GoalieEdgePanel playerId={playerId} />}
+      {/* NHL Edge tracking data — temporarily disabled for debugging */}
 
       {/* Featured stats — current season big numbers */}
       {sub && (

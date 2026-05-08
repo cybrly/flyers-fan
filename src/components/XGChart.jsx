@@ -111,10 +111,10 @@ export function XGChart({ events, oppAbbr = 'OPP', actualGoalsUs, actualGoalsThe
         </Chip>
       }
     >
-      <div className="p-4">
+      <div className="px-4 py-3">
         {/* Actual vs Expected comparison */}
-        <div className="grid grid-cols-2 gap-3 mb-4">
-          <div className="border border-white/[0.06] rounded-sm p-2.5">
+        <div className="grid grid-cols-2 gap-px bg-white/[0.04] rounded-md overflow-hidden mb-3">
+          <div className="bg-[#0C0C0C] p-2.5">
             <Label>PHI</Label>
             <div className="mt-1 flex items-baseline gap-2">
               <span className="text-[18px] font-semibold tabular-nums text-[#FF8A4C]">{totalUs.toFixed(1)}</span>
@@ -130,7 +130,7 @@ export function XGChart({ events, oppAbbr = 'OPP', actualGoalsUs, actualGoalsThe
               )}
             </div>
           </div>
-          <div className="border border-white/[0.06] rounded-sm p-2.5">
+          <div className="bg-[#0C0C0C] p-2.5">
             <Label>{oppAbbr}</Label>
             <div className="mt-1 flex items-baseline gap-2">
               <span className="text-[18px] font-semibold tabular-nums text-white/70">{totalThem.toFixed(1)}</span>

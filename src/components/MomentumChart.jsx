@@ -112,7 +112,7 @@ export function MomentumChart({ events, isHome, mode: initialMode, periods = 3 }
         </div>
       }
     >
-      <div className="p-4">
+      <div className="px-4 py-3">
         <div className="flex items-center justify-between mb-2">
           <div className="text-[11px] text-white/50">
             <span className="text-[#FF8A4C] font-medium">PHI advantage</span> above the line,

@@ -67,7 +67,7 @@ export function WinProbChart({ events, gameInfo, oppAbbr = 'OPP' }) {
         </span>
       }
     >
-      <div className="p-4">
+      <div className="px-4 py-3">
         <div className="flex items-center justify-between mb-2 text-[10px] font-mono text-white/40">
           <span>PHI win probability over game time</span>
           <div className="flex items-center gap-3">

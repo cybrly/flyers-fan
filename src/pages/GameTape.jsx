@@ -505,7 +505,7 @@ export const GameTape = ({ game, loading, pbp, pbpRaw, liveSnap, liveConnected, 
             <CompareRow label="Shots"       us={game.stats.shots.us}       them={game.stats.shots.them} />
             <CompareRow label="Hits"        us={game.stats.hits.us}        them={game.stats.hits.them} />
             <CompareRow label="Blocks"      us={game.stats.blocks.us}      them={game.stats.blocks.them} />
-            <CompareRow label="Faceoff %"   us={game.stats.faceoffPct.us}  them={game.stats.faceoffPct.them} suffix="%" format={(v) => Number(v).toFixed(2)} />
+            <CompareRow label="Faceoff %"   us={game.stats.faceoffPct.us}  them={game.stats.faceoffPct.them} suffix="%" format={(v) => Math.round(Number(v))} />
             <CompareRow label="Takeaways"   us={game.stats.takeaways.us}   them={game.stats.takeaways.them} />
             <CompareRow label="Giveaways"   us={game.stats.giveaways.us}   them={game.stats.giveaways.them}   higherBetter={false} />
             <CompareRow label="PIM"         us={game.stats.pim.us}         them={game.stats.pim.them}          higherBetter={false} />
@@ -573,7 +573,7 @@ export const GameTape = ({ game, loading, pbp, pbpRaw, liveSnap, liveConnected, 
                 { l: 'Shots on Goal',        v: game.stats.shots.us != null ? `${game.stats.shots.us} / ${game.stats.shots.them}` : '—' },
                 { l: 'Power Play',           v: game.stats.powerPlay.us != null ? `${game.stats.powerPlay.us}${game.stats.powerPlayPctg.us != null ? ` · ${game.stats.powerPlayPctg.us}%` : ''}` : '—' },
                 { l: 'PK Faced',             v: game.stats.powerPlay.them != null ? `${game.stats.powerPlay.them}` : '—' },
-                { l: 'Faceoff %',            v: game.stats.faceoffPct.us != null ? `${(game.stats.faceoffPct.us).toFixed(2)}%` : '—' },
+                { l: 'Faceoff %',            v: game.stats.faceoffPct.us != null ? `${Math.round(game.stats.faceoffPct.us)}%` : '—' },
                 { l: 'Blocks vs Opp',        v: game.stats.blocks.us != null ? `${game.stats.blocks.us} / ${game.stats.blocks.them}` : '—' },
                 { l: 'Hits Differential',    v: game.stats.hits.us != null ? (game.stats.hits.us - game.stats.hits.them) : '—' },
                 { l: 'Giveaways',            v: game.stats.giveaways.us ?? '—' },

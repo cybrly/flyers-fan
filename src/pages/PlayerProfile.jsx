@@ -72,15 +72,19 @@ const SocialLinks = ({ playerId, fullName }) => {
 
 const HEIGHT = (inches) => inches ? `${Math.floor(inches / 12)}'${inches % 12}"` : '—';
 
-const StatCell = ({ label, value, sub, accent = false }) => (
-  <div className="flex flex-col gap-0.5 px-3 py-2.5 border border-[#F74902]/[0.18] rounded-md bg-white/[0.02]">
-    <span className="text-[10px] font-mono text-white/40 uppercase tracking-wider">{label}</span>
-    <span className={cx('text-[18px] font-semibold tabular-nums', accent && 'text-[#FF8A4C]')}>
-      {value ?? '—'}
-    </span>
-    {sub && <span className="text-[10px] font-mono text-white/35">{sub}</span>}
-  </div>
-);
+const StatCell = ({ label, value, sub, accent = false }) => {
+  // Guard: React #310 — ensure value is always a renderable primitive.
+  const display = (value != null && typeof value !== 'object') ? value : '—';
+  return (
+    <div className="flex flex-col gap-0.5 px-3 py-2.5 border border-[#F74902]/[0.18] rounded-md bg-white/[0.02]">
+      <span className="text-[10px] font-mono text-white/40 uppercase tracking-wider">{label}</span>
+      <span className={cx('text-[18px] font-semibold tabular-nums', accent && 'text-[#FF8A4C]')}>
+        {display}
+      </span>
+      {sub && <span className="text-[10px] font-mono text-white/35">{sub}</span>}
+    </div>
+  );
+};
 
 // Extract a player's career season-by-season totals — NHL leagueAbbrev='NHL' rows
 // from seasonTotals, plus AHL/junior if useful. We show NHL rows in the main

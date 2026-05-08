@@ -93,8 +93,7 @@ export const OpponentScout = ({ nextGame }) => {
       };
     });
     // Rest situation — days since opponent's last game
-    const finishedGames = all.filter((g) => g.us != null);
-    const oppLastGameDate = finishedGames.length ? new Date(finishedGames[0].date) : null;
+    const oppLastGameDate = finished.length ? new Date(finished[0].gameDate) : null;
     const restDays = oppLastGameDate ? Math.floor((Date.now() - oppLastGameDate.getTime()) / 86400000) : null;
 
     return { n: slice.length, w, l: slice.length - w, gf, ga, decisions, restDays };

@@ -18,7 +18,7 @@ import { useEffect, useState } from 'react';
 // Path-based (not hash) for clean URLs and OG-friendly sharing. Requires the
 // SPA rewrite in vercel.json so direct visits to /game/123 hit index.html.
 
-const PAGES = new Set(['dashboard', 'schedule', 'standings', 'game', 'playoffs', 'roster', 'player', 'compare', 'trends', 'coaches', 'draft', 'records', 'goalies', 'forecast']);
+const PAGES = new Set(['dashboard', 'schedule', 'standings', 'game', 'playoffs', 'roster', 'player', 'compare', 'trends', 'coaches', 'draft', 'records', 'goalies', 'forecast', 'definitions']);
 // Retired routes that should silently redirect to a current home so old
 // bookmarks / shared links don't 404.
 const REDIRECTS = { 'on-ice': 'game' };

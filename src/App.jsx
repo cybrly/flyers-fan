@@ -65,6 +65,7 @@ const Coaches  = lazyPage(() => import('./pages/Coaches.jsx'),  'Coaches');
 const Draft    = lazyPage(() => import('./pages/Draft.jsx'),    'Draft');
 const Records  = lazyPage(() => import('./pages/Records.jsx'),  'Records');
 const Goalies  = lazyPage(() => import('./pages/Goalies.jsx'),  'Goalies');
+const Definitions = lazyPage(() => import('./pages/Definitions.jsx'), 'Definitions');
 const Forecast = lazyPage(() => import('./pages/Forecast.jsx'), 'Forecast');
 
 export default function App() {
@@ -99,6 +100,7 @@ export default function App() {
       records: 'Records · flyers.fan',
       goalies: 'Goalies · flyers.fan',
       forecast: 'Forecast · flyers.fan',
+      definitions: 'Definitions · flyers.fan',
     };
     document.title = titles[page] || 'flyers.fan';
   }, [page]);
@@ -455,6 +457,7 @@ export default function App() {
                 {page === 'records'   && <Records />}
                 {page === 'goalies'   && <Goalies clubStats={clubStats} schedule={schedule} goalieLeaders={goalieLeaders} />}
                 {page === 'forecast'  && <Forecast standings={standings} />}
+                {page === 'definitions' && <Definitions />}
               </Suspense>
             </ErrorBoundary>
           </main>

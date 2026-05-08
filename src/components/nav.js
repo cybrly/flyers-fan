@@ -1,4 +1,4 @@
-import { LayoutDashboard, Calendar, Trophy, Clipboard, Award, Users, TrendingUp, ArrowLeftRight, UserCog, ListOrdered, Star, ShieldCheck, Sparkles } from 'lucide-react';
+import { LayoutDashboard, Calendar, Trophy, Clipboard, Award, Users, TrendingUp, ArrowLeftRight, UserCog, ListOrdered, Star, ShieldCheck, Sparkles, BookOpen } from 'lucide-react';
 
 // Nav items are grouped semantically so the sidebar can render light
 // dividers between clusters. Order within each group matters for the
@@ -20,8 +20,9 @@ export const NAV_ITEMS = [
   { id: 'trends',    label: 'Trends',    icon: TrendingUp,      kbd: '9', group: 'team' },
   { id: 'forecast',  label: 'Forecast',  icon: Sparkles,                group: 'team' },
   { id: 'coaches',   label: 'Coaches',   icon: UserCog,         kbd: '0', group: 'team' },
-  { id: 'draft',     label: 'Draft',     icon: ListOrdered,            group: 'reference' },
-  { id: 'records',   label: 'Records',   icon: Star,                   group: 'reference' },
+  { id: 'draft',       label: 'Draft',       icon: ListOrdered,             group: 'reference' },
+  { id: 'records',     label: 'Records',     icon: Star,                    group: 'reference' },
+  { id: 'definitions', label: 'Definitions', icon: BookOpen,                group: 'reference' },
 ];
 
 export const NAV_GROUPS = [

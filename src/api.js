@@ -110,6 +110,34 @@ export function useScoreBurst(value, durationMs = 2400) {
   return active;
 }
 
+// Fires when the goal timeline grows, returning the latest goal entry
+// (team, scorer, us flag) so the broadcast view can theme its blast
+// around the team that actually scored. Returns null between bursts.
+//
+// Distinct from useScoreBurst: that one only knows "PHI score went up";
+// this one knows which team's logo to flash and whether to bias the
+// celebration toward us or them.
+export function useGoalBurst(timeline, durationMs = 5000) {
+  const lastCount = useRef(timeline?.length || 0);
+  const [active, setActive] = useState(null);
+  useEffect(() => {
+    const count = timeline?.length || 0;
+    const prev = lastCount.current;
+    lastCount.current = count;
+    if (count > prev && count > 0 && timeline) {
+      const latest = timeline[count - 1];
+      if (!latest) return;
+      const key = Date.now();
+      setActive({ team: latest.team, us: !!latest.us, scorer: latest.scorer, key });
+      const t = setTimeout(() => {
+        setActive((curr) => (curr && curr.key === key ? null : curr));
+      }, durationMs);
+      return () => clearTimeout(t);
+    }
+  }, [timeline, durationMs]);
+  return active;
+}
+
 // Ticks every second so relative-time labels stay fresh.
 export function useClockTick(ms = 1000) {
   const [, setN] = useState(0);

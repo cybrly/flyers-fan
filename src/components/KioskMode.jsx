@@ -4,8 +4,7 @@ import { X, Maximize2 } from 'lucide-react';
 import { OPP_FULL, cx } from '../config.js';
 import { FlyersMark, TeamLogo } from './Logo.jsx';
 import { TeamLogoBg } from './Watermark.jsx';
-import { useScoreBurst } from '../api.js';
-import { GoalCelebration } from './LiveTiles.jsx';
+import { useGoalBurst } from '../api.js';
 
 // Full-viewport "broadcast" overlay. Two modes:
 //   • Live mode (Hero on Dashboard during a live PHI game): score and
@@ -57,7 +56,10 @@ export const KioskMode = ({ liveGame, liveDetail, liveSnap, game, onClose }) => 
 
   const sog = (isLiveMode ? liveDetail?.stats?.shots : game?.stats?.shots);
   const pp  = (isLiveMode ? liveDetail?.stats?.powerPlay : game?.stats?.powerPlay);
-  const goalBurst = useScoreBurst(usScore);
+  // Team-aware goal burst — fires on either team's goal so the blast
+  // can flash the scoring team's logo + tint the screen edge in their
+  // colorway. Returns { team, us, scorer } during the 5s window.
+  const goalEvent = useGoalBurst(isLiveMode ? liveDetail?.timeline : game?.timeline, 5000);
 
   // Live strength state. NHL only ships `situation` while a power play
   // is active, so the absence of this object means even strength.
@@ -206,7 +208,7 @@ export const KioskMode = ({ liveGame, liveDetail, liveSnap, game, onClose }) => 
 
       {/* Center stage — score readout */}
       <div className="relative h-full flex flex-col items-center justify-center px-6">
-        {goalBurst && <GoalCelebration />}
+        {goalEvent && <BroadcastGoalBlast goal={goalEvent} oppAbbr={oppAbbr} oppFull={oppFull} />}
 
         {/* Both team identity rows */}
         <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-6 sm:gap-12 w-full max-w-6xl">
@@ -226,7 +228,7 @@ export const KioskMode = ({ liveGame, liveDetail, liveSnap, game, onClose }) => 
               className={cx(
                 'text-[140px] sm:text-[200px] font-bold tabular-nums tracking-tight leading-none',
                 isHome ? '' : 'text-[#FF8A4C]',
-                goalBurst && 'score-flash',
+                goalEvent && 'score-flash',
               )}
               style={isHome ? undefined : { textShadow: '0 0 56px rgba(247,73,2,0.5), 0 4px 16px rgba(0,0,0,0.7)' }}
             >
@@ -265,7 +267,7 @@ export const KioskMode = ({ liveGame, liveDetail, liveSnap, game, onClose }) => 
               className={cx(
                 'text-[140px] sm:text-[200px] font-bold tabular-nums tracking-tight leading-none',
                 isHome ? 'text-[#FF8A4C]' : '',
-                goalBurst && 'score-flash',
+                goalEvent && 'score-flash',
               )}
               style={isHome ? { textShadow: '0 0 56px rgba(247,73,2,0.5), 0 4px 16px rgba(0,0,0,0.7)' } : undefined}
             >
@@ -329,6 +331,110 @@ export const KioskMode = ({ liveGame, liveDetail, liveSnap, game, onClose }) => 
       )}
     </div>,
     document.body,
+  );
+};
+
+// Full-broadcast goal celebration. Triggered from the timeline-aware
+// useGoalBurst hook so it fires on either team's goal and themes the
+// blast around whoever scored.
+//
+// Three layers:
+//   • A viewport-edge ring + inner shadow that pulses in team color
+//     (so glance-readable from across the room)
+//   • A giant team logo center-screen that flashes 3 times before
+//     fading out (~5s total to match the horn duration)
+//   • A 'GOAL!' banner with the team name underneath
+//
+// Opp goals get an amber/red treatment so the celebration registers as
+// a "they scored" alert rather than a "we won" moment.
+const BroadcastGoalBlast = ({ goal, oppAbbr, oppFull }) => {
+  const isUs = !!goal?.us;
+  const palette = isUs
+    ? { color: '#F74902', glow: 'rgba(247,73,2,0.7)', soft: 'rgba(247,73,2,0.4)', text: 'text-[#FF8A4C]' }
+    : { color: '#F59E0B', glow: 'rgba(245,158,11,0.65)', soft: 'rgba(220,38,38,0.40)', text: 'text-amber-300' };
+  const teamName = isUs ? 'Philadelphia Flyers' : (oppFull || oppAbbr || 'Goal');
+  return (
+    <>
+      {/* Viewport-edge ring + inset glow. Sits above everything so the
+          whole screen reads as "lit up" while the burst is active. */}
+      <div
+        aria-hidden
+        className="fixed inset-0 z-[55] pointer-events-none"
+        style={{
+          border: `10px solid ${palette.color}`,
+          boxShadow: `inset 0 0 80px ${palette.glow}, inset 0 0 240px ${palette.soft}, 0 0 60px ${palette.glow}`,
+          animation: 'goalEdgePulse 5s ease-out forwards',
+        }}
+      />
+
+      {/* Center logo + GOAL banner — sits above the score readout. */}
+      <div
+        aria-hidden
+        className="absolute inset-0 z-[56] flex flex-col items-center justify-center pointer-events-none"
+        style={{ animation: 'fadeIn 0.18s ease-out' }}
+      >
+        <div className="relative" style={{ animation: 'goalFlash 5s steps(1, end) forwards' }}>
+          {isUs
+            ? <FlyersMark size={260} className="sm:!w-[360px] sm:!h-[360px]" />
+            : <TeamLogo abbr={goal.team || oppAbbr} size={260} className="sm:!w-[360px] sm:!h-[360px]" />}
+          <div
+            className="absolute inset-0 rounded-full pointer-events-none"
+            style={{
+              background: `radial-gradient(circle, ${palette.glow} 0%, transparent 65%)`,
+              filter: 'blur(40px)',
+              animation: 'goalAura 5s ease-out forwards',
+            }}
+          />
+        </div>
+        <div
+          className={cx('text-[80px] sm:text-[140px] font-black tracking-tighter leading-none mt-6', palette.text)}
+          style={{
+            textShadow: `0 0 48px ${palette.glow}, 0 6px 24px rgba(0,0,0,0.7)`,
+            animation: 'goalPop 1.6s cubic-bezier(0.18, 0.89, 0.32, 1.28)',
+            letterSpacing: '-0.04em',
+          }}
+        >
+          GOAL!
+        </div>
+        <div className="text-[20px] sm:text-[28px] font-mono uppercase tracking-[0.25em] text-white/85 mt-3">
+          {teamName}
+        </div>
+        {goal.scorer && goal.scorer !== '—' && (
+          <div className="text-[14px] sm:text-[16px] font-mono text-white/55 mt-2">
+            scored by <span className="text-white/85">{goal.scorer}</span>
+          </div>
+        )}
+      </div>
+
+      <style>{`
+        @keyframes goalEdgePulse {
+          0%   { opacity: 0; }
+          8%   { opacity: 1; }
+          25%  { opacity: 0.55; }
+          40%  { opacity: 1; }
+          55%  { opacity: 0.55; }
+          70%  { opacity: 1; }
+          100% { opacity: 0; }
+        }
+        @keyframes goalFlash {
+          0%   { opacity: 0; transform: scale(0.6); }
+          8%   { opacity: 1; transform: scale(1.05); }
+          22%  { opacity: 1; transform: scale(1.0); }
+          28%  { opacity: 0.15; transform: scale(0.96); }
+          36%  { opacity: 1; transform: scale(1.05); }
+          50%  { opacity: 0.15; transform: scale(0.96); }
+          58%  { opacity: 1; transform: scale(1.05); }
+          75%  { opacity: 1; transform: scale(1.0); }
+          100% { opacity: 0; transform: scale(1.0); }
+        }
+        @keyframes goalAura {
+          0%   { opacity: 0; transform: scale(0.6); }
+          15%  { opacity: 1; transform: scale(1.4); }
+          60%  { opacity: 0.6; transform: scale(2.2); }
+          100% { opacity: 0; transform: scale(2.6); }
+        }
+      `}</style>
+    </>
   );
 };
 

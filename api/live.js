@@ -89,6 +89,11 @@ export default async function handler(req) {
               t: box.periodDescriptor?.periodType ?? null,
               c: box.clock?.timeRemaining ?? null,
               i: !!box.clock?.inIntermission,
+              // Strength state — keyed so the broadcast PP banner ticks
+              // the second a power play starts/ends/changes.
+              hs: box.situation?.homeTeam?.strength ?? null,
+              as: box.situation?.awayTeam?.strength ?? null,
+              sr: box.situation?.timeRemaining ?? null,
             });
             if (boxKey !== lastBoxKey) {
               send('box', {
@@ -98,6 +103,7 @@ export default async function handler(req) {
                 home: { abbr: box.homeTeam?.abbrev, score: box.homeTeam?.score, sog: box.homeTeam?.sog },
                 periodDescriptor: box.periodDescriptor || null,
                 clock: box.clock || null,
+                situation: box.situation || null,
               });
               lastBoxKey = boxKey;
             }

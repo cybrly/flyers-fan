@@ -270,6 +270,10 @@ export function adaptGame(boxscore, rightRail, landing) {
     periods,
     clock: boxscore.clock,
     periodDescriptor: boxscore.periodDescriptor,
+    // Live strength state — present during a power play. NHL ships
+    // {homeTeam:{strength,situationDescriptions:['PP']}, awayTeam:{strength}, timeRemaining}
+    // when the game is at any non-even strength. Null at even strength.
+    situation: boxscore.situation || null,
     stats: {
       shots: stat('sog'),
       faceoffPct: (() => {

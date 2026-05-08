@@ -55,23 +55,27 @@ const CompareRow = ({ label, us, them, higherBetter = true, suffix = '', format 
   // up perfectly down the table. Right-aligned on the PHI side, left-
   // aligned on the OPP side; the chevron sits on the inboard edge so it
   // hugs the label.
-  const Number = ({ value, isWinner, side }) => (
-    <div className={cx(
-      'flex items-baseline gap-1.5 tabular-nums w-[72px]',
-      side === 'left' ? 'justify-end' : 'justify-start flex-row-reverse',
-    )}>
-      {isWinner && <ChevronGlyph dir={side === 'left' ? 'right' : 'left'} />}
-      <span
-        className={cx(
-          'text-[22px] font-semibold tracking-tight leading-none transition-colors',
-          tied ? 'text-white/65' : isWinner ? 'text-white' : 'text-white/55',
-        )}
-        style={isWinner ? { borderBottom: '1px solid #34D399', paddingBottom: '2px' } : undefined}
-      >
-        {fmt(value)}{suffix}
-      </span>
-    </div>
-  );
+  const Number = ({ value, isWinner, side }) => {
+    const isLeft = side === 'left';
+    return (
+      <div className={cx(
+        'flex items-baseline gap-1.5 tabular-nums w-[72px]',
+        isLeft ? 'justify-end' : 'justify-start',
+      )}>
+        {isLeft && isWinner && <ChevronGlyph dir="right" />}
+        <span
+          className={cx(
+            'text-[22px] font-semibold tracking-tight leading-none transition-colors',
+            tied ? 'text-white/65' : isWinner ? 'text-white' : 'text-white/55',
+          )}
+          style={isWinner ? { borderBottom: '1px solid #34D399', paddingBottom: '2px' } : undefined}
+        >
+          {fmt(value)}{suffix}
+        </span>
+        {!isLeft && isWinner && <ChevronGlyph dir="left" />}
+      </div>
+    );
+  };
 
   return (
     <div className="grid grid-cols-[1fr_72px_140px_72px_1fr] items-center gap-4 h-14 px-5 transition-colors hover:bg-white/[0.015] border-b border-white/[0.04] last:border-b-0">

@@ -158,14 +158,17 @@ export const PlayerProfile = ({ playerId }) => {
   const draft = data.draftDetails;
 
   // Per-60 normalization: parse the player's average TOI from their current season stats.
-  const toiSec = sub?.avgToi ? parseTOI(sub.avgToi) : 0;
+  // avgToi may be seconds (number) from club-stats or "MM:SS" from landing.
+  const rawToi = sub?.avgToi ?? sub?.avgTimeOnIcePerGame ?? 0;
+  const toiSec = typeof rawToi === 'string' ? parseTOI(rawToi) : (rawToi || 0);
   // Total TOI seconds for the season = avgTOI * gamesPlayed
   const totalToiSec = toiSec && sub?.gamesPlayed ? toiSec * sub.gamesPlayed : 0;
 
   // Build a display value helper: when statMode is 'per60', normalize the stat
   // using total season TOI; otherwise return the raw value.
   const p60 = (raw) => {
-    if (statMode !== 'per60' || !totalToiSec || raw == null) return raw;
+    if (raw == null) return '—';
+    if (statMode !== 'per60' || !totalToiSec) return raw;
     const rate = per60(raw, totalToiSec);
     return rate != null ? fmtPer60(rate) : '—';
   };

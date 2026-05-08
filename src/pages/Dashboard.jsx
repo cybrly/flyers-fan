@@ -93,9 +93,14 @@ export const Dashboard = ({ schedule, standings, scoreboard, clubStats, roster, 
   const liveGame = schedule?.liveGame;
   const lastResult = games[0];
   const pace = us?.gp ? Math.round((us.pts / us.gp) * 82) : null;
-  const ranks = standings?.all ? teamRanks(standings.all) : null;
-  const narrative = dashboardNarrative({ standings: us, schedule, streak });
-  const raceNarrative = us && standings?.east ? playoffRaceNarrative(us, standings.east) : '';
+  let ranks = null;
+  let narrative = '';
+  let raceNarrative = '';
+  try {
+    ranks = standings?.all ? teamRanks(standings.all) : null;
+    narrative = dashboardNarrative({ standings: us, schedule, streak }) || '';
+    raceNarrative = us && standings?.east ? playoffRaceNarrative(us, standings.east) : '';
+  } catch { /* defensive — don't let analytics crash the dashboard */ }
 
   const topScorers = clubStats?.skaters
     ? [...clubStats.skaters].sort((a, b) => b.pts - a.pts).slice(0, 6)

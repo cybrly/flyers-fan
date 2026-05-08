@@ -3,7 +3,6 @@ import { Play, RotateCcw } from 'lucide-react';
 import { cx, SEASON, TEAM_ABBR, API } from '../config.js';
 import { Section, Skeleton, Chip } from '../components/primitives.jsx';
 import { TeamLogo, FlyersMark } from '../components/Logo.jsx';
-// eslint-disable-next-line no-unused-vars
 import { TeamLogoBg } from '../components/Watermark.jsx';
 import { startForecast } from '../lib/forecast.js';
 
@@ -100,32 +99,28 @@ export const Forecast = ({ standings }) => {
 
   // Apply locked game scenarios: remove locked games from remaining,
   // and compute adjusted standings with locked results applied.
-  const { remainingGames, adjustedStandings } = useMemo(() => {
-    if (!allRemainingGames || !standings?.all) return { remainingGames: allRemainingGames, adjustedStandings: standings };
-    if (lockedGames.size === 0) return { remainingGames: allRemainingGames, adjustedStandings: standings };
+  const remainingGames = useMemo(() => {
+    if (!allRemainingGames) return null;
+    if (lockedGames.size === 0) return allRemainingGames;
+    return allRemainingGames.filter((g) => !lockedGames.has(g.id));
+  }, [allRemainingGames, lockedGames]);
 
-    const unlocked = allRemainingGames.filter((g) => !lockedGames.has(g.id));
-
-    // Apply locked results to a copy of standings
+  const adjustedStandings = useMemo(() => {
+    if (!standings?.all || !allRemainingGames || lockedGames.size === 0) return standings;
     const adjustedAll = standings.all.map((t) => ({ ...t }));
     const teamMap = new Map(adjustedAll.map((t) => [t.abbr, t]));
-
     for (const [gameId, winner] of lockedGames) {
       const game = allRemainingGames.find((g) => g.id === gameId);
       if (!game) continue;
-      const winnerAbbr = winner === 'home' ? game.home : game.away;
-      const loserAbbr = winner === 'home' ? game.away : game.home;
-      const w = teamMap.get(winnerAbbr);
-      const l = teamMap.get(loserAbbr);
-      if (w) { w.pts += 2; w.w += 1; w.gp += 1; }
-      if (l) { l.gp += 1; l.l += 1; }
+      const winAbbr = winner === 'home' ? game.home : game.away;
+      const loseAbbr = winner === 'home' ? game.away : game.home;
+      const wt = teamMap.get(winAbbr);
+      const lt = teamMap.get(loseAbbr);
+      if (wt) { wt.pts += 2; wt.w += 1; wt.gp += 1; }
+      if (lt) { lt.gp += 1; lt.l += 1; }
     }
-
-    return {
-      remainingGames: unlocked,
-      adjustedStandings: { ...standings, all: adjustedAll },
-    };
-  }, [allRemainingGames, standings, lockedGames]);
+    return { ...standings, all: adjustedAll };
+  }, [standings, allRemainingGames, lockedGames]);
 
   // Auto-run the first time data is ready so the user sees results
   // without having to click anything. Subsequent runs are user-triggered

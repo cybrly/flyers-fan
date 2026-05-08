@@ -26,6 +26,7 @@ import { teamRanks } from '../lib/stats.js';
 import { dashboardNarrative, playoffRaceNarrative } from '../lib/narrative.js';
 import { StreakAlerts } from '../components/StreakAlerts.jsx';
 import { TeamEdgePanel } from '../components/EdgeStats.jsx';
+import { OpponentPreview } from '../components/OpponentPreview.jsx';
 import { OfficialMilestones } from '../components/OfficialMilestones.jsx';
 
 // Dashboard is laid out as a single linear flow split into named bands
@@ -172,6 +173,7 @@ export const Dashboard = ({ schedule, standings, scoreboard, clubStats, roster, 
             {raceNarrative}
           </div>
         )}
+        {nextGame && <OpponentPreview nextGame={nextGame} standings={standings} />}
         {nextGame && <OpponentScout nextGame={nextGame} />}
       </CollapsibleBand>
 

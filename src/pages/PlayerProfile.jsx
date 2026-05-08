@@ -3,19 +3,15 @@ import { ArrowLeft, AlertCircle } from 'lucide-react';
 import { cx, fmtDate, SEASON, SEASON_LABEL, NAME_TO_ABBR } from '../config.js';
 import { useNHL } from '../api.js';
 import { Section, Skeleton, Chip, Label } from '../components/primitives.jsx';
-// per-60 and percentile imports — kept but toggle disabled for stability
-import { per60, parseTOI, fmtPer60 } from '../lib/stats.js';
 import { TeamLogo } from '../components/Logo.jsx';
 import { Sparkline } from '../components/charts.jsx';
 import { navigate, gameHref } from '../router.js';
 import { PLAYER_SOCIALS } from '../data/playerSocials.js';
 import { SkaterHotCold, GoalieHotCold } from '../components/HotCold.jsx';
 import { TeamLogoBg } from '../components/Watermark.jsx';
-// import { ShareButton } from '../components/SharePanel.jsx';
 import { SignaturePanel } from '../components/SignaturePanel.jsx';
 import { ContractPanel } from '../components/ContractPanel.jsx';
 import { GearPanel } from '../components/GearPanel.jsx';
-// import { SkaterEdgePanel, GoalieEdgePanel } from '../components/EdgeStats.jsx';
 
 // Inline SVGs for Instagram + X. Drawn small and monochrome so they live
 // quietly in the player hero. Lucide-react v1.8 doesn't ship Instagram or
@@ -74,26 +70,15 @@ const SocialLinks = ({ playerId, fullName }) => {
 
 const HEIGHT = (inches) => inches ? `${Math.floor(inches / 12)}'${inches % 12}"` : '—';
 
-// Guard: React #310 — NHL API sometimes wraps strings in {default: '...'} objects.
-const unwrap = (v) => {
-  if (v == null) return '—';
-  if (typeof v === 'object' && v.default !== undefined) return v.default;
-  if (typeof v === 'object') return '—';
-  return v;
-};
-
-const StatCell = ({ label, value, sub, accent = false }) => {
-  const display = unwrap(value);
-  return (
-    <div className="flex flex-col gap-0.5 px-3 py-2.5 border border-[#F74902]/[0.18] rounded-md bg-white/[0.02]">
-      <span className="text-[10px] font-mono text-white/40 uppercase tracking-wider">{label}</span>
-      <span className={cx('text-[18px] font-semibold tabular-nums', accent && 'text-[#FF8A4C]')}>
-        {display}
-      </span>
-      {sub && <span className="text-[10px] font-mono text-white/35">{sub}</span>}
-    </div>
-  );
-};
+const StatCell = ({ label, value, sub, accent = false }) => (
+  <div className="flex flex-col gap-0.5 px-3 py-2.5 border border-[#F74902]/[0.18] rounded-md bg-white/[0.02]">
+    <span className="text-[10px] font-mono text-white/40 uppercase tracking-wider">{label}</span>
+    <span className={cx('text-[18px] font-semibold tabular-nums', accent && 'text-[#FF8A4C]')}>
+      {value ?? '—'}
+    </span>
+    {sub && <span className="text-[10px] font-mono text-white/35">{sub}</span>}
+  </div>
+);
 
 // Extract a player's career season-by-season totals — NHL leagueAbbrev='NHL' rows
 // from seasonTotals, plus AHL/junior if useful. We show NHL rows in the main
@@ -120,8 +105,6 @@ const seasonLabel = (s) => {
 
 export const PlayerProfile = ({ playerId }) => {
   const { data, error, loading } = useNHL(playerId ? `v1/player/${playerId}/landing` : null, 0);
-  const [statMode] = useState('raw');
-  const leadersRaw = null; // disabled — per-60 and percentile features temporarily off
 
   if (!playerId) {
     return (
@@ -164,45 +147,6 @@ export const PlayerProfile = ({ playerId }) => {
   const { nhl: nhlSeasons, other: otherSeasons } = seasonsFromTotals(data.seasonTotals);
   const awards = data.awards || [];
   const draft = data.draftDetails;
-
-  // Per-60 normalization: parse the player's average TOI from their current season stats.
-  // avgToi may be seconds (number) from club-stats or "MM:SS" from landing.
-  const rawToi = sub?.avgToi ?? sub?.avgTimeOnIcePerGame ?? 0;
-  const toiSec = typeof rawToi === 'string' ? parseTOI(rawToi) : (rawToi || 0);
-  // Total TOI seconds for the season = avgTOI * gamesPlayed
-  const totalToiSec = toiSec && sub?.gamesPlayed ? toiSec * sub.gamesPlayed : 0;
-
-  // Build a display value helper: when statMode is 'per60', normalize the stat
-  // using total season TOI; otherwise return the raw value.
-  const p60 = (raw) => {
-    if (raw == null) return '—';
-    if (statMode !== 'per60' || !totalToiSec) return raw;
-    const rate = per60(raw, totalToiSec);
-    return rate != null ? fmtPer60(rate) : '—';
-  };
-
-  // Build percentile data from the leaders response.
-  const percentiles = useMemo(() => {
-    if (!leadersRaw || !sub || !isSkater) return null;
-    // The leaders endpoint returns { points: [...], goals: [...], ... }
-    // Each entry has { id, value }. We build a population array per stat.
-    const statMap = {
-      points:    { key: 'points',    playerVal: sub.points,    higherIsBetter: true },
-      goals:     { key: 'goals',     playerVal: sub.goals,     higherIsBetter: true },
-      assists:   { key: 'assists',   playerVal: sub.assists,   higherIsBetter: true },
-      plusMinus:  { key: 'plusMinus', playerVal: sub.plusMinus,  higherIsBetter: true },
-      shots:     { key: 'shots',     playerVal: sub.shots,     higherIsBetter: true },
-    };
-    const result = {};
-    for (const [cat, { playerVal, higherIsBetter }] of Object.entries(statMap)) {
-      const population = (leadersRaw[cat] || []).map((p) => p.value).filter((v) => v != null);
-      if (!population.length || playerVal == null) continue;
-      const sorted = [...population].sort((a, b) => a - b);
-      const below = sorted.filter((v) => higherIsBetter ? v < playerVal : v > playerVal).length;
-      result[cat] = Math.round((below / sorted.length) * 100);
-    }
-    return Object.keys(result).length ? result : null;
-  }, [leadersRaw, sub, isSkater]);
 
   // Sparkline trend across the listed seasons (most recent on the right).
   const ptsTrend = isSkater
@@ -288,54 +232,32 @@ export const PlayerProfile = ({ playerId }) => {
           lives further down with the game log — the autograph is more of a
           memorabilia reference than a stat, so it doesn't need top billing. */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-        <ContractPanel playerId={playerId} fullName={fullName} playerStats={sub ? { points: sub.points, goals: sub.goals, gp: sub.gamesPlayed } : null} />
+        <ContractPanel playerId={playerId} fullName={fullName} />
         <GearPanel playerId={playerId} />
       </div>
-
-      {/* NHL Edge tracking data — temporarily disabled for debugging */}
 
       {/* Featured stats — current season big numbers */}
       {sub && (
         <Section title={`${SEASON_LABEL} · Regular Season`}
-          action={
-            <div className="flex items-center gap-3">
-              <span className="text-[10px] font-mono text-white/40">{sub.gamesPlayed || 0} GP</span>
-              {isSkater && totalToiSec > 0 && (
-                <div className="flex border border-white/[0.08] rounded-md overflow-hidden">
-                  <button
-                    onClick={() => setStatMode('raw')}
-                    className={cx(
-                      'px-2 h-6 text-[10px] font-mono transition-colors',
-                      statMode === 'raw' ? 'bg-[#F74902]/15 text-[#FF8A4C]' : 'text-white/45 hover:text-white/75',
-                    )}
-                  >Raw</button>
-                  <button
-                    onClick={() => setStatMode('per60')}
-                    className={cx(
-                      'px-2 h-6 text-[10px] font-mono border-l border-white/[0.08] transition-colors',
-                      statMode === 'per60' ? 'bg-[#F74902]/15 text-[#FF8A4C]' : 'text-white/45 hover:text-white/75',
-                    )}
-                  >Per 60</button>
-                </div>
-              )}
-            </div>
-          }>
+          action={isSkater
+            ? <span className="text-[10px] font-mono text-white/40">{sub.gamesPlayed || 0} GP</span>
+            : <span className="text-[10px] font-mono text-white/40">{sub.gamesPlayed || 0} GP</span>}>
           <div className="p-4 grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-8 gap-2">
             {isSkater ? (
               <>
                 <StatCell label="GP"   value={sub.gamesPlayed} />
-                <StatCell label="G"    value={p60(sub.goals)} accent sub={statMode === 'per60' ? '/60' : undefined} />
-                <StatCell label="A"    value={p60(sub.assists)} sub={statMode === 'per60' ? '/60' : undefined} />
-                <StatCell label="P"    value={p60(sub.points)} accent sub={statMode === 'per60' ? '/60' : undefined} />
-                <StatCell label="+/–"  value={statMode === 'raw' ? (sub.plusMinus > 0 ? `+${sub.plusMinus}` : sub.plusMinus) : p60(sub.plusMinus)} />
-                <StatCell label="PIM"  value={p60(sub.pim)} sub={statMode === 'per60' ? '/60' : undefined} />
-                <StatCell label="SOG"  value={p60(sub.shots)} sub={statMode === 'per60' ? '/60' : undefined} />
+                <StatCell label="G"    value={sub.goals} accent />
+                <StatCell label="A"    value={sub.assists} />
+                <StatCell label="P"    value={sub.points} accent />
+                <StatCell label="+/–"  value={sub.plusMinus > 0 ? `+${sub.plusMinus}` : sub.plusMinus} />
+                <StatCell label="PIM"  value={sub.pim} />
+                <StatCell label="SOG"  value={sub.shots} />
                 <StatCell label="S%"   value={sub.shootingPctg != null ? `${(sub.shootingPctg * 100).toFixed(1)}%` : '—'} />
-                <StatCell label="PPG"  value={p60(sub.powerPlayGoals)} sub={statMode === 'per60' ? '/60' : undefined} />
-                <StatCell label="PPP"  value={p60(sub.powerPlayPoints)} sub={statMode === 'per60' ? '/60' : undefined} />
-                <StatCell label="SHG"  value={p60(sub.shorthandedGoals)} sub={statMode === 'per60' ? '/60' : undefined} />
-                <StatCell label="GWG"  value={p60(sub.gameWinningGoals)} sub={statMode === 'per60' ? '/60' : undefined} />
-                <StatCell label="OTG"  value={p60(sub.otGoals)} sub={statMode === 'per60' ? '/60' : undefined} />
+                <StatCell label="PPG"  value={sub.powerPlayGoals} />
+                <StatCell label="PPP"  value={sub.powerPlayPoints} />
+                <StatCell label="SHG"  value={sub.shorthandedGoals} />
+                <StatCell label="GWG"  value={sub.gameWinningGoals} />
+                <StatCell label="OTG"  value={sub.otGoals} />
                 <StatCell label="FO%"  value={sub.faceoffWinningPctg != null ? `${(sub.faceoffWinningPctg * 100).toFixed(1)}%` : '—'} />
                 <StatCell label="ATOI" value={sub.avgToi || '—'} />
                 <StatCell label="GP/82" value={sub.gamesPlayed && sub.points != null ? ((sub.points / sub.gamesPlayed) * 82).toFixed(0) : '—'} sub="P pace" />
@@ -356,28 +278,6 @@ export const PlayerProfile = ({ playerId }) => {
                 <StatCell label="ATOI" value={sub.avgToi || '—'} />
               </>
             )}
-          </div>
-        </Section>
-      )}
-
-      {/* Percentile ranks — horizontal bars showing where this skater ranks
-          among the top 100 NHL skaters in each category. Only shown for
-          skaters with enough data from the leaders endpoint. */}
-      {isSkater && percentiles && (
-        <Section
-          title="League Percentile Ranks"
-          action={<span className="text-[10px] font-mono text-white/40">vs top 100 skaters</span>}
-        >
-          <div className="p-4 space-y-3">
-            {[
-              { key: 'points',   label: 'Points' },
-              { key: 'goals',    label: 'Goals' },
-              { key: 'assists',  label: 'Assists' },
-              { key: 'plusMinus', label: '+/\u2013' },
-              { key: 'shots',    label: 'Shots' },
-            ].filter((s) => percentiles[s.key] != null).map(({ key, label }) => (
-              <PercentileBar key={key} label={label} value={percentiles[key]} />
-            ))}
           </div>
         </Section>
       )}
@@ -636,34 +536,6 @@ export const PlayerProfile = ({ playerId }) => {
           )}
         </div>
       </div>
-    </div>
-  );
-};
-
-// Horizontal percentile bar — 0 to 100 scale with color coding.
-const PercentileBar = ({ label, value }) => {
-  const color =
-    value >= 90 ? 'bg-emerald-400' :
-    value >= 70 ? 'bg-sky-400' :
-    value >= 40 ? 'bg-amber-400' :
-    'bg-red-400';
-  const textColor =
-    value >= 90 ? 'text-emerald-400' :
-    value >= 70 ? 'text-sky-400' :
-    value >= 40 ? 'text-amber-400' :
-    'text-red-400';
-  return (
-    <div className="flex items-center gap-3">
-      <span className="text-[11px] font-mono text-white/55 w-16 shrink-0 text-right">{label}</span>
-      <div className="flex-1 h-3 bg-white/[0.05] rounded-full overflow-hidden">
-        <div
-          className={cx('h-full rounded-full transition-all', color)}
-          style={{ width: `${Math.max(value, 2)}%`, opacity: 0.75 }}
-        />
-      </div>
-      <span className={cx('text-[11px] font-mono tabular-nums w-8 shrink-0', textColor)}>
-        {value}
-      </span>
     </div>
   );
 };

@@ -26,18 +26,9 @@ const Stat = ({ label, value, tone }) => (
   </div>
 );
 
-export const ContractPanel = ({ playerId, fullName, playerStats }) => {
+export const ContractPanel = ({ playerId, fullName }) => {
   const c = getContract(playerId);
   const puckpediaUrl = `https://puckpedia.com/player/${slugify(fullName)}`;
-
-  // Contract value analysis
-  const aav = c?.aav ?? c?.capHit ?? 0;
-  const points = playerStats?.points ?? 0;
-  const goals = playerStats?.goals ?? 0;
-  const gp = playerStats?.gp ?? 0;
-  const costPerPoint = aav && points > 0 ? (aav / points) : null;
-  const costPerGoal = aav && goals > 0 ? (aav / goals) : null;
-  const costPerGame = aav && gp > 0 ? (aav / gp) : null;
 
   return (
     <div className="border border-white/[0.08] bg-[#0C0C0C]/60 rounded-md p-4">
@@ -112,40 +103,6 @@ export const ContractPanel = ({ playerId, fullName, playerStats }) => {
                   → {c.expiryStatus}
                 </span>
               )}
-            </div>
-          )}
-
-          {/* Contract Value Analysis */}
-          {aav > 0 && gp > 0 && (
-            <div className="pt-2 border-t border-white/[0.05] space-y-1.5">
-              <div className="text-[9px] font-mono text-white/40 uppercase tracking-wider">Value Analysis</div>
-              <div className="grid grid-cols-3 gap-2">
-                {costPerPoint != null && (
-                  <Stat label="$/Point" value={fmtMillions(costPerPoint)} tone={costPerPoint < 150000 ? 'sky' : costPerPoint > 400000 ? 'amber' : undefined} />
-                )}
-                {costPerGoal != null && (
-                  <Stat label="$/Goal" value={fmtMillions(costPerGoal)} />
-                )}
-                {costPerGame != null && (
-                  <Stat label="$/Game" value={fmtMillions(costPerGame)} />
-                )}
-              </div>
-            </div>
-          )}
-
-          {/* Buyout estimate */}
-          {c && c.yearsLeft != null && c.yearsLeft > 0 && aav > 0 && (
-            <div className="pt-2 border-t border-white/[0.05]">
-              <div className="flex items-center justify-between">
-                <span className="text-[9px] font-mono text-white/40 uppercase tracking-wider">Buyout Cost (est.)</span>
-                <span className="text-[11px] font-mono tabular-nums text-amber-300">
-                  {fmtMillions(Math.round(aav * c.yearsLeft * 2 / 3))}
-                  <span className="text-white/30 ml-1">over {c.yearsLeft * 2}yr</span>
-                </span>
-              </div>
-              <div className="text-[9px] font-mono text-white/25 mt-0.5">
-                CBA formula: ⅔ remaining salary spread over 2× remaining years
-              </div>
             </div>
           )}
 

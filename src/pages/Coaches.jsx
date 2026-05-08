@@ -189,7 +189,6 @@ const CoachCard = ({ c }) => {
         {/* Coach portrait sits between the bio block and the team-logo
             watermark. Falls back to initials in a circle when no photo
             URL is set on the coach record. */}
-        <CoachPortrait c={c} size={56} />
       </div>
     </div>
   );

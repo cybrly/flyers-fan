@@ -119,11 +119,11 @@ const SummaryTile = ({ label, value, sub, tone }) => {
 // card doesn't reflow when an image gets added later.
 const CoachInitialsAvatar = ({ name, abbr, size = 56 }) => (
   <div
-    className="shrink-0 rounded-full bg-white/[0.06] border border-white/[0.10] flex items-center justify-center overflow-hidden"
+    className="shrink-0 flex items-center justify-center"
     style={{ width: size, height: size }}
     title={`${name} · ${abbr}`}
   >
-    <TeamLogo abbr={abbr} size={size * 0.6} />
+    <TeamLogo abbr={abbr} size={size} />
   </div>
 );
 

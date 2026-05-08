@@ -13,6 +13,8 @@ import { SignaturePanel } from '../components/SignaturePanel.jsx';
 import { ContractPanel } from '../components/ContractPanel.jsx';
 import { GearPanel } from '../components/GearPanel.jsx';
 import { SkaterEdgePanel, GoalieEdgePanel } from '../components/EdgeStats.jsx';
+import { ShareButton } from '../components/SharePanel.jsx';
+import { per60, parseTOI, fmtPer60 } from '../lib/stats.js';
 
 // Inline SVGs for Instagram + X. Drawn small and monochrome so they live
 // quietly in the player hero. Lucide-react v1.8 doesn't ship Instagram or
@@ -71,13 +73,14 @@ const SocialLinks = ({ playerId, fullName }) => {
 
 const HEIGHT = (inches) => inches ? `${Math.floor(inches / 12)}'${inches % 12}"` : '—';
 
+const safe = (v) => (v != null && typeof v !== 'object') ? v : '—';
 const StatCell = ({ label, value, sub, accent = false }) => (
   <div className="flex flex-col gap-0.5 px-3 py-2.5 border border-[#F74902]/[0.18] rounded-md bg-white/[0.02]">
     <span className="text-[10px] font-mono text-white/40 uppercase tracking-wider">{label}</span>
     <span className={cx('text-[18px] font-semibold tabular-nums', accent && 'text-[#FF8A4C]')}>
-      {value ?? '—'}
+      {safe(value)}
     </span>
-    {sub && <span className="text-[10px] font-mono text-white/35">{sub}</span>}
+    {sub && <span className="text-[10px] font-mono text-white/35">{safe(sub)}</span>}
   </div>
 );
 
@@ -149,6 +152,17 @@ export const PlayerProfile = ({ playerId }) => {
   const awards = data.awards || [];
   const draft = data.draftDetails;
 
+  // Per-60 normalization toggle. avgToi may be seconds (number) or absent.
+  const [statMode, setStatMode] = useState('raw');
+  const toiSec = typeof sub?.avgToi === 'string' ? parseTOI(sub.avgToi) : (sub?.avgToi || 0);
+  const totalToiSec = toiSec && sub?.gamesPlayed ? toiSec * sub.gamesPlayed : 0;
+  const p60 = (raw) => {
+    if (raw == null) return '—';
+    if (statMode !== 'per60' || !totalToiSec) return raw;
+    const rate = per60(raw, totalToiSec);
+    return rate != null ? fmtPer60(rate) : '—';
+  };
+
   // Sparkline trend across the listed seasons (most recent on the right).
   const ptsTrend = isSkater
     ? [...nhlSeasons].reverse().map((s) => s.points || 0)
@@ -167,6 +181,7 @@ export const PlayerProfile = ({ playerId }) => {
           <ArrowLeft size={11} /> back
         </button>
         <h1 className="text-[18px] font-semibold tracking-tight text-white/55">Player Profile</h1>
+        {playerId && <ShareButton type="player" playerId={playerId} label="Share" />}
       </div>
 
       {/* Hero — headshot, name, bio, draft */}
@@ -233,7 +248,7 @@ export const PlayerProfile = ({ playerId }) => {
           lives further down with the game log — the autograph is more of a
           memorabilia reference than a stat, so it doesn't need top billing. */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-        <ContractPanel playerId={playerId} fullName={fullName} />
+        <ContractPanel playerId={playerId} fullName={fullName} playerStats={sub ? { points: sub.points || 0, goals: sub.goals || 0, gp: sub.gamesPlayed || 0 } : null} />
         <GearPanel playerId={playerId} />
       </div>
 
@@ -244,27 +259,35 @@ export const PlayerProfile = ({ playerId }) => {
       {/* Featured stats — current season big numbers */}
       {sub && (
         <Section title={`${SEASON_LABEL} · Regular Season`}
-          action={isSkater
-            ? <span className="text-[10px] font-mono text-white/40">{sub.gamesPlayed || 0} GP</span>
-            : <span className="text-[10px] font-mono text-white/40">{sub.gamesPlayed || 0} GP</span>}>
+          action={
+            <div className="flex items-center gap-3">
+              <span className="text-[10px] font-mono text-white/40">{sub.gamesPlayed || 0} GP</span>
+              {isSkater && totalToiSec > 0 && (
+                <div className="flex border border-white/[0.08] rounded-md overflow-hidden">
+                  <button type="button" onClick={() => setStatMode('raw')} className={cx('px-2 h-6 text-[10px] font-mono transition-colors', statMode === 'raw' ? 'bg-[#F74902]/15 text-[#FF8A4C]' : 'text-white/45 hover:text-white/75')}>Raw</button>
+                  <button type="button" onClick={() => setStatMode('per60')} className={cx('px-2 h-6 text-[10px] font-mono border-l border-white/[0.08] transition-colors', statMode === 'per60' ? 'bg-[#F74902]/15 text-[#FF8A4C]' : 'text-white/45 hover:text-white/75')}>Per 60</button>
+                </div>
+              )}
+            </div>
+          }>
           <div className="p-4 grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-8 gap-2">
             {isSkater ? (
               <>
                 <StatCell label="GP"   value={sub.gamesPlayed} />
-                <StatCell label="G"    value={sub.goals} accent />
-                <StatCell label="A"    value={sub.assists} />
-                <StatCell label="P"    value={sub.points} accent />
-                <StatCell label="+/–"  value={sub.plusMinus > 0 ? `+${sub.plusMinus}` : sub.plusMinus} />
-                <StatCell label="PIM"  value={sub.pim} />
-                <StatCell label="SOG"  value={sub.shots} />
+                <StatCell label="G"    value={p60(sub.goals)} accent sub={statMode === 'per60' ? '/60' : undefined} />
+                <StatCell label="A"    value={p60(sub.assists)} sub={statMode === 'per60' ? '/60' : undefined} />
+                <StatCell label="P"    value={p60(sub.points)} accent sub={statMode === 'per60' ? '/60' : undefined} />
+                <StatCell label="+/–"  value={statMode === 'raw' ? (sub.plusMinus > 0 ? `+${sub.plusMinus}` : sub.plusMinus) : p60(sub.plusMinus)} />
+                <StatCell label="PIM"  value={p60(sub.pim)} sub={statMode === 'per60' ? '/60' : undefined} />
+                <StatCell label="SOG"  value={p60(sub.shots)} sub={statMode === 'per60' ? '/60' : undefined} />
                 <StatCell label="S%"   value={sub.shootingPctg != null ? `${(sub.shootingPctg * 100).toFixed(1)}%` : '—'} />
-                <StatCell label="PPG"  value={sub.powerPlayGoals} />
-                <StatCell label="PPP"  value={sub.powerPlayPoints} />
-                <StatCell label="SHG"  value={sub.shorthandedGoals} />
-                <StatCell label="GWG"  value={sub.gameWinningGoals} />
-                <StatCell label="OTG"  value={sub.otGoals} />
+                <StatCell label="PPG"  value={p60(sub.powerPlayGoals)} sub={statMode === 'per60' ? '/60' : undefined} />
+                <StatCell label="PPP"  value={p60(sub.powerPlayPoints)} sub={statMode === 'per60' ? '/60' : undefined} />
+                <StatCell label="SHG"  value={p60(sub.shorthandedGoals)} sub={statMode === 'per60' ? '/60' : undefined} />
+                <StatCell label="GWG"  value={p60(sub.gameWinningGoals)} sub={statMode === 'per60' ? '/60' : undefined} />
+                <StatCell label="OTG"  value={p60(sub.otGoals)} sub={statMode === 'per60' ? '/60' : undefined} />
                 <StatCell label="FO%"  value={sub.faceoffWinningPctg != null ? `${(sub.faceoffWinningPctg * 100).toFixed(1)}%` : '—'} />
-                <StatCell label="ATOI" value={sub.avgToi || '—'} />
+                <StatCell label="ATOI" value={safe(sub.avgToi) !== '—' ? safe(sub.avgToi) : '—'} />
                 <StatCell label="GP/82" value={sub.gamesPlayed && sub.points != null ? ((sub.points / sub.gamesPlayed) * 82).toFixed(0) : '—'} sub="P pace" />
               </>
             ) : (

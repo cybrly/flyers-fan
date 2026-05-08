@@ -26,9 +26,13 @@ const Stat = ({ label, value, tone }) => (
   </div>
 );
 
-export const ContractPanel = ({ playerId, fullName }) => {
+export const ContractPanel = ({ playerId, fullName, playerStats }) => {
   const c = getContract(playerId);
   const puckpediaUrl = `https://puckpedia.com/player/${slugify(fullName)}`;
+  const aav = c?.aav ?? c?.capHit ?? 0;
+  const pts = playerStats?.points ?? 0;
+  const goals = playerStats?.goals ?? 0;
+  const gp = playerStats?.gp ?? 0;
 
   return (
     <div className="border border-white/[0.08] bg-[#0C0C0C]/60 rounded-md p-4">
@@ -106,6 +110,26 @@ export const ContractPanel = ({ playerId, fullName }) => {
             </div>
           )}
 
+          {/* Value analysis — cost per point/goal when stats are available */}
+          {aav > 0 && gp > 0 && pts > 0 && (
+            <div className="pt-2 border-t border-white/[0.05] space-y-1.5">
+              <div className="text-[9px] font-mono text-white/40 uppercase tracking-wider">Value</div>
+              <div className="grid grid-cols-3 gap-2">
+                <Stat label="$/Point" value={fmtMillions(Math.round(aav / pts))} tone={aav / pts < 150000 ? 'sky' : undefined} />
+                {goals > 0 && <Stat label="$/Goal" value={fmtMillions(Math.round(aav / goals))} />}
+                <Stat label="$/Game" value={fmtMillions(Math.round(aav / gp))} />
+              </div>
+            </div>
+          )}
+          {/* Buyout estimate */}
+          {c.yearsLeft != null && c.yearsLeft > 0 && aav > 0 && (
+            <div className="pt-2 border-t border-white/[0.05] flex items-center justify-between">
+              <span className="text-[9px] font-mono text-white/40 uppercase tracking-wider">Buyout est.</span>
+              <span className="text-[11px] font-mono tabular-nums text-amber-300">
+                {fmtMillions(Math.round(aav * c.yearsLeft * 2 / 3))} <span className="text-white/30">over {c.yearsLeft * 2}yr</span>
+              </span>
+            </div>
+          )}
           {c.updated && (
             <div className="text-[9px] font-mono text-white/30 pt-1">
               Source: PuckPedia · last verified {c.updated}

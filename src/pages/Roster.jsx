@@ -212,7 +212,7 @@ export const Roster = ({ roster, clubStats, prospects, draftPicks }) => {
   const [view, setView] = useState('forwards');
   if (!roster) {
     return (
-      <div className="p-3 md:p-5 space-y-3">
+      <div className="p-4 md:p-6 space-y-5">
         <Skeleton height={24} className="w-48" />
         <Skeleton height={400} />
       </div>
@@ -223,7 +223,7 @@ export const Roster = ({ roster, clubStats, prospects, draftPicks }) => {
   const goalieLeaders = clubStats ? [...clubStats.goalies].sort((a, b) => (b.savePct ?? 0) - (a.savePct ?? 0)) : [];
 
   return (
-    <div className="p-3 md:p-5 space-y-3">
+    <div className="p-4 md:p-6 space-y-5">
       <div className="flex items-end justify-between flex-wrap gap-3">
         <div>
           <h1 className="text-[20px] font-semibold tracking-tight">Roster</h1>

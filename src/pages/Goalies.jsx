@@ -279,7 +279,7 @@ export const Goalies = ({ clubStats, schedule, goalieLeaders }) => {
   const llLoading = !goalieLeaders || (svList.length === 0 && gaaList.length === 0 && winsList.length === 0);
 
   return (
-    <div className="p-3 md:p-5 space-y-3">
+    <div className="p-4 md:p-6 space-y-5">
       <div>
         <h1 className="text-[20px] font-semibold tracking-tight">Goalies</h1>
         <p className="text-[12px] text-white/45 mt-1 font-mono">

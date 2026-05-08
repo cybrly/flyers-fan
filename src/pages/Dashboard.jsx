@@ -109,7 +109,7 @@ export const Dashboard = ({ schedule, standings, scoreboard, clubStats, roster, 
   const lastGameGoals = lastGame?.timeline || [];
 
   return (
-    <div className="p-3 md:p-5 space-y-4">
+    <div className="p-4 md:p-6 space-y-6">
       {/* ─── HERO ─────────────────────────────────────────────────────────── */}
       <Hero
         liveGame={liveGame}
@@ -199,7 +199,7 @@ export const Dashboard = ({ schedule, standings, scoreboard, clubStats, roster, 
           "are we good and how have we been lately?" Pace / Streak /
           Division are demoted to a thinner secondary row below so the
           primary row reads cleanly. */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
         <KPI
           label="Record"
           value={us ? `${us.w}–${us.l}${us.ot ? `–${us.ot}` : ''}` : '—'}
@@ -237,7 +237,7 @@ export const Dashboard = ({ schedule, standings, scoreboard, clubStats, roster, 
       </div>
 
       {/* Secondary stat strip — supporting metrics in a denser row. */}
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-3 gap-4">
         <SecondaryStat
           label="82-game Pace"
           value={pace ?? '—'}
@@ -420,7 +420,7 @@ export const Dashboard = ({ schedule, standings, scoreboard, clubStats, roster, 
       </CollapsibleBand>
 
       {/* ─── BAND · OFFENSE & SCORING ─────────────────────────────────────── */}
-      <CollapsibleBand id="offense" label="Offense & Scoring" color="orange" sub="rate · top scorers · goals">
+      <CollapsibleBand id="offense" label="Offense & Scoring" color="orange" sub="rate · top scorers · goals" defaultCollapsed>
 
       <ScoringPanel games={games} us={us} />
 
@@ -508,7 +508,7 @@ export const Dashboard = ({ schedule, standings, scoreboard, clubStats, roster, 
       </CollapsibleBand>
 
       {/* ─── BAND · LEAGUE ────────────────────────────────────────────────── */}
-      <CollapsibleBand id="league" label="League" color="sky" sub="leaders · NHL-wide">
+      <CollapsibleBand id="league" label="League" color="sky" sub="leaders · NHL-wide" defaultCollapsed>
         <LeagueLeaders data={leagueLeaders} />
       </CollapsibleBand>
 

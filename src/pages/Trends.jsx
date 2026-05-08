@@ -241,7 +241,7 @@ export const Trends = ({ schedule, roster, clubStats }) => {
 
   if (N === 0) {
     return (
-      <div className="p-3 md:p-5 space-y-3">
+      <div className="p-4 md:p-6 space-y-5">
         <h1 className="text-[20px] font-semibold tracking-tight">Trends</h1>
         <Section title="Season Trajectory">
           <div className="p-10 text-center text-[12px] font-mono text-white/40">No games yet this season.</div>
@@ -334,7 +334,7 @@ export const Trends = ({ schedule, roster, clubStats }) => {
   const goalies = roster?.goalies || [];
 
   return (
-    <div className="p-3 md:p-5 space-y-3">
+    <div className="p-4 md:p-6 space-y-5">
       <div className="flex items-end justify-between flex-wrap gap-3">
         <div>
           <h1 className="text-[20px] font-semibold tracking-tight">Trends</h1>

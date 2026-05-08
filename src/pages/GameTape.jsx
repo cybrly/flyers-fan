@@ -339,7 +339,7 @@ export const GameTape = ({ game, loading, pbp, pbpRaw, liveSnap, liveConnected, 
   const us = standings?.us;
 
   return (
-    <div className="p-3 md:p-5 space-y-3">
+    <div className="p-4 md:p-6 space-y-5">
       {kioskOpen && (
         <KioskMode game={game} onClose={() => setKioskOpen(false)} />
       )}
@@ -440,7 +440,7 @@ export const GameTape = ({ game, loading, pbp, pbpRaw, liveSnap, liveConnected, 
         )}
       </div>
 
-      <div className="space-y-4">
+      <div className="space-y-5">
         <Section branded title="Team Comparison">
           {/* Header: team logos + abbreviations on each side, balanced
               around the centerline so the panel reads as a head-to-head

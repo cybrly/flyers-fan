@@ -28,7 +28,7 @@ export const KPI = ({ label, value, sub, delta, sparkData, trendColor, loading, 
   const sparkColor = trendColor || t.spark;
   return (
     <div className={cx(
-      'min-w-0 border backdrop-blur-sm rounded-md px-3 py-2.5 hover:bg-[#0F0F10]/80 hover:-translate-y-px transition-all duration-200',
+      'min-w-0 border backdrop-blur-sm rounded-lg px-3.5 py-3 hover:bg-[#0F0F10]/80 hover:-translate-y-px transition-all duration-200',
       t.wrap,
     )}>
       <div className="flex items-start justify-between mb-1.5">
@@ -52,7 +52,7 @@ export const KPI = ({ label, value, sub, delta, sparkData, trendColor, loading, 
             {sub && <span className="text-[10px] text-white/40 font-mono">{sub}</span>}
           </div>
           {rank != null && (
-            <div className="mt-0.5 text-[9px] font-mono tabular-nums text-white/30">
+            <div className="mt-1 text-[10px] font-mono tabular-nums text-white/28">
               #{rank} <span className="text-white/20">/ {rankOf}</span>
             </div>
           )}

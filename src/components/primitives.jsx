@@ -43,16 +43,18 @@ export const Label = ({ children, className = '' }) => (
 // 1px STROKES preserve the orange hue cleanly).
 export const Section = ({ title, action, children, className = '', branded = false }) => (
   <div className={cx(
-    'bg-[#0C0C0C]/60 rounded-md backdrop-blur-sm border',
-    branded ? 'border-[#F74902]/[0.18]' : 'border-white/[0.07]',
+    'rounded-lg border',
+    branded
+      ? 'bg-[#0C0C0C]/70 border-[#F74902]/[0.18]'
+      : 'bg-[#0A0A0A]/40 border-white/[0.06]',
     className,
   )}>
     {(title || action) && (
       <div className={cx(
-        'flex items-center justify-between px-3.5 h-8 border-b',
-        branded ? 'border-[#F74902]/[0.25]' : 'border-white/[0.06]',
+        'flex items-center justify-between px-4 h-9 border-b',
+        branded ? 'border-[#F74902]/[0.15]' : 'border-white/[0.05]',
       )}>
-        <span className="text-[11px] font-medium text-white/85 tracking-tight">{title}</span>
+        <span className="text-[11px] font-medium text-white/80 tracking-tight">{title}</span>
         {action}
       </div>
     )}
@@ -116,32 +118,34 @@ export const CollapsibleBand = ({ id, label, color = 'orange', sub, action, coun
     writeCollapsed(saved);
   };
   return (
-    <section>
+    <section className="pt-2">
+      {/* Subtle separator line above each band */}
+      <div className="h-px bg-gradient-to-r from-transparent via-white/[0.06] to-transparent mb-4" />
       <button
         type="button"
         onClick={toggle}
         aria-expanded={!collapsed}
-        className="w-full flex items-center gap-3 pt-2 group transition-colors text-left"
+        className="w-full flex items-center gap-3 group transition-colors text-left"
       >
-        <span className={cx('w-1 h-5 rounded-sm shrink-0 transition-colors', c.bar, collapsed && 'opacity-60')} />
-        <span className={cx('text-[12px] font-semibold uppercase tracking-[0.18em] transition-opacity', c.text, collapsed && 'opacity-70')}>{label}</span>
+        <span className={cx('w-1 h-6 rounded-sm shrink-0 transition-colors', c.bar, collapsed && 'opacity-50')} />
+        <span className={cx('text-[13px] font-semibold uppercase tracking-[0.14em] transition-opacity', c.text, collapsed && 'opacity-60')}>{label}</span>
         {count != null && (
           <span className={cx('text-[10px] font-mono px-1.5 py-[1px] rounded-[3px] border border-current/30', c.text)}>
             {count}
           </span>
         )}
-        {sub && <span className="text-[10px] font-mono text-white/35 uppercase tracking-wider">{sub}</span>}
-        <span className="flex-1 h-px bg-gradient-to-r from-white/[0.08] via-white/[0.04] to-transparent" />
+        {sub && <span className="text-[10px] font-mono text-white/30 uppercase tracking-wider">{sub}</span>}
+        <span className="flex-1 h-px bg-gradient-to-r from-white/[0.06] to-transparent" />
         {action && <span onClick={(e) => e.stopPropagation()}>{action}</span>}
         <ChevronDown
           size={14}
           strokeWidth={2}
-          className={cx('shrink-0 text-white/35 group-hover:text-white/70 transition-transform duration-200',
+          className={cx('shrink-0 text-white/30 group-hover:text-white/60 transition-transform duration-200',
             collapsed ? '-rotate-90' : 'rotate-0',
           )}
         />
       </button>
-      {!collapsed && <div className="space-y-4 pt-3">{children}</div>}
+      {!collapsed && <div className="space-y-5 pt-4">{children}</div>}
     </section>
   );
 };

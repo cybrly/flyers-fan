@@ -117,7 +117,7 @@ export const PlayerProfile = ({ playerId }) => {
 
   if (loading && !data) {
     return (
-      <div className="p-3 md:p-5 space-y-3">
+      <div className="p-4 md:p-6 space-y-5">
         <Skeleton height={28} className="w-48" />
         <Skeleton height={140} />
         <Skeleton height={300} />
@@ -158,7 +158,7 @@ export const PlayerProfile = ({ playerId }) => {
     : [];
 
   return (
-    <div className="p-3 md:p-5 space-y-3">
+    <div className="p-4 md:p-6 space-y-5">
       <div className="flex items-center gap-3">
         <button
           onClick={() => window.history.length > 1 ? window.history.back() : navigate('/roster')}

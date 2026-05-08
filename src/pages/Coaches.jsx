@@ -34,7 +34,7 @@ export const Coaches = () => {
   const cupWinners = COACHES.filter((c) => c.highlight && /Cup/.test(c.highlight));
 
   return (
-    <div className="p-3 md:p-5 space-y-3">
+    <div className="p-4 md:p-6 space-y-5">
       <div className="flex items-end justify-between flex-wrap gap-3">
         <div>
           <h1 className="text-[20px] font-semibold tracking-tight">Head Coaches</h1>

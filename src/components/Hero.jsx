@@ -567,25 +567,21 @@ export const Hero = ({ liveGame, liveDetail, liveSnap, nextGame, lastResult, us,
   const streak = computeStreak(recentGames);
 
   return (
-    <div className="relative overflow-hidden rounded-lg border border-[#F74902]/[0.25] bg-[#0A0A0A] px-5 sm:px-8 py-6 sm:py-8 shadow-[0_0_0_1px_rgba(255,255,255,0.02)_inset,0_24px_48px_-24px_rgba(0,0,0,0.9),0_2px_0_rgba(255,255,255,0.04)_inset]">
-        {/* ── Layered background for depth ──────────────────────────────────
-            Three stacked passes: (1) base dark gradient with a faint vertical
-            light fall-off, (2) two large neutral radial spotlights pinned to
-            where each team logo sits — they make the logos feel "lit" without
-            adding any color, (3) a subtle ice-rink line pattern at very low
-            opacity. None of these layers carry orange / blue tint, so the
-            panel reads as pure charcoal. */}
-        <div aria-hidden className="pointer-events-none absolute inset-0 bg-gradient-to-b from-[#181818] via-[#0E0E0E] to-[#070707]" />
+    <div className="relative overflow-hidden rounded-xl border border-[#F74902]/[0.30] bg-[#0A0A0A] px-5 sm:px-8 py-7 sm:py-10 shadow-[0_0_40px_-12px_rgba(247,73,2,0.15),0_0_0_1px_rgba(255,255,255,0.03)_inset,0_24px_48px_-24px_rgba(0,0,0,0.9)]">
+        {/* ── Layered background for depth ────────────────────────────────── */}
+        <div aria-hidden className="pointer-events-none absolute inset-0 bg-gradient-to-b from-[#1a1210] via-[#0E0E0E] to-[#050505]" />
+        {/* Orange ambient glow at the top edge — gives the hero a warm "lit from above" feel */}
+        <div aria-hidden className="pointer-events-none absolute inset-x-0 top-0 h-40" style={{ background: 'radial-gradient(ellipse 60% 100% at 50% 0%, rgba(247,73,2,0.08), transparent)' }} />
         <div
           aria-hidden
           className="pointer-events-none absolute inset-0"
           style={{
-            background: 'radial-gradient(closest-side at 12% 50%, rgba(255,255,255,0.05), transparent 70%), radial-gradient(closest-side at 88% 50%, rgba(255,255,255,0.045), transparent 70%)',
+            background: 'radial-gradient(closest-side at 12% 50%, rgba(255,255,255,0.06), transparent 70%), radial-gradient(closest-side at 88% 50%, rgba(255,255,255,0.05), transparent 70%)',
           }}
         />
         <div
           aria-hidden
-          className="pointer-events-none absolute inset-0 opacity-[0.06]"
+          className="pointer-events-none absolute inset-0 opacity-[0.05]"
           style={{
             backgroundImage:
               'repeating-linear-gradient(90deg, rgba(255,255,255,0.5) 0 1px, transparent 1px 64px), repeating-linear-gradient(0deg, rgba(255,255,255,0.5) 0 1px, transparent 1px 64px)',
@@ -609,7 +605,7 @@ export const Hero = ({ liveGame, liveDetail, liveSnap, nextGame, lastResult, us,
         <FullRinkMark />
         <CenterShield />
         {/* Top edge highlight + bottom shadow for the "raised card" feel. */}
-        <div aria-hidden className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/15 to-transparent" />
+        <div aria-hidden className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[#F74902]/40 to-transparent" />
         <div aria-hidden className="pointer-events-none absolute inset-x-8 bottom-0 h-12 bg-gradient-to-t from-black/60 to-transparent" />
 
       <div className="relative">
@@ -709,9 +705,9 @@ const HeroStat = ({ label, value, accent }) => {
     accent === 'warm' ? 'text-[#FF8A4C]' :
     'text-white';
   return (
-    <div className="relative px-3 py-2 rounded-md bg-white/[0.015] border border-white/[0.04]">
-      <div className="text-[10px] font-mono text-white/40 uppercase tracking-wider">{label}</div>
-      <div className={cx('text-[20px] font-semibold tabular-nums mt-0.5 leading-none', valueClass)}>
+    <div className="relative px-4 py-3 rounded-lg bg-white/[0.025] border border-white/[0.06] hover:bg-white/[0.04] transition-colors">
+      <div className="text-[10px] font-mono text-white/45 uppercase tracking-wider">{label}</div>
+      <div className={cx('text-[24px] font-semibold tabular-nums mt-1 leading-none', valueClass)}>
         {value}
       </div>
     </div>

@@ -46,15 +46,42 @@ const h = (type, props, ...children) => ({
 
 const div = (props, ...children) => h('div', props, ...children);
 
+const fetchStandings = async () => {
+  try {
+    const r = await fetch(`${NHL}/v1/standings/now`, { headers: { accept: 'application/json' } });
+    if (!r.ok) return null;
+    return r.json();
+  } catch { return null; }
+};
+
+const fetchPlayer = async (id) => {
+  if (!id) return null;
+  try {
+    const r = await fetch(`${NHL}/v1/player/${id}/landing`, { headers: { accept: 'application/json' } });
+    if (!r.ok) return null;
+    return r.json();
+  } catch { return null; }
+};
+
 export default async function handler(req) {
   try {
     const { searchParams } = new URL(req.url);
+    const panel = searchParams.get('panel') || '';
     const gameId = (searchParams.get('game') || '').replace(/[^0-9]/g, '');
-    const game = gameId ? await fetchGame(gameId) : null;
+    const playerId = (searchParams.get('player') || '').replace(/[^0-9]/g, '');
 
-    const tree = game?.homeTeam && game?.awayTeam
-      ? gameCard(game)
-      : brandCard();
+    let tree;
+
+    if (panel === 'standings') {
+      const standings = await fetchStandings();
+      tree = standings ? standingsCard(standings) : brandCard();
+    } else if (panel === 'player' && playerId) {
+      const player = await fetchPlayer(playerId);
+      tree = player ? playerCard(player) : brandCard();
+    } else {
+      const game = gameId ? await fetchGame(gameId) : null;
+      tree = game?.homeTeam && game?.awayTeam ? gameCard(game) : brandCard();
+    }
 
     return new ImageResponse(tree, {
       width: 1200,
@@ -228,6 +255,53 @@ function brandCard() {
     div({ style: { display: 'flex', fontSize: 88, fontWeight: 700, color: '#FF8A4C', letterSpacing: -2, marginTop: -32 } }, 'flyers.fan'),
     div({ style: { display: 'flex', fontSize: 22, color: 'rgba(255,255,255,0.55)', letterSpacing: 4 } }, 'LIVE TRACKER · STATS · FORECAST'),
     div({ style: { display: 'flex', position: 'absolute', bottom: 36, fontSize: 14, color: 'rgba(255,255,255,0.35)', letterSpacing: 2 } }, 'UNOFFICIAL · NOT AFFILIATED WITH THE NHL'),
+  );
+}
+
+function standingsCard(raw) {
+  const teams = (raw?.standings || []).filter((t) => t.conferenceName === 'Eastern').sort((a, b) => a.conferenceSequence - b.conferenceSequence).slice(0, 8);
+  const phi = teams.find((t) => t.teamAbbrev?.default === 'PHI');
+  const sysFont = 'system-ui, -apple-system, sans-serif';
+
+  return div(
+    { style: { height: '100%', width: '100%', display: 'flex', flexDirection: 'column', background: '#050505', color: '#E8E8E8', fontFamily: sysFont, position: 'relative' } },
+    div({ style: { display: 'flex', position: 'absolute', top: 0, left: 0, right: 0, height: 8, background: '#F74902' } }),
+    div({ style: { display: 'flex', justifyContent: 'space-between', padding: '36px 56px 24px', fontSize: 22, letterSpacing: 2 } },
+      div({ style: { display: 'flex', color: '#FF8A4C', fontWeight: 700 } }, 'EASTERN CONFERENCE'),
+      div({ style: { display: 'flex', color: 'rgba(255,255,255,0.45)' } }, 'FLYERS.FAN'),
+    ),
+    div({ style: { display: 'flex', flexDirection: 'column', padding: '0 56px', gap: 6, flex: 1 } },
+      ...teams.map((t, i) => {
+        const abbr = t.teamAbbrev?.default || '???';
+        const isPHI = abbr === 'PHI';
+        return div(
+          { style: { display: 'flex', alignItems: 'center', gap: 16, padding: '10px 16px', borderRadius: 8, background: isPHI ? 'rgba(247,73,2,0.12)' : 'transparent' } },
+          div({ style: { display: 'flex', width: 32, fontSize: 18, fontWeight: 600, color: isPHI ? '#FF8A4C' : i < 3 ? 'rgba(255,255,255,0.7)' : 'rgba(255,255,255,0.3)' } }, String(i + 1)),
+          div({ style: { display: 'flex', fontSize: 20, fontWeight: 700, color: isPHI ? '#FF8A4C' : 'rgba(255,255,255,0.85)', width: 64 } }, abbr),
+          div({ style: { display: 'flex', fontSize: 18, color: 'rgba(255,255,255,0.55)', flex: 1 } }, `${t.wins}-${t.losses}-${t.otLosses || 0}`),
+          div({ style: { display: 'flex', fontSize: 24, fontWeight: 700, color: isPHI ? '#FF8A4C' : 'rgba(255,255,255,0.9)' } }, `${t.points} pts`),
+        );
+      }),
+    ),
+    div({ style: { display: 'flex', padding: '0 56px 36px', fontSize: 14, color: 'rgba(255,255,255,0.3)', letterSpacing: 2 } }, 'UNOFFICIAL · NOT AFFILIATED WITH THE NHL'),
+  );
+}
+
+function playerCard(player) {
+  const name = [player.firstName?.default, player.lastName?.default].filter(Boolean).join(' ');
+  const sub = player.featuredStats?.regularSeason?.subSeason;
+  const sysFont = 'system-ui, -apple-system, sans-serif';
+  const stats = sub ? `${sub.goals || 0}G · ${sub.assists || 0}A · ${sub.points || 0}P in ${sub.gamesPlayed || 0} GP` : '';
+
+  return div(
+    { style: { height: '100%', width: '100%', display: 'flex', flexDirection: 'column', background: '#050505', color: '#E8E8E8', fontFamily: sysFont, position: 'relative', alignItems: 'center', justifyContent: 'center', gap: 16 } },
+    div({ style: { display: 'flex', position: 'absolute', top: 0, left: 0, right: 0, height: 8, background: '#F74902' } }),
+    div({ style: { display: 'flex', position: 'absolute', left: -20, top: 60, fontSize: 400, fontWeight: 900, color: '#F74902', opacity: 0.1, lineHeight: 1, letterSpacing: -16 } }, 'PHI'),
+    div({ style: { display: 'flex', fontSize: 28, color: '#FF8A4C', fontWeight: 600, letterSpacing: 4, zIndex: 1 } }, 'FLYERS.FAN · PLAYER'),
+    div({ style: { display: 'flex', fontSize: 100, fontWeight: 800, color: 'rgba(255,255,255,0.95)', letterSpacing: -4, zIndex: 1 } }, name),
+    div({ style: { display: 'flex', fontSize: 18, color: 'rgba(255,255,255,0.55)', zIndex: 1 } }, `${player.position || '?'} · #${player.sweaterNumber || '?'}`),
+    stats && div({ style: { display: 'flex', fontSize: 36, fontWeight: 700, color: '#FF8A4C', zIndex: 1, marginTop: 8 } }, stats),
+    div({ style: { display: 'flex', position: 'absolute', bottom: 36, fontSize: 14, color: 'rgba(255,255,255,0.3)', letterSpacing: 2 } }, 'UNOFFICIAL · NOT AFFILIATED WITH THE NHL'),
   );
 }
 

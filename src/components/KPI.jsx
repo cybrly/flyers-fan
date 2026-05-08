@@ -22,7 +22,7 @@ const TONES = {
              value: 'text-amber-300', spark: '#F59E0B', dot: 'bg-amber-400' },
 };
 
-export const KPI = ({ label, value, sub, delta, sparkData, trendColor, loading, tone = 'default' }) => {
+export const KPI = ({ label, value, sub, delta, sparkData, trendColor, loading, tone = 'default', rank, rankOf = 32 }) => {
   const animated = useCountUp(typeof value === 'number' ? value : value);
   const t = TONES[tone] || TONES.default;
   const sparkColor = trendColor || t.spark;
@@ -51,6 +51,11 @@ export const KPI = ({ label, value, sub, delta, sparkData, trendColor, loading, 
             </span>
             {sub && <span className="text-[10px] text-white/40 font-mono">{sub}</span>}
           </div>
+          {rank != null && (
+            <div className="mt-0.5 text-[9px] font-mono tabular-nums text-white/30">
+              #{rank} <span className="text-white/20">/ {rankOf}</span>
+            </div>
+          )}
           {sparkData && (
             <div className="mt-2 -mx-0.5">
               <Sparkline data={sparkData} h={20} stroke={sparkColor} />

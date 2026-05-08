@@ -3,6 +3,7 @@ import { Play, RotateCcw } from 'lucide-react';
 import { cx, SEASON, TEAM_ABBR, API } from '../config.js';
 import { Section, Skeleton, Chip } from '../components/primitives.jsx';
 import { TeamLogo, FlyersMark } from '../components/Logo.jsx';
+// eslint-disable-next-line no-unused-vars
 import { TeamLogoBg } from '../components/Watermark.jsx';
 import { startForecast } from '../lib/forecast.js';
 
@@ -58,7 +59,21 @@ export const Forecast = ({ standings }) => {
   const [progress, setProgress] = useState({ done: 0, total: 0 });
   const [result, setResult] = useState(null);
   const [hasRun, setHasRun] = useState(false);
+  // Interactive scenarios: lock specific game results before simulating.
+  // Map of gameId → 'home' | 'away' (the winner). Locked games are
+  // excluded from simulation and applied as fixed outcomes.
+  const [lockedGames, setLockedGames] = useState(new Map());
   const cancelRef = useRef(null);
+
+  const toggleLock = (gameId, winner) => {
+    setLockedGames((prev) => {
+      const next = new Map(prev);
+      if (next.get(gameId) === winner) next.delete(gameId);
+      else next.set(gameId, winner);
+      return next;
+    });
+  };
+  const clearLocks = () => setLockedGames(new Map());
 
   // Fetch every team's schedule in parallel.
   useEffect(() => {
@@ -78,10 +93,39 @@ export const Forecast = ({ standings }) => {
     return () => { cancelled = true; };
   }, [standings]);
 
-  const remainingGames = useMemo(() => {
+  const allRemainingGames = useMemo(() => {
     if (!schedRaws) return null;
     return buildRemainingGames(schedRaws);
   }, [schedRaws]);
+
+  // Apply locked game scenarios: remove locked games from remaining,
+  // and compute adjusted standings with locked results applied.
+  const { remainingGames, adjustedStandings } = useMemo(() => {
+    if (!allRemainingGames || !standings?.all) return { remainingGames: allRemainingGames, adjustedStandings: standings };
+    if (lockedGames.size === 0) return { remainingGames: allRemainingGames, adjustedStandings: standings };
+
+    const unlocked = allRemainingGames.filter((g) => !lockedGames.has(g.id));
+
+    // Apply locked results to a copy of standings
+    const adjustedAll = standings.all.map((t) => ({ ...t }));
+    const teamMap = new Map(adjustedAll.map((t) => [t.abbr, t]));
+
+    for (const [gameId, winner] of lockedGames) {
+      const game = allRemainingGames.find((g) => g.id === gameId);
+      if (!game) continue;
+      const winnerAbbr = winner === 'home' ? game.home : game.away;
+      const loserAbbr = winner === 'home' ? game.away : game.home;
+      const w = teamMap.get(winnerAbbr);
+      const l = teamMap.get(loserAbbr);
+      if (w) { w.pts += 2; w.w += 1; w.gp += 1; }
+      if (l) { l.gp += 1; l.l += 1; }
+    }
+
+    return {
+      remainingGames: unlocked,
+      adjustedStandings: { ...standings, all: adjustedAll },
+    };
+  }, [allRemainingGames, standings, lockedGames]);
 
   // Auto-run the first time data is ready so the user sees results
   // without having to click anything. Subsequent runs are user-triggered
@@ -94,14 +138,14 @@ export const Forecast = ({ standings }) => {
   }, [standings, remainingGames, hasRun]);
 
   const triggerRun = (overrideSeed) => {
-    if (!standings?.all || !remainingGames) return;
+    if (!adjustedStandings?.all || !remainingGames) return;
     if (cancelRef.current) cancelRef.current();
     setRunning(true);
     setProgress({ done: 0, total: runs });
     setResult(null);
     const useSeed = overrideSeed != null ? overrideSeed : seed;
     cancelRef.current = startForecast({
-      standingsAll: standings.all,
+      standingsAll: adjustedStandings.all,
       remainingGames,
       ourAbbr: TEAM_ABBR,
       runs,
@@ -172,6 +216,76 @@ export const Forecast = ({ standings }) => {
           canRun={!!remainingGames && !running}
           hasResult={!!result}
         />
+      )}
+
+      {/* Interactive Scenario Builder — lock specific game outcomes */}
+      {allRemainingGames && allRemainingGames.length > 0 && (
+        <Section
+          title={`Scenario Builder${lockedGames.size ? ` · ${lockedGames.size} locked` : ''}`}
+          action={lockedGames.size > 0 ? (
+            <button
+              type="button"
+              onClick={() => { clearLocks(); reroll(); }}
+              className="text-[10px] font-mono text-white/40 hover:text-white/70 transition-colors"
+            >
+              Clear all & re-run
+            </button>
+          ) : null}
+        >
+          <div className="p-3">
+            <p className="text-[11px] text-white/45 mb-3">
+              Lock game outcomes then re-run the simulation. Click a team to lock them as the winner.
+            </p>
+            <div className="max-h-[240px] overflow-y-auto space-y-1">
+              {allRemainingGames
+                .filter((g) => g.home === TEAM_ABBR || g.away === TEAM_ABBR)
+                .slice(0, 15)
+                .map((g) => {
+                  const locked = lockedGames.get(g.id);
+                  return (
+                    <div key={g.id} className="flex items-center gap-2 h-8 px-2 rounded-sm hover:bg-white/[0.02]">
+                      <button
+                        type="button"
+                        onClick={() => toggleLock(g.id, 'away')}
+                        className={cx(
+                          'flex items-center gap-1.5 px-2 h-6 rounded-[3px] text-[11px] font-mono transition-colors',
+                          locked === 'away' ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'text-white/55 hover:text-white border border-transparent',
+                        )}
+                      >
+                        <TeamLogo abbr={g.away} size={14} />
+                        {g.away}
+                      </button>
+                      <span className="text-[10px] text-white/25">@</span>
+                      <button
+                        type="button"
+                        onClick={() => toggleLock(g.id, 'home')}
+                        className={cx(
+                          'flex items-center gap-1.5 px-2 h-6 rounded-[3px] text-[11px] font-mono transition-colors',
+                          locked === 'home' ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'text-white/55 hover:text-white border border-transparent',
+                        )}
+                      >
+                        <TeamLogo abbr={g.home} size={14} />
+                        {g.home}
+                      </button>
+                      {locked && (
+                        <Chip tone="green">W</Chip>
+                      )}
+                    </div>
+                  );
+                })}
+            </div>
+            {lockedGames.size > 0 && (
+              <button
+                type="button"
+                onClick={reroll}
+                disabled={running}
+                className="mt-3 w-full h-8 rounded-md bg-[#F74902]/15 border border-[#F74902]/30 text-[#FF8A4C] text-[12px] font-medium hover:bg-[#F74902]/25 disabled:opacity-50 transition-colors"
+              >
+                Re-run with {lockedGames.size} locked {lockedGames.size === 1 ? 'game' : 'games'}
+              </button>
+            )}
+          </div>
+        </Section>
       )}
 
       {error && (

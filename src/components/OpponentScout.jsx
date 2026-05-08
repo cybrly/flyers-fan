@@ -92,7 +92,12 @@ export const OpponentScout = ({ nextGame }) => {
         score: `${usScore}-${themScore}`,
       };
     });
-    return { n: slice.length, w, l: slice.length - w, gf, ga, decisions };
+    // Rest situation — days since opponent's last game
+    const finishedGames = all.filter((g) => g.us != null);
+    const oppLastGameDate = finishedGames.length ? new Date(finishedGames[0].date) : null;
+    const restDays = oppLastGameDate ? Math.floor((Date.now() - oppLastGameDate.getTime()) / 86400000) : null;
+
+    return { n: slice.length, w, l: slice.length - w, gf, ga, decisions, restDays };
   }, [oppSchedRaw.data, opp]);
 
   if (!opp) return null;
@@ -159,6 +164,16 @@ export const OpponentScout = ({ nextGame }) => {
             <div className="mt-2 text-[10px] font-mono text-white/40 tabular-nums">
               {last5.gf} GF · {last5.ga} GA over {last5.n} GP
             </div>
+            {last5.restDays != null && (
+              <div className={cx(
+                'mt-1.5 text-[10px] font-mono',
+                last5.restDays === 0 ? 'text-red-400' : last5.restDays === 1 ? 'text-amber-400' : 'text-emerald-400',
+              )}>
+                {last5.restDays === 0 ? 'B2B — playing back-to-back' :
+                 last5.restDays === 1 ? `1 day rest` :
+                 `${last5.restDays} days rest — well rested`}
+              </div>
+            )}
           </div>
 
           {/* Top scorers */}

@@ -451,7 +451,7 @@ export default function App() {
                 {page === 'roster'    && <Roster roster={roster} clubStats={clubStats} prospects={prospects} draftPicks={draftPicks} />}
                 {page === 'player'    && <PlayerProfile playerId={profileId} />}
                 {page === 'compare'   && <PlayerCompare schedule={schedule} />}
-                {page === 'trends'    && <Trends schedule={schedule} standings={standings} roster={roster} />}
+                {page === 'trends'    && <Trends schedule={schedule} standings={standings} roster={roster} clubStats={clubStats} />}
                 {page === 'coaches'   && <Coaches />}
                 {page === 'draft'     && <Draft rankings={draftRankings} loading={drNAS.loading} />}
                 {page === 'records'   && <Records />}

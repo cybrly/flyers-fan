@@ -66,6 +66,12 @@ const GoalieRow = ({ goalie, seasonStr }) => {
     return null;
   }).filter((v) => v != null), [log]);
 
+  // Quality Starts: SV% >= .913 in that game
+  const qualityStarts = useMemo(() => {
+    const qs = savePctSeries.filter((sv) => sv >= 0.913).length;
+    return { qs, total: savePctSeries.length, pct: savePctSeries.length > 0 ? (qs / savePctSeries.length * 100).toFixed(0) : '—' };
+  }, [savePctSeries]);
+
   const gaaSeries = useMemo(() => {
     return log.map((e) => {
       const toi = parseToiSeconds(e.toi);
@@ -88,7 +94,7 @@ const GoalieRow = ({ goalie, seasonStr }) => {
             <div className="text-[10px] font-mono text-white/40 mt-0.5">
               #{goalie.num || '?'} · {goalie.gp} GP · {goalie.w}-{goalie.l}-{goalie.otl}
             </div>
-            <div className="grid grid-cols-3 gap-3 mt-2 text-[11px] font-mono tabular-nums">
+            <div className="grid grid-cols-4 gap-3 mt-2 text-[11px] font-mono tabular-nums">
               <div>
                 <div className="text-[9px] text-white/35 uppercase tracking-wider">Save %</div>
                 <div className="text-[#FF8A4C]">{goalie.savePct != null ? `${goalie.savePct.toFixed(1)}%` : '—'}</div>
@@ -100,6 +106,10 @@ const GoalieRow = ({ goalie, seasonStr }) => {
               <div>
                 <div className="text-[9px] text-white/35 uppercase tracking-wider">SO</div>
                 <div className="text-emerald-400">{goalie.so || 0}</div>
+              </div>
+              <div>
+                <div className="text-[9px] text-white/35 uppercase tracking-wider">QS%</div>
+                <div className="text-sky-300">{qualityStarts.pct}%</div>
               </div>
             </div>
           </div>

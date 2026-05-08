@@ -19,6 +19,12 @@ import { KioskMode, KioskTrigger } from '../components/KioskMode.jsx';
 import { Hero } from '../components/Hero.jsx';
 import { LiveFreshness } from '../components/LiveFreshness.jsx';
 import { LiveOnIcePanel } from '../components/LiveOnIcePanel.jsx';
+import { MomentumChart } from '../components/MomentumChart.jsx';
+import { WinProbChart } from '../components/WinProbChart.jsx';
+import { XGChart, XGSummary } from '../components/XGChart.jsx';
+import { RefereeTendencies } from '../components/RefereeTendencies.jsx';
+import { postGameRecap } from '../lib/narrative.js';
+import { cumulativeXG, tagShotContext } from '../lib/xg.js';
 
 // Team-comparison row, executive layout. Order from outer-edge to
 // inner-center on each side:
@@ -387,6 +393,24 @@ export const GameTape = ({ game, loading, pbp, pbpRaw, liveSnap, liveConnected, 
         standings={standings}
       />
 
+      {/* Post-game narrative recap */}
+      {!liveNow && game && pbp?.events?.length > 0 && (() => {
+        const chrono = [...pbp.events].reverse();
+        const tagged = tagShotContext(chrono);
+        const xgData = cumulativeXG(tagged);
+        const topScorer = game.skaters?.[0];
+        const recap = postGameRecap({
+          game,
+          topScorer: topScorer ? { name: topScorer.name, goals: topScorer.g, assists: topScorer.a, points: topScorer.pts } : null,
+          xg: { totalUs: xgData.totalUs, totalThem: xgData.totalThem },
+        });
+        return recap ? (
+          <div className="text-[13px] text-white/55 leading-relaxed font-mono px-1">
+            {recap}
+          </div>
+        ) : null;
+      })()}
+
       {/* Periods strip — kept under the Hero since it's a Game Tape
           specific surface (scoring by period across the full game) and
           doesn't live on the Dashboard Hero. */}
@@ -532,11 +556,38 @@ export const GameTape = ({ game, loading, pbp, pbpRaw, liveSnap, liveConnected, 
         </div>
 
         <GameInfoPanel game={game} />
+        {game.officials?.referees?.length > 0 && (
+          <RefereeTendencies referees={game.officials.referees} linesmen={game.officials.linesmen} />
+        )}
 
         {pbpRaw && (
           <Section title="Shot Map" action={<span className="text-[10px] font-mono text-white/40">offensive zone · all periods</span>}>
             <ShotMap pbpData={pbpRaw} oppAbbr={game.oppAbbr} />
           </Section>
+        )}
+
+        {/* Analytics: xG, Momentum, Win Probability */}
+        {pbp && pbp.events.length > 0 && (
+          <XGChart
+            events={pbp.events}
+            oppAbbr={game.oppAbbr}
+            actualGoalsUs={game.score.us}
+            actualGoalsThem={game.score.them}
+          />
+        )}
+        {pbp && pbp.events.length > 0 && (
+          <MomentumChart events={pbp.events} isHome={game.home} />
+        )}
+        {pbp && pbp.events.length > 0 && (
+          <WinProbChart
+            events={pbp.events}
+            gameInfo={{
+              isHome: game.home,
+              homeStrength: standings?.us?.pct ?? 0.5,
+              awayStrength: 0.5,
+            }}
+            oppAbbr={game.oppAbbr}
+          />
         )}
 
         {pbpRaw && <ScoreStateSplits pbpRaw={pbpRaw} />}

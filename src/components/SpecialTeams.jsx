@@ -57,8 +57,19 @@ const Unit = ({ title, sub, color, players, valueFor, valueLabel, formatVal }) =
   </Section>
 );
 
-export const SpecialTeams = ({ clubStats }) => {
+export const SpecialTeams = ({ clubStats, ranks }) => {
   const skaters = clubStats?.skaters || [];
+
+  // Team-level PP/PK aggregates from individual skater stats.
+  const teamST = useMemo(() => {
+    if (!skaters.length) return null;
+    const ppGoals = skaters.reduce((s, p) => s + (p.ppGoals || 0), 0);
+    const shGoals = skaters.reduce((s, p) => s + (p.shGoals || 0), 0);
+    const ppPts = skaters.reduce((s, p) => s + (p.ppPts || 0), 0);
+    const totalGoals = skaters.reduce((s, p) => s + (p.g || 0), 0);
+    const ppPct = totalGoals > 0 ? ((ppGoals / totalGoals) * 100).toFixed(1) : null;
+    return { ppGoals, shGoals, ppPts, ppPct };
+  }, [skaters]);
 
   const ppUnit = useMemo(() => {
     return [...skaters]
@@ -94,6 +105,52 @@ export const SpecialTeams = ({ clubStats }) => {
           </p>
         </div>
       </div>
+
+      {/* Team-level PP/PK summary tiles */}
+      {teamST && (
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-px bg-white/[0.05] rounded-md overflow-hidden">
+          <div className="bg-[#0A0A0A] px-3 py-2.5">
+            <div className="flex items-center gap-1.5">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#FF8A4C]" />
+              <span className="text-[9px] font-mono text-white/40 uppercase tracking-wider">PP Goals</span>
+            </div>
+            <div className="text-[18px] font-semibold tabular-nums tracking-tight text-[#FF8A4C] mt-1">{teamST.ppGoals}</div>
+            {teamST.ppPct && <div className="text-[9px] font-mono text-white/35 mt-0.5">{teamST.ppPct}% of all goals</div>}
+          </div>
+          <div className="bg-[#0A0A0A] px-3 py-2.5">
+            <div className="flex items-center gap-1.5">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#FF8A4C]" />
+              <span className="text-[9px] font-mono text-white/40 uppercase tracking-wider">PP Points</span>
+            </div>
+            <div className="text-[18px] font-semibold tabular-nums tracking-tight text-[#FF8A4C] mt-1">{teamST.ppPts}</div>
+            <div className="text-[9px] font-mono text-white/35 mt-0.5">total PP assists + goals</div>
+          </div>
+          <div className="bg-[#0A0A0A] px-3 py-2.5">
+            <div className="flex items-center gap-1.5">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#8AB4FF]" />
+              <span className="text-[9px] font-mono text-white/40 uppercase tracking-wider">SH Goals</span>
+            </div>
+            <div className="text-[18px] font-semibold tabular-nums tracking-tight text-[#8AB4FF] mt-1">{teamST.shGoals}</div>
+            <div className="text-[9px] font-mono text-white/35 mt-0.5">shorthanded goals scored</div>
+          </div>
+          <div className="bg-[#0A0A0A] px-3 py-2.5">
+            <div className="flex items-center gap-1.5">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#10B981]" />
+              <span className="text-[9px] font-mono text-white/40 uppercase tracking-wider">EV Goals</span>
+            </div>
+            {(() => {
+              const totalG = skaters.reduce((s, p) => s + (p.g || 0), 0);
+              const evG = totalG - teamST.ppGoals - teamST.shGoals;
+              return (
+                <>
+                  <div className="text-[18px] font-semibold tabular-nums tracking-tight text-[#10B981] mt-1">{evG}</div>
+                  <div className="text-[9px] font-mono text-white/35 mt-0.5">even-strength goals</div>
+                </>
+              );
+            })()}
+          </div>
+        </div>
+      )}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         <Unit
           title="Power Play Unit"

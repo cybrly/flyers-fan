@@ -22,6 +22,9 @@ import { ThisDayInHistory } from '../components/ThisDayInHistory.jsx';
 import { ScheduleStrength } from '../components/ScheduleStrength.jsx';
 import { PlayoffRace } from '../components/PlayoffRace.jsx';
 import { navigate } from '../router.js';
+import { teamRanks } from '../lib/stats.js';
+import { dashboardNarrative, playoffRaceNarrative } from '../lib/narrative.js';
+import { StreakAlerts } from '../components/StreakAlerts.jsx';
 
 // Dashboard is laid out as a single linear flow split into named bands
 // (Tonight / Season / Recent / Offense / Roster / Reference). Each band
@@ -90,6 +93,9 @@ export const Dashboard = ({ schedule, standings, scoreboard, clubStats, roster, 
   const liveGame = schedule?.liveGame;
   const lastResult = games[0];
   const pace = us?.gp ? Math.round((us.pts / us.gp) * 82) : null;
+  const ranks = standings?.all ? teamRanks(standings.all) : null;
+  const narrative = dashboardNarrative({ standings: us, schedule, streak });
+  const raceNarrative = us && standings?.east ? playoffRaceNarrative(us, standings.east) : '';
 
   const topScorers = clubStats?.skaters
     ? [...clubStats.skaters].sort((a, b) => b.pts - a.pts).slice(0, 6)
@@ -108,6 +114,16 @@ export const Dashboard = ({ schedule, standings, scoreboard, clubStats, roster, 
         us={us}
         recentGames={games}
         standings={standings}
+      />
+
+      {/* Narrative + Streak Alerts */}
+      {narrative && (
+        <div className="text-[13px] text-white/55 leading-relaxed font-mono px-1">
+          {narrative}
+        </div>
+      )}
+      <StreakAlerts
+        teamStreak={streak ? { ...streak, longestW: 0 } : null}
       />
 
       {/* Quick Actions rail — short-circuits the scroll for power users
@@ -144,6 +160,11 @@ export const Dashboard = ({ schedule, standings, scoreboard, clubStats, roster, 
           <PlayoffRace standings={standings} />
           <StandingsPanel standings={standings} />
         </div>
+        {raceNarrative && (
+          <div className="text-[12px] text-white/45 leading-relaxed font-mono px-1 mt-2">
+            {raceNarrative}
+          </div>
+        )}
         {nextGame && <OpponentScout nextGame={nextGame} />}
       </CollapsibleBand>
 
@@ -187,6 +208,7 @@ export const Dashboard = ({ schedule, standings, scoreboard, clubStats, roster, 
           sub={us ? `${(us.pct * 100).toFixed(1)}%` : ''}
           sparkData={running.winPctArr}
           tone="warm"
+          rank={ranks?.ptsRank}
           loading={loading && !us}
         />
         <KPI
@@ -195,6 +217,7 @@ export const Dashboard = ({ schedule, standings, scoreboard, clubStats, roster, 
           sub="season"
           sparkData={running.diffArr}
           tone={us ? diffTone(us.diff) : 'default'}
+          rank={ranks?.diffRank}
           loading={loading && !us}
         />
         <KPI
@@ -392,7 +415,7 @@ export const Dashboard = ({ schedule, standings, scoreboard, clubStats, roster, 
 
       <ScoringPanel games={games} us={us} />
 
-      <SpecialTeams clubStats={clubStats} />
+      <SpecialTeams clubStats={clubStats} ranks={ranks} />
 
       <FaceoffSpecialists clubStats={clubStats} />
 

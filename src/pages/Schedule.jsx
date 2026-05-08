@@ -5,19 +5,42 @@ import { TeamLogo } from '../components/Logo.jsx';
 import { TeamLogoBg } from '../components/Watermark.jsx';
 import { WatchabilityPanel } from '../components/WatchabilityPanel.jsx';
 
-// Annotate every finished game with rest days (since the prior PHI game) and
-// travel miles (great-circle from the prior game's venue to this one's).
-// Schedule arrives newest-first, so the "previous game" sits at index+1.
+// Fatigue score 1–5 from rest days + travel miles.
+function fatigueScore(restDays, travelMiles) {
+  if (restDays == null) return null;
+  const miles = travelMiles || 0;
+  if (restDays === 0 && miles >= 500) return 5;
+  if (restDays === 0)                 return 4;
+  if (restDays === 1)                 return 3;
+  if (restDays === 2 && miles < 1000) return 2;
+  if (restDays >= 3  && miles < 500)  return 1;
+  return 2; // fallback: 2+ rest, 1000+ miles
+}
+const FATIGUE_LABEL = { 1: 'Fresh', 2: 'Normal', 3: 'Tired', 4: 'Exhausted', 5: 'Brutal' };
+const FATIGUE_COLOR = { 1: 'text-emerald-400', 2: 'text-emerald-400', 3: 'text-amber-400', 4: 'text-red-400', 5: 'text-red-400' };
+
+// Annotate every finished game with rest days (since the prior PHI game),
+// travel miles (great-circle from the prior game's venue to this one's),
+// fatigue score, and 3-in-4 flag. Schedule arrives newest-first, so the
+// "previous game" sits at index+1.
 function enrich(games) {
   return games.map((g, i, arr) => {
     const prev = arr[i + 1];
-    if (!prev) return { ...g, restDays: null, travelMiles: null };
+    if (!prev) return { ...g, restDays: null, travelMiles: null, fatigue: null, threeInFour: false };
     const ms = new Date(g.date).getTime() - new Date(prev.date).getTime();
     const restDays = Math.max(0, Math.floor(ms / 86400000));
     const fromArena = prev.home ? TEAM_ABBR : prev.opp;
     const toArena   = g.home    ? TEAM_ABBR : g.opp;
     const travelMiles = arenaMiles(fromArena, toArena);
-    return { ...g, restDays, travelMiles };
+    const fatigue = fatigueScore(restDays, travelMiles);
+    // 3-in-4: this game is the 3rd game within a 4-day span.
+    let threeInFour = false;
+    if (i + 2 < arr.length) {
+      const twoPrev = arr[i + 2];
+      const span = (new Date(g.date).getTime() - new Date(twoPrev.date).getTime()) / 86400000;
+      if (span <= 3) threeInFour = true;
+    }
+    return { ...g, restDays, travelMiles, fatigue, threeInFour };
   });
 }
 
@@ -133,6 +156,7 @@ export const Schedule = ({ schedule, monthSchedule, onOpenGame, scoreboard, stan
                 <th className="font-normal text-right px-2 h-9 w-[60px]">Diff</th>
                 <th className="font-normal text-center px-2 h-9 w-[80px]">Rest</th>
                 <th className="font-normal text-right px-2 h-9 w-[70px]">Travel</th>
+                <th className="font-normal text-center px-2 h-9 w-[70px]">Fatigue</th>
                 <th className="font-normal text-center px-2 h-9 w-[110px]">Goals</th>
                 <th className="font-normal text-center px-2 h-9 w-[140px]">Watch on</th>
                 <th className="font-normal text-right px-4 h-9 w-[50px]">Type</th>
@@ -140,7 +164,7 @@ export const Schedule = ({ schedule, monthSchedule, onOpenGame, scoreboard, stan
             </thead>
             <tbody className="divide-y divide-white/[0.04]">
               {!all.length && Array.from({ length: 8 }).map((_, i) => (
-                <tr key={i}><td colSpan={11} className="px-4 h-11"><Skeleton className="w-full" height={18} /></td></tr>
+                <tr key={i}><td colSpan={12} className="px-4 h-11"><Skeleton className="w-full" height={18} /></td></tr>
               ))}
               {filtered.map((g) => {
                 const diff = g.us - g.them;
@@ -197,6 +221,14 @@ export const Schedule = ({ schedule, monthSchedule, onOpenGame, scoreboard, stan
                           : 'text-white/55'
                         )}>
                           {g.travelMiles === 0 ? '—' : `${g.travelMiles.toLocaleString()}`}
+                        </span>
+                      )}
+                    </td>
+                    <td className="px-2 text-center">
+                      {g.fatigue != null && (
+                        <span className={cx('inline-flex items-center gap-1 text-[10px] font-mono tabular-nums', FATIGUE_COLOR[g.fatigue])}>
+                          {g.fatigue} {FATIGUE_LABEL[g.fatigue]}
+                          {g.threeInFour && <span className="text-red-400" title="3rd game in 4 nights">3in4</span>}
                         </span>
                       )}
                     </td>
@@ -275,6 +307,12 @@ export const Schedule = ({ schedule, monthSchedule, onOpenGame, scoreboard, stan
                   {g.travelMiles > 0 && (
                     <span className={cx(g.travelMiles >= 1500 ? 'text-amber-400' : 'text-white/40')}>
                       {g.travelMiles.toLocaleString()}mi
+                    </span>
+                  )}
+                  {g.fatigue != null && (
+                    <span className={cx(FATIGUE_COLOR[g.fatigue])}>
+                      {FATIGUE_LABEL[g.fatigue]}
+                      {g.threeInFour && ' 3in4'}
                     </span>
                   )}
                   {g.gameType === 3 && <span className="text-[#FF8A4C]">PO</span>}
@@ -431,6 +469,14 @@ const TravelSummary = ({ games }) => {
   const longTravel = games.filter((g) => (g.travelMiles || 0) >= 1500);
   const b2bRecord = `${b2b.filter((g) => g.w).length}–${b2b.filter((g) => !g.w).length}`;
   const restedRecord = `${restedPlus.filter((g) => g.w).length}–${restedPlus.filter((g) => !g.w).length}`;
+  const threeInFourGames = games.filter((g) => g.threeInFour);
+  const threeInFourRecord = `${threeInFourGames.filter((g) => g.w).length}–${threeInFourGames.filter((g) => !g.w).length}`;
+  // Win% by fatigue level (1-5).
+  const byFatigue = [1, 2, 3, 4, 5].map((lvl) => {
+    const g = games.filter((x) => x.fatigue === lvl);
+    const w = g.filter((x) => x.w).length;
+    return { lvl, n: g.length, w, pct: g.length ? ((w / g.length) * 100).toFixed(0) : '—' };
+  });
   return (
     <Section title="Travel & Rest" action={<span className="text-[10px] font-mono text-white/40">{games.length} games</span>}>
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-px bg-white/[0.04]">
@@ -439,6 +485,20 @@ const TravelSummary = ({ games }) => {
         <Tile label="2+ Days Rest" value={restedPlus.length} sub={`record ${restedRecord}`} color="#10B981" tone={restedPlus.filter((g) => g.w).length >= restedPlus.length / 2 ? 'good' : null} />
         <Tile label="Long Travel (1.5k+)" value={longTravel.length} sub="cross-country" color="#F59E0B" />
       </div>
+      <div className="grid grid-cols-2 sm:grid-cols-5 gap-px bg-white/[0.04] mt-px">
+        {byFatigue.map(({ lvl, n, w, pct }) => (
+          <Tile key={lvl} label={`${FATIGUE_LABEL[lvl]} (${lvl})`} value={n ? `${pct}%` : '—'}
+            sub={n ? `${w}–${n - w} in ${n}gm` : 'no games'}
+            color={lvl <= 2 ? '#10B981' : lvl === 3 ? '#F59E0B' : '#EF4444'}
+            tone={n ? (w / n >= 0.5 ? 'good' : 'bad') : null} />
+        ))}
+      </div>
+      {threeInFourGames.length > 0 && (
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-px bg-white/[0.04] mt-px">
+          <Tile label="3-in-4 Nights" value={threeInFourGames.length} sub={`record ${threeInFourRecord}`} color="#EF4444"
+            tone={threeInFourGames.filter((g) => g.w).length >= threeInFourGames.length / 2 ? 'good' : 'bad'} />
+        </div>
+      )}
     </Section>
   );
 };

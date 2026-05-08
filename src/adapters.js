@@ -607,6 +607,10 @@ export function adaptClubStats(raw) {
     pim: p.penaltyMinutes,
     sog: p.shots,
     shootingPct: p.shootingPctg != null ? +(p.shootingPctg * 100).toFixed(1) : null,
+    ppGoals: p.powerPlayGoals ?? 0,
+    shGoals: p.shorthandedGoals ?? 0,
+    ppPts: p.powerPlayPoints ?? 0,
+    gwg: p.gameWinningGoals ?? 0,
     avgToi: p.avgTimeOnIcePerGame != null ? p.avgTimeOnIcePerGame : null, // seconds
     avgEvToi: p.avgEvenStrengthTimeOnIcePerGame ?? null,                  // seconds
     avgPpToi: p.avgPowerPlayTimeOnIcePerGame ?? null,                     // seconds

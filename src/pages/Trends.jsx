@@ -3,6 +3,8 @@ import { cx } from '../config.js';
 import { Section } from '../components/primitives.jsx';
 import { useNHL } from '../api.js';
 import { navigate, gameHref } from '../router.js';
+import { rollingWindow, rollingAvg } from '../lib/stats.js';
+import { HISTORICAL_SEASONS } from '../data/historicalSeasons.js';
 
 // Season trajectory chart — multi-line plot of GF / GA / Diff (cumulative),
 // 5-game rolling form, points pace, plus an optional per-player cumulative
@@ -43,11 +45,13 @@ const pathFrom = (values, yMin, yMax, n) => {
 const xForIndex = (i, n) => PAD.left + (n <= 1 ? 0 : (i / (n - 1)) * PLOT_W);
 const yForCum = (v, scale) => PAD.top + PLOT_H - ((v - scale.min) / Math.max(1, scale.max - scale.min)) * PLOT_H;
 
-export const Trends = ({ schedule, roster }) => {
+export const Trends = ({ schedule, roster, clubStats }) => {
   const [active, setActive] = useState({ diff: true, gf: true, ga: true, form: false, pts: true });
   const [hoverIdx, setHoverIdx] = useState(null);
   const [playerId, setPlayerId] = useState('');
   const [playerStat, setPlayerStat] = useState('points'); // 'points' | 'goals'
+  const [rollWindow, setRollWindow] = useState(10);
+  const [histOverlay, setHistOverlay] = useState(null);
   const svgRef = useRef(null);
 
   // Trends curves and per-game splits are about the regular-season race,
@@ -114,6 +118,21 @@ export const Trends = ({ schedule, roster }) => {
     ? `${playerLogRaw.data.firstName?.default || ''} ${playerLogRaw.data.lastName?.default || ''}`.trim() || 'Player'
     : 'Player';
 
+  // Rolling points% series from stats.js — uses the rolling-window toggle.
+  const rollingPtsPct = useMemo(() => {
+    if (games.length < rollWindow) return [];
+    const windows = rollingWindow(games, rollWindow);
+    return windows.map((w) => ({ index: w.index, value: (w.pointsPct ?? 0) * 100 }));
+  }, [games, rollWindow]);
+
+  // Historical season overlay data (cumulative points, trimmed to current N).
+  const histSeason = useMemo(() => {
+    if (!histOverlay) return null;
+    const s = HISTORICAL_SEASONS.find((h) => h.id === histOverlay);
+    if (!s) return null;
+    return { ...s, pts: s.points.slice(0, N) };
+  }, [histOverlay, N]);
+
   // Projected pace — extend cumulative points to game 82 using the current
   // points-per-game rate. Drawn as a faint dashed extension of the pts line.
   const N = games.length;
@@ -130,6 +149,7 @@ export const Trends = ({ schedule, roster }) => {
     if (active.diff) cumulative.push(...series.diff);
     if (active.pts)  cumulative.push(...series.pts);
     if (playerSeries) cumulative.push(...playerSeries);
+    if (histSeason) cumulative.push(...histSeason.pts);
     // If pts is active, extend the y-axis to fit projected pace + threshold.
     if (active.pts && pace) cumulative.push(pace.projected82, PLAYOFF_LINE);
     if (cumulative.length === 0) cumulative.push(0, 1);
@@ -140,7 +160,7 @@ export const Trends = ({ schedule, roster }) => {
       cum: { min: Math.floor(cumMin - cumPad), max: Math.ceil(cumMax + cumPad) },
       form: { min: 0, max: 100 },
     };
-  }, [series, active, playerSeries, pace]);
+  }, [series, active, playerSeries, pace, histSeason]);
 
   // Rolling 10-game window stats (over the most recent 10 finished games).
   const last10 = useMemo(() => {
@@ -387,6 +407,43 @@ export const Trends = ({ schedule, roster }) => {
         </div>
       )}
 
+      {/* Rolling window + historical overlay controls */}
+      <div className="flex items-center gap-3 flex-wrap">
+        <span className="text-[10px] font-mono text-white/40 uppercase tracking-wider">Rolling pts%</span>
+        <div className="flex items-center gap-1 border border-white/[0.08] rounded-md overflow-hidden">
+          {[5, 10, 20].map((w) => (
+            <button
+              key={w}
+              onClick={() => setRollWindow(w)}
+              className={cx('px-2 h-7 text-[11px] font-mono transition-colors',
+                rollWindow === w ? 'bg-white/[0.06] text-white' : 'text-white/45 hover:text-white/75'
+              )}
+            >
+              {w}g
+            </button>
+          ))}
+        </div>
+        <span className="text-[10px] font-mono text-white/40 uppercase tracking-wider ml-2">Historical overlay</span>
+        <select
+          value={histOverlay || ''}
+          onChange={(e) => setHistOverlay(e.target.value || null)}
+          className="h-7 px-2 bg-white/[0.03] border border-white/[0.08] hover:border-white/20 text-[11px] font-mono text-white/85 rounded-md outline-none focus:border-[#FF8A4C]/50"
+        >
+          <option value="">— none —</option>
+          {HISTORICAL_SEASONS.map((s) => (
+            <option key={s.id} value={s.id}>{s.label}</option>
+          ))}
+        </select>
+        {histOverlay && (
+          <button
+            onClick={() => setHistOverlay(null)}
+            className="text-[11px] font-mono text-white/45 hover:text-white/85"
+          >
+            clear
+          </button>
+        )}
+      </div>
+
       <Section title="Season Trajectory" action={<span className="text-[10px] font-mono text-white/40">cumulative · multi-axis</span>}>
         <div className="p-3 sm:p-4">
           <svg
@@ -524,6 +581,70 @@ export const Trends = ({ schedule, roster }) => {
               </g>
             )}
 
+            {/* Rolling points% line — uses form (0-100) scale, right axis */}
+            {rollingPtsPct.length > 0 && (
+              <g>
+                <path
+                  d={rollingPtsPct.map((p, i) => {
+                    const x = xForIndex(p.index, N);
+                    const y = PAD.top + PLOT_H - (p.value / 100) * PLOT_H;
+                    return `${i === 0 ? 'M' : 'L'} ${x.toFixed(1)} ${y.toFixed(1)}`;
+                  }).join(' ')}
+                  fill="none"
+                  stroke="#FBBF24"
+                  strokeWidth="1.6"
+                  opacity="0.8"
+                  strokeDasharray="4 2"
+                  strokeLinejoin="round"
+                  strokeLinecap="round"
+                />
+                {(() => {
+                  const last = rollingPtsPct[rollingPtsPct.length - 1];
+                  const x = xForIndex(last.index, N);
+                  const y = PAD.top + PLOT_H - (last.value / 100) * PLOT_H;
+                  return (
+                    <g>
+                      <circle cx={x} cy={y} r="3" fill="#FBBF24" />
+                      <text x={x + 6} y={y + 3} fontSize="10"
+                        fill="#FBBF24" fontFamily="ui-monospace, SF Mono, monospace">
+                        {Math.round(last.value)}% ({rollWindow}g)
+                      </text>
+                    </g>
+                  );
+                })()}
+              </g>
+            )}
+
+            {/* Historical season overlay line — cumulative points */}
+            {histSeason && histSeason.pts.length > 0 && (
+              <g>
+                <path
+                  d={pathFrom(histSeason.pts, yScales.cum.min, yScales.cum.max, N)}
+                  fill="none"
+                  stroke="#A78BFA"
+                  strokeWidth="1.4"
+                  opacity="0.65"
+                  strokeDasharray="6 3"
+                  strokeLinejoin="round"
+                  strokeLinecap="round"
+                />
+                {(() => {
+                  const lastIdx = histSeason.pts.length - 1;
+                  const x = xForIndex(lastIdx, N);
+                  const y = yForCum(histSeason.pts[lastIdx], yScales.cum);
+                  return (
+                    <g>
+                      <circle cx={x} cy={y} r="3" fill="#A78BFA" opacity="0.7" />
+                      <text x={x + 6} y={y + 3} fontSize="10"
+                        fill="#A78BFA" fontFamily="ui-monospace, SF Mono, monospace" opacity="0.85">
+                        {histSeason.id} · {histSeason.pts[lastIdx]}
+                      </text>
+                    </g>
+                  );
+                })()}
+              </g>
+            )}
+
             {/* W/L color strip directly below plot */}
             {games.map((g, i) => {
               const x1 = xForIndex(i, N);
@@ -577,6 +698,8 @@ export const Trends = ({ schedule, roster }) => {
                 (active.diff ? 1 : 0) + (active.gf ? 1 : 0) + (active.ga ? 1 : 0) +
                 (active.pts ? 1 : 0) + (active.form ? 1 : 0) +
                 (playerSeries ? 1 : 0) +
+                (rollingPtsPct.length > 0 ? 1 : 0) +
+                (histSeason ? 1 : 0) +
                 1 // result row
               );
               const flip = x + TT_W + 12 > PAD.left + PLOT_W;
@@ -627,6 +750,19 @@ export const Trends = ({ schedule, roster }) => {
                   {playerSeries && (
                     <text x={tx + 8} y={rowY()} fontSize="10" fill="#C4B5FD" fontFamily="ui-monospace, SF Mono, monospace">
                       {playerName.split(' ').slice(-1)[0]} · {playerSeries[hoverIdx]} {playerStat === 'goals' ? 'G' : 'P'}
+                    </text>
+                  )}
+                  {rollingPtsPct.length > 0 && (() => {
+                    const entry = rollingPtsPct.find((p) => p.index === hoverIdx);
+                    return entry ? (
+                      <text x={tx + 8} y={rowY()} fontSize="10" fill="#FBBF24" fontFamily="ui-monospace, SF Mono, monospace">
+                        roll pts% · {Math.round(entry.value)}% ({rollWindow}g)
+                      </text>
+                    ) : null;
+                  })()}
+                  {histSeason && hoverIdx < histSeason.pts.length && (
+                    <text x={tx + 8} y={rowY()} fontSize="10" fill="#A78BFA" fontFamily="ui-monospace, SF Mono, monospace">
+                      {histSeason.id} · {histSeason.pts[hoverIdx]} pts
                     </text>
                   )}
                   <text x={tx + 8} y={ty + TT_H - 5} fontSize="9" fill="rgba(255,255,255,0.4)" fontFamily="ui-monospace, SF Mono, monospace">
@@ -716,7 +852,7 @@ export const Trends = ({ schedule, roster }) => {
         </Section>
       </div>
 
-      <SituationalSplits splits={splits} />
+      <SituationalSplits splits={splits} clubStats={clubStats} />
     </div>
   );
 };
@@ -770,10 +906,66 @@ const SplitCard = ({ label, sub, b }) => {
   );
 };
 
-const SituationalSplits = ({ splits }) => {
+const SituationalSplits = ({ splits, clubStats }) => {
   const { home, away, restB2B, restStd, restLong, months } = splits;
+
+  // Strength-state goal breakdown from clubStats skater aggregates.
+  const strengthSplit = useMemo(() => {
+    const skaters = clubStats?.skaters;
+    if (!skaters?.length) return null;
+    const totalG = skaters.reduce((s, p) => s + (p.g || 0), 0);
+    const ppG = skaters.reduce((s, p) => s + (p.ppGoals || 0), 0);
+    const shG = skaters.reduce((s, p) => s + (p.shGoals || 0), 0);
+    const evG = totalG - ppG - shG;
+    const ppPts = skaters.reduce((s, p) => s + (p.ppPts || 0), 0);
+    return { totalG, ppG, shG, evG, ppPts };
+  }, [clubStats]);
+
   return (
     <div className="space-y-3">
+      {/* Strength-state goal breakdown */}
+      {strengthSplit && strengthSplit.totalG > 0 && (
+        <Section title="Strength State Splits" action={<span className="text-[10px] font-mono text-white/40">5v5 · PP · SH</span>}>
+          <div className="p-3 space-y-3">
+            {/* Stacked bar showing EV / PP / SH proportions */}
+            <div className="space-y-1.5">
+              <div className="flex items-center gap-3 text-[10px] font-mono text-white/50">
+                <span className="flex items-center gap-1"><span className="w-2 h-2 bg-[#10B981] rounded-sm" /> Even Strength</span>
+                <span className="flex items-center gap-1"><span className="w-2 h-2 bg-[#FF8A4C] rounded-sm" /> Power Play</span>
+                <span className="flex items-center gap-1"><span className="w-2 h-2 bg-[#8AB4FF] rounded-sm" /> Shorthanded</span>
+              </div>
+              <div className="flex h-4 w-full rounded-md overflow-hidden">
+                <div className="bg-[#10B981]" style={{ width: `${(strengthSplit.evG / strengthSplit.totalG * 100).toFixed(1)}%` }} />
+                <div className="bg-[#FF8A4C]" style={{ width: `${(strengthSplit.ppG / strengthSplit.totalG * 100).toFixed(1)}%` }} />
+                <div className="bg-[#8AB4FF]" style={{ width: `${(strengthSplit.shG / strengthSplit.totalG * 100).toFixed(1)}%` }} />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              <div className="border border-white/[0.06] rounded-md p-3 bg-white/[0.01]">
+                <div className="text-[10px] font-mono text-white/40 uppercase tracking-wider">Even Strength</div>
+                <div className="text-[18px] font-semibold tabular-nums mt-1 text-[#10B981]">{strengthSplit.evG}</div>
+                <div className="text-[9px] font-mono text-white/35 mt-0.5">{(strengthSplit.evG / strengthSplit.totalG * 100).toFixed(1)}% of goals</div>
+              </div>
+              <div className="border border-white/[0.06] rounded-md p-3 bg-white/[0.01]">
+                <div className="text-[10px] font-mono text-white/40 uppercase tracking-wider">Power Play</div>
+                <div className="text-[18px] font-semibold tabular-nums mt-1 text-[#FF8A4C]">{strengthSplit.ppG}</div>
+                <div className="text-[9px] font-mono text-white/35 mt-0.5">{(strengthSplit.ppG / strengthSplit.totalG * 100).toFixed(1)}% of goals</div>
+              </div>
+              <div className="border border-white/[0.06] rounded-md p-3 bg-white/[0.01]">
+                <div className="text-[10px] font-mono text-white/40 uppercase tracking-wider">Shorthanded</div>
+                <div className="text-[18px] font-semibold tabular-nums mt-1 text-[#8AB4FF]">{strengthSplit.shG}</div>
+                <div className="text-[9px] font-mono text-white/35 mt-0.5">{strengthSplit.shG} SHG scored</div>
+              </div>
+              <div className="border border-white/[0.06] rounded-md p-3 bg-white/[0.01]">
+                <div className="text-[10px] font-mono text-white/40 uppercase tracking-wider">PP Points</div>
+                <div className="text-[18px] font-semibold tabular-nums mt-1 text-[#FF8A4C]">{strengthSplit.ppPts}</div>
+                <div className="text-[9px] font-mono text-white/35 mt-0.5">goals + assists on PP</div>
+              </div>
+            </div>
+          </div>
+        </Section>
+      )}
+
       <Section title="Venue Split" action={<span className="text-[10px] font-mono text-white/40">home vs road</span>}>
         <div className="p-3 grid grid-cols-1 sm:grid-cols-2 gap-3">
           <SplitCard label="Home" sub="at WFC" b={home} />

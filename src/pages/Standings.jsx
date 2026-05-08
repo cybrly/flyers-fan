@@ -4,6 +4,8 @@ import { Chip, Label, Section, Skeleton } from '../components/primitives.jsx';
 import { MiniBar } from '../components/charts.jsx';
 import { FlyersMark, TeamLogo } from '../components/Logo.jsx';
 import { TeamLogoBg } from '../components/Watermark.jsx';
+import { tiebreakReason } from '../lib/stats.js';
+import { ShareButton } from '../components/SharePanel.jsx';
 
 const clinchChip = (c) => {
   if (c === 'z') return <Chip tone="amber">PRES</Chip>;
@@ -29,7 +31,10 @@ export const Standings = ({ standings }) => {
     <div className="p-3 md:p-5 space-y-3">
       <div className="flex items-end justify-between flex-wrap gap-3">
         <div>
-          <h1 className="text-[20px] font-semibold tracking-tight">Standings</h1>
+          <div className="flex items-center gap-2">
+            <h1 className="text-[20px] font-semibold tracking-tight">Standings</h1>
+            <ShareButton type="standings" label="Share" />
+          </div>
           <p className="text-[12px] text-white/45 mt-1 font-mono">Live standings · refreshed from NHL every 5 min</p>
         </div>
         <div className="flex items-center gap-0.5 p-0.5 border border-white/[0.08] rounded-md bg-white/[0.02]">
@@ -107,6 +112,7 @@ export const Standings = ({ standings }) => {
                 <th className="font-normal text-right px-2 h-9 w-[44px]">L</th>
                 <th className="font-normal text-right px-2 h-9 w-[44px]">OT</th>
                 <th className="font-normal text-right px-2 h-9 w-[54px]">PTS</th>
+                <th className="font-normal text-right px-2 h-9 w-[44px] hidden lg:table-cell">ROW</th>
                 <th className="font-normal text-right px-2 h-9 w-[60px]">P%</th>
                 <th className="font-normal text-right px-2 h-9 w-[50px]">DIFF</th>
                 <th className="font-normal text-center px-2 h-9 w-[120px]">Points Share</th>
@@ -115,7 +121,7 @@ export const Standings = ({ standings }) => {
             </thead>
             <tbody className="divide-y divide-white/[0.04]">
               {!data.length && Array.from({ length: 8 }).map((_, i) => (
-                <tr key={i}><td colSpan={11} className="px-4 h-11"><Skeleton className="w-full" height={16} /></td></tr>
+                <tr key={i}><td colSpan={12} className="px-4 h-11"><Skeleton className="w-full" height={16} /></td></tr>
               ))}
               {data.map((t, i) => {
                 const isUs = t.us;
@@ -139,7 +145,15 @@ export const Standings = ({ standings }) => {
                     <td className="px-2 text-right text-[12px] font-mono tabular-nums font-medium">{t.w}</td>
                     <td className="px-2 text-right text-[12px] font-mono tabular-nums text-white/55">{t.l}</td>
                     <td className="px-2 text-right text-[11px] font-mono tabular-nums text-white/45">{t.ot || 0}</td>
-                    <td className="px-2 text-right text-[12px] font-mono tabular-nums font-semibold">{t.pts}</td>
+                    <td className="px-2 text-right text-[12px] font-mono tabular-nums font-semibold">
+                      {t.pts}
+                      {us && !isUs && t.pts === us.pts && (
+                        <span className="ml-1 text-[9px] text-amber-400/70" title={tiebreakReason(us, t) || 'Tied'}>
+                          TB
+                        </span>
+                      )}
+                    </td>
+                    <td className="px-2 text-right text-[11px] font-mono tabular-nums text-white/40 hidden lg:table-cell">{t.row ?? '—'}</td>
                     <td className="px-2 text-right text-[11px] font-mono tabular-nums text-white/70">{(t.pct * 100).toFixed(1)}</td>
                     <td className={cx('px-2 text-right text-[11px] font-mono tabular-nums',
                       t.diff > 0 ? 'text-emerald-400' : t.diff < 0 ? 'text-red-400' : 'text-white/50'

@@ -130,7 +130,7 @@ export function adaptGame(boxscore, rightRail, landing) {
   };
 
   // Skater stats — both teams. PHI under .skaters (back-compat), the
-  // opponent under .oppSkaters so the OnIce page can render the full
+  // opponent under .oppSkaters so Game Tape can render the full
   // ice surface. Each skater normalized identically.
   const normSkater = (p) => ({
     id: p.playerId,

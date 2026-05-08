@@ -560,8 +560,7 @@ export const Dashboard = ({ schedule, standings, scoreboard, clubStats, roster, 
 const QuickActionsRail = ({ liveGame, nextGame, lastResult, clubStats, onOpenGame }) => {
   const actions = [];
   if (liveGame) {
-    actions.push({ label: 'On-ice tracker', sub: 'Live skaters', href: '/on-ice', tone: 'live' });
-    actions.push({ label: 'Game tape · live', sub: `vs ${liveGame.opp}`, fn: () => onOpenGame?.(liveGame.id), tone: 'orange' });
+    actions.push({ label: 'Game tape · live', sub: `vs ${liveGame.opp}`, fn: () => onOpenGame?.(liveGame.id), tone: 'live' });
   } else if (lastResult) {
     actions.push({ label: 'Last game tape', sub: `${lastResult.w ? 'W' : 'L'} ${lastResult.us}–${lastResult.them} vs ${lastResult.opp}`, fn: () => onOpenGame?.(lastResult.id), tone: 'orange' });
   }

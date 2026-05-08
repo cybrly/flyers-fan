@@ -1,18 +1,18 @@
 import { useEffect, useMemo, useState } from 'react';
-import { cx, isLive, TEAM_ABBR } from '../config.js';
+import { cx } from '../config.js';
 import { useShifts } from '../api.js';
-import { Section, SectionBand, Skeleton, Chip } from '../components/primitives.jsx';
-import { Headshot } from '../components/Headshot.jsx';
-import { PlayerLink } from '../components/PlayerLink.jsx';
-import { TeamLogo } from '../components/Logo.jsx';
-import { FlyersMark } from '../components/Logo.jsx';
-import { TeamLogoBg } from '../components/Watermark.jsx';
-import { LiveFreshness } from '../components/LiveFreshness.jsx';
+import { Section, Skeleton, Chip } from './primitives.jsx';
+import { Headshot } from './Headshot.jsx';
+import { PlayerLink } from './PlayerLink.jsx';
+import { TeamLogo, FlyersMark } from './Logo.jsx';
+import { TeamLogoBg } from './Watermark.jsx';
 
-// Live "who's on the ice right now" view. Pulls the shift-charts feed
-// for the active game and cross-references each shift's start/end
-// against the play clock to figure out which Flyers are currently on
-// the ice. Boxscore stats build alongside (G/A/P/SOG/+-/hits/blk/TOI).
+// Live "who's on the ice right now" panel — was its own page, now lives
+// inside Game Tape. Cross-references the shift-charts feed against the
+// play clock to figure out who's currently on the ice for both teams,
+// renders a side-by-side skater tracker with on-ice highlight, computes
+// line-chemistry (top forward trios by shared TOI), and surfaces the
+// live matchup card when the game is live.
 //
 // Shifts data lags ~10–15 s behind the actual clock — the upstream
 // shiftcharts endpoint commits a shift only after it ends, and our
@@ -27,6 +27,12 @@ const parseMSS = (mss) => {
   if (!mss || typeof mss !== 'string') return 0;
   const [m, s] = mss.split(':').map(Number);
   return (m || 0) * 60 + (s || 0);
+};
+
+const fmtMSS = (sec) => {
+  const m = Math.floor(sec / 60);
+  const s = Math.floor(sec % 60);
+  return `${m}:${String(s).padStart(2, '0')}`;
 };
 
 const computeElapsed = (liveDetail, isPlayoff) => {
@@ -56,20 +62,9 @@ const playerLiveShift = (shifts, playerId, period, elapsed) => {
   return null;
 };
 
-const fmtMSS = (sec) => {
-  const m = Math.floor(sec / 60);
-  const s = Math.floor(sec % 60);
-  return `${m}:${String(s).padStart(2, '0')}`;
-};
-
 const FWD_POS = new Set(['C', 'L', 'R', 'LW', 'RW']);
 
 // Sweep all PHI forward shifts and accumulate per-trio shared ice time.
-// For each period we build a sorted event list of starts/ends, walk it
-// while tracking the currently-on-ice forward set, and for every interval
-// add its duration to every trio combination present. Cheap (O(C(n,3) ·
-// intervals)) and gives us a clean ranked list of "lines that actually
-// played together," not the chalkboard lines coaches drew up.
 function computeLineChemistry(shifts, forwards) {
   if (!shifts?.length || !forwards?.length) return [];
   const fwdIds = new Set(forwards.map((p) => p.id));
@@ -127,10 +122,7 @@ function computeLineChemistry(shifts, forwards) {
 }
 
 const LineChemistry = ({ skaters, shifts }) => {
-  const forwards = useMemo(
-    () => skaters.filter((p) => FWD_POS.has(p.pos)),
-    [skaters],
-  );
+  const forwards = useMemo(() => skaters.filter((p) => FWD_POS.has(p.pos)), [skaters]);
   const trios = useMemo(() => computeLineChemistry(shifts, forwards), [shifts, forwards]);
   if (trios.length === 0) return null;
   const topSec = trios[0].sec;
@@ -179,8 +171,22 @@ const LineChemistry = ({ skaters, shifts }) => {
   );
 };
 
-// One row of the skater table — renders for both PHI and OPP.
-const SkaterRow = ({ p, liveShift, accentColor, periodLabel, periodElapsed }) => {
+const Stat = ({ label, value, highlight, tone, accent }) => (
+  <div className="text-center">
+    <div className="text-[8px] font-mono text-white/30 uppercase tracking-wider">{label}</div>
+    <div className={cx(
+      'text-[12px] font-mono tabular-nums leading-none mt-0.5',
+      tone === 'good' ? 'text-emerald-400' :
+      tone === 'bad' ? 'text-red-400' :
+      highlight && accent ? '' : highlight ? 'text-[#FF8A4C]' : 'text-white/85',
+    )}
+    style={highlight && accent ? { color: accent } : undefined}>
+      {value ?? 0}
+    </div>
+  </div>
+);
+
+const SkaterRow = ({ p, liveShift, accentColor }) => {
   const onIce = !!liveShift?.active;
   const shiftTime = onIce ? liveShift.inShiftSec : null;
   return (
@@ -224,41 +230,35 @@ const SkaterRow = ({ p, liveShift, accentColor, periodLabel, periodElapsed }) =>
   );
 };
 
-const Stat = ({ label, value, highlight, tone, accent }) => (
-  <div className="text-center">
-    <div className="text-[8px] font-mono text-white/30 uppercase tracking-wider">{label}</div>
-    <div className={cx(
-      'text-[12px] font-mono tabular-nums leading-none mt-0.5',
-      tone === 'good' ? 'text-emerald-400' :
-      tone === 'bad' ? 'text-red-400' :
-      highlight && accent ? '' : highlight ? 'text-[#FF8A4C]' : 'text-white/85',
-    )}
-    style={highlight && accent ? { color: accent } : undefined}>
-      {value ?? 0}
-    </div>
-  </div>
-);
+const TeamTable = ({ skaters, liveShifts, accentColor, header }) => {
+  const sorted = useMemo(() => {
+    return [...skaters].sort((a, b) => {
+      const aOn = liveShifts[a.id]?.active ? 1 : 0;
+      const bOn = liveShifts[b.id]?.active ? 1 : 0;
+      if (aOn !== bOn) return bOn - aOn;
+      return (b.pts - a.pts) || (b.sog - a.sog);
+    });
+  }, [skaters, liveShifts]);
 
-// Currently-on-ice players for both teams shown side-by-side. Reads
-// the most natural way to use the OnIce page during a live game:
-// "what's on the ice right now."
-const LiveMatchup = ({ phiOn, oppOn, oppAbbr, periodLabel, periodElapsed }) => {
-  const has = phiOn.length > 0 || oppOn.length > 0;
-  if (!has) return null;
   return (
-    <Section
-      title="Current Matchup"
-      action={
-        <span className="text-[10px] font-mono text-emerald-300 tabular-nums">
-          {periodLabel ? `${periodLabel} · ${fmtMSS(periodElapsed)}` : 'live'}
-        </span>
-      }
-    >
-      <div className="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-white/[0.05]">
-        <MatchupSide skaters={phiOn} label="PHI" logo={<FlyersMark size={20} />} accent="text-[#FF8A4C]" abbr="PHI" side="left" />
-        <MatchupSide skaters={oppOn} label={oppAbbr || 'OPP'} logo={<TeamLogo abbr={oppAbbr} size={20} />} accent="text-white/85" abbr={oppAbbr} side="right" />
+    <div>
+      {header}
+      <div className="grid grid-cols-[44px_36px_minmax(120px,1fr)_56px_56px_44px_44px_44px] gap-2 items-center px-3 h-7 text-[9px] font-mono text-white/30 uppercase tracking-wider border-b border-white/[0.04]">
+        <span className="text-center">On</span>
+        <span></span>
+        <span>Player</span>
+        <span className="text-center">TOI</span>
+        <span className="text-center">G·A·P</span>
+        <span className="text-center">SOG</span>
+        <span className="text-center">+/-</span>
+        <span className="text-center">Hit</span>
       </div>
-    </Section>
+      <div className="divide-y divide-white/[0.04]">
+        {sorted.map((p) => (
+          <SkaterRow key={p.id} p={p} liveShift={liveShifts[p.id]} accentColor={accentColor} />
+        ))}
+      </div>
+    </div>
   );
 };
 
@@ -298,7 +298,27 @@ const MatchupSide = ({ skaters, label, logo, accent, abbr, side }) => (
   </div>
 );
 
-const Header = ({ periodLabel, periodElapsed, onIceCount, oppOnIceCount, isLiveGame, oppAbbr }) => (
+const LiveMatchup = ({ phiOn, oppOn, oppAbbr, periodLabel, periodElapsed }) => {
+  const has = phiOn.length > 0 || oppOn.length > 0;
+  if (!has) return null;
+  return (
+    <Section
+      title="Current Matchup"
+      action={
+        <span className="text-[10px] font-mono text-emerald-300 tabular-nums">
+          {periodLabel ? `${periodLabel} · ${fmtMSS(periodElapsed)}` : 'live'}
+        </span>
+      }
+    >
+      <div className="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-white/[0.05]">
+        <MatchupSide skaters={phiOn} label="PHI" logo={<FlyersMark size={20} />} accent="text-[#FF8A4C]" abbr="PHI" side="left" />
+        <MatchupSide skaters={oppOn} label={oppAbbr || 'OPP'} logo={<TeamLogo abbr={oppAbbr} size={20} />} accent="text-white/85" abbr={oppAbbr} side="right" />
+      </div>
+    </Section>
+  );
+};
+
+const TrackerHeader = ({ periodLabel, periodElapsed, onIceCount, oppOnIceCount, isLiveGame, oppAbbr }) => (
   <div className="flex items-center justify-between flex-wrap gap-3 px-3 py-2 border-b border-white/[0.06]">
     <div className="flex items-center gap-3">
       {isLiveGame ? <Chip tone="live" pulse>LIVE</Chip> : <Chip tone="muted">FINAL</Chip>}
@@ -318,48 +338,12 @@ const Header = ({ periodLabel, periodElapsed, onIceCount, oppOnIceCount, isLiveG
   </div>
 );
 
-// Side panel for one team's skater table — sortable, on-ice highlight.
-const TeamTable = ({ skaters, liveShifts, accentColor, header, periodLabel, periodElapsed }) => {
-  const sorted = useMemo(() => {
-    return [...skaters].sort((a, b) => {
-      const aOn = liveShifts[a.id]?.active ? 1 : 0;
-      const bOn = liveShifts[b.id]?.active ? 1 : 0;
-      if (aOn !== bOn) return bOn - aOn;
-      return (b.pts - a.pts) || (b.sog - a.sog);
-    });
-  }, [skaters, liveShifts]);
-
-  return (
-    <div>
-      {header}
-      <div className="grid grid-cols-[44px_36px_minmax(120px,1fr)_56px_56px_44px_44px_44px] gap-2 items-center px-3 h-7 text-[9px] font-mono text-white/30 uppercase tracking-wider border-b border-white/[0.04]">
-        <span className="text-center">On</span>
-        <span></span>
-        <span>Player</span>
-        <span className="text-center">TOI</span>
-        <span className="text-center">G·A·P</span>
-        <span className="text-center">SOG</span>
-        <span className="text-center">+/-</span>
-        <span className="text-center">Hit</span>
-      </div>
-      <div className="divide-y divide-white/[0.04]">
-        {sorted.map((p) => (
-          <SkaterRow
-            key={p.id}
-            p={p}
-            liveShift={liveShifts[p.id]}
-            accentColor={accentColor}
-            periodLabel={periodLabel}
-            periodElapsed={periodElapsed}
-          />
-        ))}
-      </div>
-    </div>
-  );
-};
-
-export const OnIce = ({ game, gameId, liveSnap, liveConnected, boxscoreLastFetch }) => {
-  const liveGame = !!game && isLive(game.state);
+// Top-level entry. Renders the live matchup, line chemistry, and the
+// side-by-side skater tracker — all of which used to live on a separate
+// On Ice page. Game Tape now hosts these so fans only need one page to
+// follow a game live and review it after the buzzer.
+export const LiveOnIcePanel = ({ game, gameId, liveSnap }) => {
+  const liveGame = !!game?.state && (game.state === 'LIVE' || game.state === 'CRIT');
   const [tick, setTick] = useState(0);
   useEffect(() => {
     if (!liveGame) return;
@@ -369,10 +353,6 @@ export const OnIce = ({ game, gameId, liveSnap, liveConnected, boxscoreLastFetch
 
   const { data: shifts, loading: shiftsLoading } = useShifts(gameId, liveGame ? 15000 : 0);
 
-  // SSE overlay — when the live stream has emitted a fresh snap, prefer
-  // its periodDescriptor + clock so the elapsed-time math (and the
-  // resulting on-ice highlight) tracks within ~2s of the actual play
-  // clock instead of waiting on the 5s polled boxscore.
   const snapFresh = liveGame && liveSnap?.ts && (Date.now() - liveSnap.ts) < 6000;
   const liveBase = useMemo(() => {
     if (snapFresh && liveSnap?.periodDescriptor && liveSnap?.clock) {
@@ -411,30 +391,10 @@ export const OnIce = ({ game, gameId, liveSnap, liveConnected, boxscoreLastFetch
 
   const periodLabel = periodState ? (periodState.period > 3 ? (game?.gameType === 3 ? `OT${periodState.period - 3}` : 'OT') : `P${periodState.period}`) : null;
 
-  if (!game) {
-    return (
-      <div className="p-3 md:p-5 space-y-3">
-        <SectionBand label="On Ice" color="emerald" sub="live skater state" />
-        <Section title="Waiting for a game">
-          <div className="p-8 text-center text-[12px] font-mono text-white/40">
-            No live or recent game data available.
-          </div>
-        </Section>
-      </div>
-    );
-  }
+  if (!game) return null;
 
   return (
-    <div className="p-3 md:p-5 space-y-3">
-      <SectionBand
-        label="On Ice"
-        color="emerald"
-        sub={liveGame ? 'live · auto-updating' : 'final game · last known state'}
-        count={skaters.length + oppSkaters.length}
-        action={<LiveFreshness liveGame={liveGame} liveSnap={liveSnap} liveConnected={liveConnected} lastFetch={boxscoreLastFetch} />}
-      />
-
-      {/* Live matchup — only meaningful while a game is in progress. */}
+    <>
       {liveGame && (
         <LiveMatchup
           phiOn={phiOnIce}
@@ -445,14 +405,13 @@ export const OnIce = ({ game, gameId, liveSnap, liveConnected, boxscoreLastFetch
         />
       )}
 
-      <LineChemistry skaters={skaters} shifts={shifts} />
+      {liveGame && <LineChemistry skaters={skaters} shifts={shifts} />}
 
-      {/* Side-by-side full skater tables */}
       <Section
         title="Skater Tracker"
         action={<span className="text-[10px] font-mono text-white/40">PHI vs {game.oppAbbr || '—'}</span>}
       >
-        <Header
+        <TrackerHeader
           periodLabel={periodLabel}
           periodElapsed={periodState?.elapsed || 0}
           onIceCount={phiOnIce.length}
@@ -474,8 +433,6 @@ export const OnIce = ({ game, gameId, liveSnap, liveConnected, boxscoreLastFetch
             skaters={skaters}
             liveShifts={phiLiveShifts}
             accentColor="#FF8A4C"
-            periodLabel={periodLabel}
-            periodElapsed={periodState?.elapsed || 0}
             header={
               <div className="px-4 py-2.5 border-b border-white/[0.06] flex items-center gap-2 bg-[#F74902]/[0.04]">
                 <FlyersMark size={18} />
@@ -490,8 +447,6 @@ export const OnIce = ({ game, gameId, liveSnap, liveConnected, boxscoreLastFetch
             skaters={oppSkaters}
             liveShifts={oppLiveShifts}
             accentColor="#E0E0E0"
-            periodLabel={periodLabel}
-            periodElapsed={periodState?.elapsed || 0}
             header={
               <div className="px-4 py-2.5 border-b border-white/[0.06] flex items-center gap-2">
                 <TeamLogo abbr={game.oppAbbr} size={18} />
@@ -510,6 +465,6 @@ export const OnIce = ({ game, gameId, liveSnap, liveConnected, boxscoreLastFetch
           </div>
         )}
       </Section>
-    </div>
+    </>
   );
 };

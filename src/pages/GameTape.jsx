@@ -18,6 +18,7 @@ import { TeamLogoBg } from '../components/Watermark.jsx';
 import { KioskMode, KioskTrigger } from '../components/KioskMode.jsx';
 import { Hero } from '../components/Hero.jsx';
 import { LiveFreshness } from '../components/LiveFreshness.jsx';
+import { LiveOnIcePanel } from '../components/LiveOnIcePanel.jsx';
 
 // Team-comparison row, executive layout. Order from outer-edge to
 // inner-center on each side:
@@ -556,62 +557,12 @@ export const GameTape = ({ game, loading, pbp, pbpRaw, liveSnap, liveConnected, 
           <LinemateAnalysis gameId={game.id} />
         )}
 
-        <Section title="Skater Box Score · PHI">
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="text-[10px] font-mono text-white/35 uppercase tracking-wider border-b border-white/[0.05]">
-                    <th className="font-normal text-left px-4 h-8 w-[36px]">#</th>
-                    <th className="font-normal text-left px-2 h-8">Player</th>
-                    <th className="font-normal text-center px-2 h-8 w-[38px]">Pos</th>
-                    <th className="font-normal text-right px-2 h-8 w-[36px]">G</th>
-                    <th className="font-normal text-right px-2 h-8 w-[36px]">A</th>
-                    <th className="font-normal text-right px-2 h-8 w-[36px]">P</th>
-                    <th className="font-normal text-right px-2 h-8 w-[40px]">SOG</th>
-                    <th className="font-normal text-right px-2 h-8 w-[40px]">HIT</th>
-                    <th className="font-normal text-right px-2 h-8 w-[40px]">BLK</th>
-                    <th className="font-normal text-right px-2 h-8 w-[40px]">+/–</th>
-                    <th className="font-normal text-right px-4 h-8 w-[60px]">TOI</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-white/[0.04]">
-                  {game.skaters.map((s) => {
-                    const displayName = typeof s.name === 'string' ? s.name : (s.name?.default || '—');
-                    return (
-                    <tr key={s.id || `${displayName}-${s.num}`} className="hover:bg-white/[0.02]">
-                      <td className="px-4 text-right text-[10px] font-mono tabular-nums text-white/30 h-10">{s.num}</td>
-                      <td className="px-2 text-[12px] text-white/85">
-                        <span className="flex items-center gap-2">
-                          <Headshot playerId={s.id} teamAbbrev="PHI" num={s.num} size={22} />
-                          <PlayerLink playerId={s.id}>{displayName}</PlayerLink>
-                        </span>
-                      </td>
-                      <td className="px-2 text-center text-[10px] font-mono text-white/45">{s.pos}</td>
-                      <td className={cx('px-2 text-right text-[12px] font-mono tabular-nums',
-                        s.g > 0 ? 'text-[#FF8A4C] font-medium' : 'text-white/35'
-                      )}>{s.g || '—'}</td>
-                      <td className={cx('px-2 text-right text-[12px] font-mono tabular-nums',
-                        s.a > 0 ? 'text-white/85' : 'text-white/35'
-                      )}>{s.a || '—'}</td>
-                      <td className={cx('px-2 text-right text-[12px] font-mono tabular-nums',
-                        s.pts > 0 ? 'text-white/90 font-medium' : 'text-white/35'
-                      )}>{s.pts || '—'}</td>
-                      <td className="px-2 text-right text-[11px] font-mono tabular-nums text-white/65">{s.sog}</td>
-                      <td className="px-2 text-right text-[11px] font-mono tabular-nums text-white/65">{s.hits}</td>
-                      <td className={cx('px-2 text-right text-[11px] font-mono tabular-nums',
-                        s.blk >= 3 ? 'text-[#FF8A4C]' : 'text-white/65'
-                      )}>{s.blk}</td>
-                      <td className={cx('px-2 text-right text-[11px] font-mono tabular-nums',
-                        s.pm > 0 ? 'text-emerald-400' : s.pm < 0 ? 'text-red-400' : 'text-white/45'
-                      )}>{s.pm > 0 ? '+' : ''}{s.pm}</td>
-                      <td className="px-4 text-right text-[11px] font-mono tabular-nums text-white/55">{s.toi}</td>
-                    </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-          </Section>
+        {/* Skater tracker — used to live on its own On Ice page. Now
+            embedded here so a single page covers live game-watch and
+            post-game review. Renders both teams side-by-side, lights up
+            currently-on-ice players in green during live play, and adds
+            line-chemistry + current-matchup blocks when the game is live. */}
+        <LiveOnIcePanel game={game} gameId={game.id} liveSnap={liveSnap} />
 
           {(game.goalies.us.length > 0 || game.goalies.them.length > 0) && (
             <Section title="Goalies">

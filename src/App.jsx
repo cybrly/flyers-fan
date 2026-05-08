@@ -64,7 +64,6 @@ const Trends   = lazyPage(() => import('./pages/Trends.jsx'),   'Trends');
 const Coaches  = lazyPage(() => import('./pages/Coaches.jsx'),  'Coaches');
 const Draft    = lazyPage(() => import('./pages/Draft.jsx'),    'Draft');
 const Records  = lazyPage(() => import('./pages/Records.jsx'),  'Records');
-const OnIce    = lazyPage(() => import('./pages/OnIce.jsx'),    'OnIce');
 const Goalies  = lazyPage(() => import('./pages/Goalies.jsx'),  'Goalies');
 const Forecast = lazyPage(() => import('./pages/Forecast.jsx'), 'Forecast');
 
@@ -98,7 +97,6 @@ export default function App() {
       coaches: 'Coaches · flyers.fan',
       draft: 'Draft Rankings · flyers.fan',
       records: 'Records · flyers.fan',
-      'on-ice': 'On Ice · flyers.fan',
       goalies: 'Goalies · flyers.fan',
       forecast: 'Forecast · flyers.fan',
     };
@@ -117,9 +115,9 @@ export default function App() {
       if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
       // Keep this in sync with NAV_ITEMS kbd properties in nav.js.
       const map = {
-        '1': 'dashboard', '2': 'on-ice', '3': 'game',
-        '4': 'schedule', '5': 'standings', '6': 'playoffs',
-        '7': 'roster', '8': 'compare', '9': 'trends', '0': 'coaches',
+        '1': 'dashboard', '2': 'game', '3': 'schedule',
+        '4': 'standings', '5': 'playoffs', '6': 'roster',
+        '7': 'goalies', '8': 'compare', '9': 'trends', '0': 'coaches',
       };
       if (map[e.key]) navigate(pageHref(map[e.key]));
     };
@@ -455,7 +453,6 @@ export default function App() {
                 {page === 'coaches'   && <Coaches />}
                 {page === 'draft'     && <Draft rankings={draftRankings} loading={drNAS.loading} />}
                 {page === 'records'   && <Records />}
-                {page === 'on-ice'    && <OnIce game={game} gameId={gameId} liveSnap={liveSnap} liveConnected={liveConnected} boxscoreLastFetch={boxscore.lastFetch} />}
                 {page === 'goalies'   && <Goalies clubStats={clubStats} schedule={schedule} goalieLeaders={goalieLeaders} />}
                 {page === 'forecast'  && <Forecast standings={standings} />}
               </Suspense>

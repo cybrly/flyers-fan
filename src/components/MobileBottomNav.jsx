@@ -1,4 +1,4 @@
-import { LayoutDashboard, Activity, Calendar, Trophy, MoreHorizontal } from 'lucide-react';
+import { LayoutDashboard, Clipboard, Calendar, Trophy, MoreHorizontal } from 'lucide-react';
 import { cx } from '../config.js';
 
 // Phone-only fixed bottom navigation. Five highest-traffic destinations,
@@ -7,9 +7,9 @@ import { cx } from '../config.js';
 // faster path on small screens. Hidden ≥ sm where the sidebar is visible.
 
 const ITEMS = [
-  { id: 'dashboard', label: 'Home',     icon: LayoutDashboard },
-  { id: 'schedule',  label: 'Schedule', icon: Calendar },
-  { id: 'on-ice',    label: 'On Ice',   icon: Activity, liveBadge: true },
+  { id: 'dashboard', label: 'Home',      icon: LayoutDashboard },
+  { id: 'game',      label: 'Game Tape', icon: Clipboard, liveBadge: true },
+  { id: 'schedule',  label: 'Schedule',  icon: Calendar },
   { id: 'standings', label: 'Standings', icon: Trophy },
 ];
 

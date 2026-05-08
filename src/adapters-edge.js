@@ -55,13 +55,13 @@ export function adaptSkaterEdge(raw) {
       unit: 'mi',
     },
     zoneTime: raw.zoneTimeDetails ? {
-      offensive: raw.zoneTimeDetails.offensiveZone?.pctg != null ? Math.round(raw.zoneTimeDetails.offensiveZone.pctg * 100) : null,
-      neutral: raw.zoneTimeDetails.neutralZone?.pctg != null ? Math.round(raw.zoneTimeDetails.neutralZone.pctg * 100) : null,
-      defensive: raw.zoneTimeDetails.defensiveZone?.pctg != null ? Math.round(raw.zoneTimeDetails.defensiveZone.pctg * 100) : null,
+      offensive: raw.zoneTimeDetails.offensiveZonePctg != null ? Math.round(raw.zoneTimeDetails.offensiveZonePctg * 100) : null,
+      neutral: raw.zoneTimeDetails.neutralZonePctg != null ? Math.round(raw.zoneTimeDetails.neutralZonePctg * 100) : null,
+      defensive: raw.zoneTimeDetails.defensiveZonePctg != null ? Math.round(raw.zoneTimeDetails.defensiveZonePctg * 100) : null,
     } : null,
-    sogSummary: (raw.sogSummary || []).map((s) => ({
-      label: s.label?.default || s.label || '—',
-      sog: s.shotsOnGoal ?? 0,
+    sogSummary: (raw.sogSummary || []).filter((s) => s.locationCode !== 'all').map((s) => ({
+      label: s.locationCode || '—',
+      sog: s.shots ?? 0,
       goals: s.goals ?? 0,
       shootingPct: s.shootingPctg != null ? +(s.shootingPctg * 100).toFixed(1) : null,
     })),

@@ -25,6 +25,7 @@ import { LiveRibbon } from './components/LiveRibbon.jsx';
 import { MobileBottomNav } from './components/MobileBottomNav.jsx';
 import { useGoalHorn, useGoalHornEnabled } from './components/GoalHorn.jsx';
 import { useGoalNotifications, useGoalNotificationsEnabled } from './components/GoalNotifications.jsx';
+import { SeasonEndBanner } from './components/SeasonEndBanner.jsx';
 
 // Page-level code splitting — each route ships in its own chunk so the first
 // paint only includes the Dashboard. Named exports get unwrapped via .then.
@@ -491,6 +492,7 @@ export default function App() {
       <SpeedInsights />
       <Analytics />
       <InstallPrompt />
+      <SeasonEndBanner />
     </div>
     </PlayerCtx.Provider>
   );

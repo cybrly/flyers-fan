@@ -8,14 +8,14 @@ import { Sparkline } from './charts.jsx';
 // when no override is provided. Keep these pre-computed so we don't churn
 // Tailwind class lookups inside the hot render path.
 const TONES = {
-  default: { wrap: 'border-[#F74902]/[0.18] bg-[#0C0C0C]/60 hover:border-[#F74902]/35',
-             value: 'text-white', spark: '#F74902', dot: null },
+  default: { wrap: 'border-white/[0.08] bg-[#0C0C0C]/60 hover:border-white/[0.15]',
+             value: 'text-white', spark: 'var(--team-primary)', dot: null },
   good:    { wrap: 'border-emerald-500/15 bg-emerald-500/[0.04] hover:border-emerald-500/30',
              value: 'text-emerald-400', spark: '#10B981', dot: 'bg-emerald-400' },
   bad:     { wrap: 'border-red-500/15 bg-red-500/[0.04] hover:border-red-500/30',
              value: 'text-red-400', spark: '#EF4444', dot: 'bg-red-400' },
-  warm:    { wrap: 'border-[#F74902]/20 bg-[#F74902]/[0.05] hover:border-[#F74902]/35',
-             value: 'text-[#FF8A4C]', spark: '#F74902', dot: 'bg-[#F74902]' },
+  warm:    { wrap: 'border-white/[0.12] bg-white/[0.02] hover:border-white/[0.18]',
+             value: 'text-[var(--team-accent)]', spark: 'var(--team-primary)', dot: 'bg-[var(--team-primary)]' },
   cool:    { wrap: 'border-sky-500/15 bg-sky-500/[0.03] hover:border-sky-500/30',
              value: 'text-sky-300', spark: '#38BDF8', dot: 'bg-sky-400' },
   amber:   { wrap: 'border-amber-500/15 bg-amber-500/[0.04] hover:border-amber-500/30',

@@ -20,12 +20,12 @@ const EdgeBar = ({ label, value, percentile, leagueAvg, unit = '' }) => {
   const color =
     pct >= 90 ? 'bg-emerald-400' :
     pct >= 70 ? 'bg-sky-400' :
-    pct >= 40 ? 'bg-[#FF8A4C]' :
+    pct >= 40 ? 'bg-[var(--team-accent)]' :
     'bg-red-400';
   const textColor =
     pct >= 90 ? 'text-emerald-400' :
     pct >= 70 ? 'text-sky-400' :
-    pct >= 40 ? 'text-[#FF8A4C]' :
+    pct >= 40 ? 'text-[var(--team-accent)]' :
     'text-red-400';
 
   return (
@@ -63,7 +63,7 @@ const EdgeTile = ({ label, value, sub, unit = '', tone }) => (
     <Label>{label}</Label>
     <div className={cx(
       'text-[20px] font-semibold tabular-nums mt-1',
-      tone === 'orange' ? 'text-[#FF8A4C]' :
+      tone === 'orange' ? 'text-[var(--team-accent)]' :
       tone === 'green' ? 'text-emerald-400' :
       tone === 'sky' ? 'text-sky-400' : 'text-white/85',
     )}>
@@ -163,12 +163,12 @@ export const SkaterEdgePanel = ({ playerId, gameType = 2 }) => {
           <div className="space-y-2">
             <Label>Zone Time Distribution</Label>
             <div className="flex h-5 w-full rounded-md overflow-hidden">
-              <div className="bg-[#FF8A4C]" style={{ width: `${edge.zoneTime.offensive || 0}%` }} title={`Offensive: ${edge.zoneTime.offensive}%`} />
+              <div className="bg-[var(--team-accent)]" style={{ width: `${edge.zoneTime.offensive || 0}%` }} title={`Offensive: ${edge.zoneTime.offensive}%`} />
               <div className="bg-white/20" style={{ width: `${edge.zoneTime.neutral || 0}%` }} title={`Neutral: ${edge.zoneTime.neutral}%`} />
               <div className="bg-sky-400/60" style={{ width: `${edge.zoneTime.defensive || 0}%` }} title={`Defensive: ${edge.zoneTime.defensive}%`} />
             </div>
             <div className="flex items-center gap-4 text-[10px] font-mono text-white/50">
-              <span className="flex items-center gap-1"><span className="w-2 h-2 bg-[#FF8A4C] rounded-sm" /> OZ {edge.zoneTime.offensive}%</span>
+              <span className="flex items-center gap-1"><span className="w-2 h-2 bg-[var(--team-accent)] rounded-sm" /> OZ {edge.zoneTime.offensive}%</span>
               <span className="flex items-center gap-1"><span className="w-2 h-2 bg-white/20 rounded-sm" /> NZ {edge.zoneTime.neutral}%</span>
               <span className="flex items-center gap-1"><span className="w-2 h-2 bg-sky-400/60 rounded-sm" /> DZ {edge.zoneTime.defensive}%</span>
             </div>
@@ -185,7 +185,7 @@ export const SkaterEdgePanel = ({ playerId, gameType = 2 }) => {
                   <span className="text-[11px] text-white/55">{s.label}</span>
                   <div className="flex items-center gap-3 text-[11px] font-mono tabular-nums">
                     <span className="text-white/40">{s.sog} SOG</span>
-                    <span className="text-[#FF8A4C]">{s.goals}G</span>
+                    <span className="text-[var(--team-accent)]">{s.goals}G</span>
                     <span className="text-white/55">{s.shootingPct != null ? `${s.shootingPct}%` : '—'}</span>
                   </div>
                 </div>
@@ -260,7 +260,7 @@ export const TeamEdgePanel = () => {
                   <div key={i} className="grid grid-cols-[1fr_60px_50px_70px] gap-2 py-1.5 items-center">
                     <span className="text-[11px] text-white/55">{loc.zone}</span>
                     <span className="text-[11px] font-mono tabular-nums text-white/50 text-right">{loc.sog}</span>
-                    <span className="text-[11px] font-mono tabular-nums text-[#FF8A4C] text-right">{loc.goals}</span>
+                    <span className="text-[11px] font-mono tabular-nums text-[var(--team-accent)] text-right">{loc.goals}</span>
                     <span className={cx('text-[11px] font-mono tabular-nums text-right', aboveAvg ? 'text-emerald-400' : 'text-white/55')}>
                       {loc.shootingPct != null ? `${loc.shootingPct}%` : '—'}
                     </span>
@@ -271,7 +271,7 @@ export const TeamEdgePanel = () => {
                 <div className="grid grid-cols-[1fr_60px_50px_70px] gap-2 py-1.5 items-center border-t border-white/[0.06] mt-1 pt-1.5">
                   <span className="text-[11px] text-white/70 font-medium">Total</span>
                   <span className="text-[11px] font-mono tabular-nums text-white/70 text-right">{edge.shotLocationTotals.all.sog}</span>
-                  <span className="text-[11px] font-mono tabular-nums text-[#FF8A4C] font-medium text-right">{edge.shotLocationTotals.all.goals}</span>
+                  <span className="text-[11px] font-mono tabular-nums text-[var(--team-accent)] font-medium text-right">{edge.shotLocationTotals.all.goals}</span>
                   <span className="text-[11px] font-mono tabular-nums text-white/70 text-right">{edge.shotLocationTotals.all.pct}%</span>
                 </div>
               )}
@@ -284,12 +284,12 @@ export const TeamEdgePanel = () => {
           <div className="space-y-2">
             <Label>Zone Time Distribution</Label>
             <div className="flex h-5 w-full rounded-md overflow-hidden">
-              <div className="bg-[#FF8A4C]" style={{ width: `${edge.zoneTime.offensive || 0}%` }} />
+              <div className="bg-[var(--team-accent)]" style={{ width: `${edge.zoneTime.offensive || 0}%` }} />
               <div className="bg-white/20" style={{ width: `${edge.zoneTime.neutral || 0}%` }} />
               <div className="bg-sky-400/60" style={{ width: `${edge.zoneTime.defensive || 0}%` }} />
             </div>
             <div className="flex items-center gap-4 text-[10px] font-mono text-white/50">
-              <span className="flex items-center gap-1"><span className="w-2 h-2 bg-[#FF8A4C] rounded-sm" /> OZ {edge.zoneTime.offensive}%</span>
+              <span className="flex items-center gap-1"><span className="w-2 h-2 bg-[var(--team-accent)] rounded-sm" /> OZ {edge.zoneTime.offensive}%</span>
               <span className="flex items-center gap-1"><span className="w-2 h-2 bg-white/20 rounded-sm" /> NZ {edge.zoneTime.neutral}%</span>
               <span className="flex items-center gap-1"><span className="w-2 h-2 bg-sky-400/60 rounded-sm" /> DZ {edge.zoneTime.defensive}%</span>
             </div>

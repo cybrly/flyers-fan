@@ -10,7 +10,7 @@ export const Topbar = ({ page, liveGame, lastFetch, error, onOpenPalette, onOpen
   const status = connStatus(lastFetch, error);
 
   return (
-    <header className="h-12 border-b border-[#F74902]/[0.22] bg-[#0A0A0A]/90 backdrop-blur-md sticky top-0 z-30">
+    <header className="h-12 border-b bg-[#0A0A0A]/90 backdrop-blur-md sticky top-0 z-30" style={{ borderColor: 'color-mix(in srgb, var(--team-primary) 22%, transparent)' }}>
       <div className="h-full px-4 md:px-6 flex items-center justify-between gap-4">
         <div className="flex items-center gap-2 min-w-0">
           <button
@@ -25,7 +25,7 @@ export const Topbar = ({ page, liveGame, lastFetch, error, onOpenPalette, onOpen
           </button>
           <div className="lg:hidden flex items-center gap-2">
             <FlyersMark size={18} />
-            <span className="text-[12px] font-semibold">flyers<span className="text-[#F74902]">.fan</span></span>
+            <span className="text-[12px] font-semibold">flyers<span className="text-[var(--team-primary)]">.fan</span></span>
           </div>
           <div className="hidden sm:flex items-center gap-2 text-[11px] font-mono text-white/40">
             <span>PHI</span>

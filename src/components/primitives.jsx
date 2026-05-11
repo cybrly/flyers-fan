@@ -12,7 +12,7 @@ export const Kbd = ({ children }) => (
 export const Chip = ({ children, tone = 'default', pulse = false }) => {
   const tones = {
     default: 'border-white/10 bg-white/[0.02] text-white/65',
-    orange:  'border-[#F74902]/40 bg-[#F74902]/10 text-[#FF8A4C]',
+    orange:  'border-[var(--team-primary)]/40 bg-[var(--team-primary)]/10 text-[var(--team-accent)]',
     green:   'border-emerald-500/30 bg-emerald-500/[0.08] text-emerald-400',
     red:     'border-red-500/30 bg-red-500/[0.08] text-red-400',
     amber:   'border-amber-500/30 bg-amber-500/[0.08] text-amber-400',
@@ -42,18 +42,19 @@ export const Label = ({ children, className = '' }) => (
 // the surface (low-opacity orange FILLS perceive as brown on dark — only
 // 1px STROKES preserve the orange hue cleanly).
 export const Section = ({ title, action, children, className = '', branded = false }) => (
-  <div className={cx(
-    'rounded-lg border',
-    branded
-      ? 'bg-[#0C0C0C]/70 border-[#F74902]/[0.18]'
-      : 'bg-[#0A0A0A]/40 border-white/[0.06]',
-    className,
-  )}>
+  <div
+    className={cx(
+      'rounded-lg border',
+      branded ? 'bg-[#0C0C0C]/70' : 'bg-[#0A0A0A]/40 border-white/[0.06]',
+      className,
+    )}
+    style={branded ? { borderColor: 'color-mix(in srgb, var(--team-primary) 18%, transparent)' } : undefined}
+  >
     {(title || action) && (
-      <div className={cx(
-        'flex items-center justify-between px-4 h-9 border-b',
-        branded ? 'border-[#F74902]/[0.15]' : 'border-white/[0.05]',
-      )}>
+      <div
+        className="flex items-center justify-between px-4 h-9 border-b"
+        style={branded ? { borderColor: 'color-mix(in srgb, var(--team-primary) 15%, transparent)' } : { borderColor: 'rgba(255,255,255,0.05)' }}
+      >
         <span className="text-[11px] font-medium text-white/80 tracking-tight">{title}</span>
         {action}
       </div>
@@ -66,7 +67,7 @@ export const Section = ({ title, action, children, className = '', branded = fal
 // "RECENT FORM" zones. The colored left bar gives each band a clear visual
 // identity and (importantly) tells the user *what* they are about to look at.
 const BAND_COLORS = {
-  orange:  { bar: 'bg-[#F74902]', text: 'text-[#FF8A4C]' },
+  orange:  { bar: 'bg-[var(--team-primary)]', text: 'text-[var(--team-accent)]' },
   emerald: { bar: 'bg-emerald-500', text: 'text-emerald-300' },
   amber:   { bar: 'bg-amber-500', text: 'text-amber-300' },
   sky:     { bar: 'bg-sky-500', text: 'text-sky-300' },

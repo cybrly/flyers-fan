@@ -74,7 +74,7 @@ export const Sidebar = ({ page, setPage, team, liveGame, metro, roster, lastFetc
         width: collapsed && !mobileOpen ? 56 : 244,
       }}
       className={cx(
-        'flex flex-col shrink-0 border-r border-[#F74902]/[0.22] bg-[#0A0A0A]/95 backdrop-blur-md',
+        'flex flex-col shrink-0 border-r border-white/[0.08] bg-[#0A0A0A]/95 backdrop-blur-md',
         'lg:sticky lg:top-0 lg:h-screen',
         'fixed lg:relative inset-y-0 left-0 h-screen z-50 transition-[width,transform] duration-300',
         mobileOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0',
@@ -168,7 +168,7 @@ export const Sidebar = ({ page, setPage, team, liveGame, metro, roster, lastFetc
                       )}
                     >
                       <div className={cx('flex items-center', collapsed ? '' : 'gap-2')}>
-                        <Icon size={collapsed ? 16 : 13} strokeWidth={active ? 2 : 1.75} className={active ? 'text-[#F74902]' : ''} />
+                        <Icon size={collapsed ? 16 : 13} strokeWidth={active ? 2 : 1.75} className={active ? 'text-[var(--team-primary)]' : ''} />
                         {!collapsed && (
                           <>
                             <span className="text-[12px] font-medium tracking-tight">{label}</span>
@@ -203,11 +203,11 @@ export const Sidebar = ({ page, setPage, team, liveGame, metro, roster, lastFetc
                 key={t.abbr}
                 className={cx(
                   'flex items-center gap-2 px-2 h-6 rounded-sm',
-                  t.us ? 'bg-[#F74902]/[0.08]' : 'hover:bg-white/[0.02]',
+                  t.us ? 'bg-[var(--team-primary)]/[0.08]' : 'hover:bg-white/[0.02]',
                 )}
               >
                 <span className={cx('text-[10px] font-mono tabular-nums w-3',
-                  t.us ? 'text-[#F74902]' : i < 3 ? 'text-white/50' : 'text-white/25'
+                  t.us ? 'text-[var(--team-primary)]' : i < 3 ? 'text-white/50' : 'text-white/25'
                 )}>{i + 1}</span>
                 <TeamLogo abbr={t.abbr} size={14} />
                 <span className={cx('text-[11px] font-mono font-medium',
@@ -271,14 +271,14 @@ export const Sidebar = ({ page, setPage, team, liveGame, metro, roster, lastFetc
                   <Flame size={9} className={
                     streak.startsWith('W') ? 'text-emerald-400'
                       : streak.startsWith('L') ? 'text-red-400'
-                      : 'text-[#F74902]'
+                      : 'text-[var(--team-primary)]'
                   } />
                   Streak
                 </span>
                 <span className={cx('font-medium tabular-nums',
                   streak.startsWith('W') ? 'text-emerald-400'
                     : streak.startsWith('L') ? 'text-red-400'
-                    : 'text-[#FF8A4C]'
+                    : 'text-[var(--team-accent)]'
                 )}>{streak}</span>
               </div>
             )}
@@ -339,7 +339,7 @@ const SidebarRoster = ({ roster }) => {
                   title={`${p.name} · #${p.num || '—'} · ${p.pos}`}
                   className="w-full flex items-center gap-2 px-2 h-6 rounded-sm hover:bg-white/[0.04] transition-colors text-left group"
                 >
-                  <span className="text-[10px] font-mono tabular-nums text-white/30 w-5 group-hover:text-[#FF8A4C]">
+                  <span className="text-[10px] font-mono tabular-nums text-white/30 w-5 group-hover:text-[var(--team-accent)]">
                     {p.num != null ? p.num : '—'}
                   </span>
                   <span className="text-[11px] text-white/70 group-hover:text-white truncate flex-1">

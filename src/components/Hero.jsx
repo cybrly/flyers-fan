@@ -69,7 +69,7 @@ const FullRinkMark = () => (
 
         {/* Center face-off circle */}
         <circle cx="500" cy="120" r="58" fill="none" stroke="white" strokeWidth="1.4" />
-        <circle cx="500" cy="120" r="2.5" fill="#F74902" />
+        <circle cx="500" cy="120" r="2.5" fill="var(--team-primary)" />
 
         {/* End-zone face-off circles — four corners */}
         {[
@@ -313,8 +313,8 @@ const HeroLive = ({ liveGame, liveDetail, liveSnap, oppFull, recentGames, oppRow
       <div className="flex items-center gap-2 flex-wrap">
         <Chip tone="live" pulse>LIVE</Chip>
         {periodLabel && (
-          <div className="flex items-center gap-1.5 px-2 h-6 border border-[#F74902]/30 bg-[#F74902]/[0.08] rounded-md">
-            <span className="text-[10px] font-mono text-[#FF8A4C] uppercase tracking-wider">{periodLabel}</span>
+          <div className="flex items-center gap-1.5 px-2 h-6 rounded-md" style={{ borderWidth: 1, borderStyle: 'solid', borderColor: 'color-mix(in srgb, var(--team-primary) 30%, transparent)', backgroundColor: 'color-mix(in srgb, var(--team-primary) 8%, transparent)' }}>
+            <span className="text-[10px] font-mono text-[var(--team-accent)] uppercase tracking-wider">{periodLabel}</span>
             <span className="text-[12px] font-mono tabular-nums text-white/85">
               {inIntermission ? 'INT' : clockText}
             </span>
@@ -352,10 +352,10 @@ const HeroLive = ({ liveGame, liveDetail, liveSnap, oppFull, recentGames, oppRow
         <div className="col-span-2 sm:col-span-1 sm:row-start-1 sm:col-start-2 flex items-baseline justify-center gap-3 sm:gap-4">
           <span
             className={cx(
-              'text-[44px] sm:text-[76px] font-semibold tabular-nums tracking-tight text-[#FF8A4C] leading-none',
+              'text-[44px] sm:text-[76px] font-semibold tabular-nums tracking-tight text-[var(--team-accent)] leading-none',
               goalBurst && 'score-flash',
             )}
-            style={{ textShadow: '0 0 24px rgba(247,73,2,0.4), 0 2px 4px rgba(0,0,0,0.6)' }}
+            style={{ textShadow: '0 0 24px color-mix(in srgb, var(--team-primary) 40%, transparent), 0 2px 4px rgba(0,0,0,0.6)' }}
           >{usScore}</span>
           <span className="text-[28px] sm:text-[44px] text-white/20 leading-none">–</span>
           <span
@@ -382,7 +382,7 @@ const HeroLive = ({ liveGame, liveDetail, liveSnap, oppFull, recentGames, oppRow
             period={period?.number}
             periodType={period?.periodType}
             clock={clock}
-            color="#FF8A4C"
+            color="var(--team-accent)"
           />
           {sog?.us != null && (
             <PaceProjection
@@ -422,7 +422,7 @@ const LiveStat = ({ label, us, them }) => (
   <div className="text-center">
     <div className="text-[9px] font-mono text-white/40 uppercase tracking-wider mb-1">{label}</div>
     <div className="flex items-center gap-1.5 tabular-nums">
-      <span className="text-[#FF8A4C]">{us}</span>
+      <span className="text-[var(--team-accent)]">{us}</span>
       <span className="text-white/25">·</span>
       <span className="text-white/65">{them}</span>
     </div>
@@ -469,8 +469,8 @@ const HeroNext = ({ nextGame, oppFull, recentGames, oppRow }) => {
                 <PuckIcon size={9} />
                 Puck drops in
               </div>
-              <div className="flex items-baseline gap-1 justify-center font-semibold tabular-nums tracking-tight text-[#FF8A4C] leading-none whitespace-nowrap"
-                style={{ textShadow: '0 0 22px rgba(247,73,2,0.4), 0 2px 4px rgba(0,0,0,0.6)' }}>
+              <div className="flex items-baseline gap-1 justify-center font-semibold tabular-nums tracking-tight text-[var(--team-accent)] leading-none whitespace-nowrap"
+                style={{ textShadow: '0 0 22px color-mix(in srgb, var(--team-primary) 40%, transparent), 0 2px 4px rgba(0,0,0,0.6)' }}>
                 {cd.d > 0 && (
                   <>
                     <span className="text-[36px] sm:text-[76px]">{cd.d}</span>
@@ -567,11 +567,11 @@ export const Hero = ({ liveGame, liveDetail, liveSnap, nextGame, lastResult, us,
   const streak = computeStreak(recentGames);
 
   return (
-    <div className="relative overflow-hidden rounded-xl border border-[#F74902]/[0.30] bg-[#0A0A0A] px-5 sm:px-8 py-7 sm:py-10 shadow-[0_0_40px_-12px_rgba(247,73,2,0.15),0_0_0_1px_rgba(255,255,255,0.03)_inset,0_24px_48px_-24px_rgba(0,0,0,0.9)]">
+    <div className="relative overflow-hidden rounded-xl bg-[#0A0A0A] px-5 sm:px-8 py-7 sm:py-10" style={{ border: '1px solid color-mix(in srgb, var(--team-primary) 30%, transparent)', boxShadow: '0 0 40px -12px color-mix(in srgb, var(--team-primary) 15%, transparent), 0 0 0 1px rgba(255,255,255,0.03) inset, 0 24px 48px -24px rgba(0,0,0,0.9)' }}>
         {/* ── Layered background for depth ────────────────────────────────── */}
         <div aria-hidden className="pointer-events-none absolute inset-0 bg-gradient-to-b from-[#1a1210] via-[#0E0E0E] to-[#050505]" />
         {/* Orange ambient glow at the top edge — gives the hero a warm "lit from above" feel */}
-        <div aria-hidden className="pointer-events-none absolute inset-x-0 top-0 h-40" style={{ background: 'radial-gradient(ellipse 60% 100% at 50% 0%, rgba(247,73,2,0.08), transparent)' }} />
+        <div aria-hidden className="pointer-events-none absolute inset-x-0 top-0 h-40" style={{ background: 'radial-gradient(ellipse 60% 100% at 50% 0%, color-mix(in srgb, var(--team-primary) 8%, transparent), transparent)' }} />
         <div
           aria-hidden
           className="pointer-events-none absolute inset-0"
@@ -605,7 +605,7 @@ export const Hero = ({ liveGame, liveDetail, liveSnap, nextGame, lastResult, us,
         <FullRinkMark />
         <CenterShield />
         {/* Top edge highlight + bottom shadow for the "raised card" feel. */}
-        <div aria-hidden className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[#F74902]/40 to-transparent" />
+        <div aria-hidden className="pointer-events-none absolute inset-x-0 top-0 h-px" style={{ background: 'linear-gradient(to right, transparent, color-mix(in srgb, var(--team-primary) 40%, transparent), transparent)' }} />
         <div aria-hidden className="pointer-events-none absolute inset-x-8 bottom-0 h-12 bg-gradient-to-t from-black/60 to-transparent" />
 
       <div className="relative">
@@ -626,13 +626,13 @@ export const Hero = ({ liveGame, liveDetail, liveSnap, nextGame, lastResult, us,
           <div className={cx(
             'relative mt-5 mx-auto max-w-fit px-4 py-1.5 rounded-md border flex items-center gap-2 text-[12px] font-mono uppercase tracking-wider',
             streak.type === 'W'
-              ? 'border-[#F74902]/40 bg-[#F74902]/[0.08] text-[#FF8A4C]'
+              ? 'text-[var(--team-accent)]'
               : 'border-red-500/30 bg-red-500/[0.08] text-red-300',
-          )}>
+          )} style={streak.type === 'W' ? { borderColor: 'color-mix(in srgb, var(--team-primary) 40%, transparent)', backgroundColor: 'color-mix(in srgb, var(--team-primary) 8%, transparent)' } : undefined}>
             <span className={cx('w-1.5 h-1.5 rounded-full',
-              streak.type === 'W' ? 'bg-[#F74902]' : 'bg-red-400')} />
+              streak.type === 'W' ? 'bg-[var(--team-primary)]' : 'bg-red-400')} />
             <span className="font-semibold tabular-nums">{streak.count}-game {streak.type === 'W' ? 'win streak' : 'losing skid'}</span>
-            {streak.type === 'W' && streak.count >= 5 && <span className="text-[#FF8A4C]">· heating up</span>}
+            {streak.type === 'W' && streak.count >= 5 && <span className="text-[var(--team-accent)]">· heating up</span>}
             {streak.type === 'L' && streak.count >= 6 && <span className="text-red-300/80">· need a spark</span>}
           </div>
         )}
@@ -693,8 +693,8 @@ const Watermark = ({ url, side }) => {
 // Tiny puck glyph for label decoration.
 const PuckIcon = ({ size = 10 }) => (
   <svg width={size} height={size * 0.55} viewBox="0 0 20 11" aria-hidden>
-    <ellipse cx="10" cy="5.5" rx="9" ry="4" fill="#F74902" opacity="0.85" />
-    <ellipse cx="10" cy="4" rx="9" ry="4" fill="none" stroke="#FF8A4C" strokeWidth="1" opacity="0.9" />
+    <ellipse cx="10" cy="5.5" rx="9" ry="4" fill="var(--team-primary)" opacity="0.85" />
+    <ellipse cx="10" cy="4" rx="9" ry="4" fill="none" stroke="var(--team-accent)" strokeWidth="1" opacity="0.9" />
   </svg>
 );
 
@@ -702,7 +702,7 @@ const HeroStat = ({ label, value, accent }) => {
   const valueClass =
     accent === 'good' ? 'text-emerald-400' :
     accent === 'bad'  ? 'text-red-400' :
-    accent === 'warm' ? 'text-[#FF8A4C]' :
+    accent === 'warm' ? 'text-[var(--team-accent)]' :
     'text-white';
   return (
     <div className="relative px-4 py-3 rounded-lg bg-white/[0.025] border border-white/[0.06] hover:bg-white/[0.04] transition-colors">

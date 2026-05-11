@@ -6,7 +6,7 @@ import { GoalNotificationsToggle } from './GoalNotifications.jsx';
 export const Statusbar = ({ lastFetch, error, refresh }) => {
   const status = connStatus(lastFetch, error);
   return (
-    <div className="h-7 border-t border-[#F74902]/[0.22] bg-[#080808] flex items-center justify-between px-4 md:px-6 text-[10px] font-mono text-white/45">
+    <div className="h-7 border-t bg-[#080808] flex items-center justify-between px-4 md:px-6 text-[10px] font-mono text-white/45" style={{ borderColor: 'color-mix(in srgb, var(--team-primary) 22%, transparent)' }}>
       <div className="flex items-center gap-4">
         <span className={cx('flex items-center gap-1.5',
           status.tone === 'red' && 'text-red-400',
@@ -33,7 +33,7 @@ export const Statusbar = ({ lastFetch, error, refresh }) => {
         </span>
         <span className="lg:hidden text-white/35">Unofficial · not NHL</span>
         <span className="hidden md:inline">{SEASON_LABEL} Season</span>
-        <span>v14.0</span>
+        <span>v14.1</span>
       </div>
     </div>
   );

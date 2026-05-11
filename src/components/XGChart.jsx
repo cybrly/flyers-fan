@@ -24,12 +24,12 @@ export function XGSummary({ events, isHome }) {
 
   return (
     <div className="flex items-center gap-3">
-      <span className="text-[12px] font-mono tabular-nums text-[#FF8A4C] font-medium">
+      <span className="text-[12px] font-mono tabular-nums text-[var(--team-accent)] font-medium">
         {xg.totalUs.toFixed(1)}
       </span>
       <div className="flex-1 h-2 bg-white/[0.06] rounded-full overflow-hidden relative">
         <div
-          className="absolute inset-y-0 left-0 bg-[#F74902]/60 rounded-l-full transition-all duration-500"
+          className="absolute inset-y-0 left-0 bg-[var(--team-primary)]/60 rounded-l-full transition-all duration-500"
           style={{ width: `${usPct}%` }}
         />
       </div>
@@ -115,9 +115,9 @@ export function XGChart({ events, oppAbbr = 'OPP', actualGoalsUs, actualGoalsThe
         {/* Actual vs Expected comparison */}
         <div className="grid grid-cols-2 gap-px bg-white/[0.04] rounded-md overflow-hidden mb-3">
           <div className="bg-[#0C0C0C] p-2.5">
-            <Label>PHI</Label>
+            <Label>{TEAM_ABBR}</Label>
             <div className="mt-1 flex items-baseline gap-2">
-              <span className="text-[18px] font-semibold tabular-nums text-[#FF8A4C]">{totalUs.toFixed(1)}</span>
+              <span className="text-[18px] font-semibold tabular-nums text-[var(--team-accent)]">{totalUs.toFixed(1)}</span>
               <span className="text-[10px] font-mono text-white/40">xG</span>
               {actualGoalsUs != null && (
                 <span className={cx(
@@ -151,8 +151,8 @@ export function XGChart({ events, oppAbbr = 'OPP', actualGoalsUs, actualGoalsThe
         <svg width="100%" viewBox={`0 0 ${W} ${H}`} className="block">
           <defs>
             <linearGradient id={`${gradientId}-us`} x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="#F74902" stopOpacity="0.15" />
-              <stop offset="100%" stopColor="#F74902" stopOpacity="0" />
+              <stop offset="0%" stopColor="var(--team-primary)" stopOpacity="0.15" />
+              <stop offset="100%" stopColor="var(--team-primary)" stopOpacity="0" />
             </linearGradient>
           </defs>
 
@@ -170,13 +170,13 @@ export function XGChart({ events, oppAbbr = 'OPP', actualGoalsUs, actualGoalsThe
 
           {/* PHI xG area + line */}
           <path d={`${usPath} L${sx(usLine[usLine.length - 1].gameSeconds)},${sy(0)} L${sx(0)},${sy(0)} Z`} fill={`url(#${gradientId}-us)`} />
-          <path d={usPath} fill="none" stroke="#F74902" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+          <path d={usPath} fill="none" stroke="var(--team-primary)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
 
           {/* Opponent xG line */}
           <path d={themPath} fill="none" stroke="rgba(255,255,255,0.35)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" strokeDasharray="4 3" />
 
           {/* End labels */}
-          <text x={sx(usLine[usLine.length - 1].gameSeconds) + 6} y={sy(totalUs) + 3} className="fill-[#FF8A4C] text-[10px] font-mono font-medium">
+          <text x={sx(usLine[usLine.length - 1].gameSeconds) + 6} y={sy(totalUs) + 3} className="fill-[var(--team-accent)] text-[10px] font-mono font-medium">
             {totalUs.toFixed(1)}
           </text>
           <text x={sx(themLine[themLine.length - 1].gameSeconds) + 6} y={sy(totalThem) + 3} className="fill-white/45 text-[10px] font-mono">
@@ -188,8 +188,8 @@ export function XGChart({ events, oppAbbr = 'OPP', actualGoalsUs, actualGoalsThe
           <text x={PAD.left - 4} y={sy(0)} textAnchor="end" className="fill-white/25 text-[9px] font-mono">0</text>
 
           {/* Legend */}
-          <line x1={W - 55} y1={PAD.top + 4} x2={W - 40} y2={PAD.top + 4} stroke="#F74902" strokeWidth="2" />
-          <text x={W - 36} y={PAD.top + 8} className="fill-[#FF8A4C] text-[9px] font-mono">PHI</text>
+          <line x1={W - 55} y1={PAD.top + 4} x2={W - 40} y2={PAD.top + 4} stroke="var(--team-primary)" strokeWidth="2" />
+          <text x={W - 36} y={PAD.top + 8} className="fill-[var(--team-accent)] text-[9px] font-mono">{TEAM_ABBR}</text>
           <line x1={W - 55} y1={PAD.top + 18} x2={W - 40} y2={PAD.top + 18} stroke="rgba(255,255,255,0.35)" strokeWidth="1.5" strokeDasharray="4 3" />
           <text x={W - 36} y={PAD.top + 22} className="fill-white/40 text-[9px] font-mono">{oppAbbr}</text>
         </svg>

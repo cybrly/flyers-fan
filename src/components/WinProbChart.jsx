@@ -1,3 +1,4 @@
+import { TEAM_ABBR } from '../config.js';
 // Win Probability Chart — shows PHI's estimated win probability over
 // the course of a game, updated at each goal and period boundary.
 
@@ -69,9 +70,9 @@ export function WinProbChart({ events, gameInfo, oppAbbr = 'OPP' }) {
     >
       <div className="px-4 py-3">
         <div className="flex items-center justify-between mb-2 text-[10px] font-mono text-white/40">
-          <span>PHI win probability over game time</span>
+          <span>{TEAM_ABBR} win probability over game time</span>
           <div className="flex items-center gap-3">
-            <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-[#F74902]" /> PHI goal</span>
+            <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-[var(--team-primary)]" /> {TEAM_ABBR} goal</span>
             <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-white/40" /> {oppAbbr} goal</span>
           </div>
         </div>
@@ -129,7 +130,7 @@ export function WinProbChart({ events, gameInfo, oppAbbr = 'OPP' }) {
                 x={x(g.gameSeconds)}
                 y={y(g.wp) + (g.us ? -10 : 14)}
                 textAnchor="middle"
-                className={cx('text-[9px] font-mono', g.us ? 'fill-[#FF8A4C]' : 'fill-white/50')}
+                className={cx('text-[9px] font-mono', g.us ? 'fill-[var(--team-accent)]' : 'fill-white/50')}
               >
                 {(g.wp * 100).toFixed(0)}%
               </text>
@@ -137,12 +138,12 @@ export function WinProbChart({ events, gameInfo, oppAbbr = 'OPP' }) {
           ))}
 
           {/* Y-axis labels */}
-          <text x={PAD.left - 4} y={y(1) + 4} textAnchor="end" className="fill-[#FF8A4C]/50 text-[9px] font-mono">100%</text>
+          <text x={PAD.left - 4} y={y(1) + 4} textAnchor="end" className="fill-[var(--team-accent)]/50 text-[9px] font-mono">100%</text>
           <text x={PAD.left - 4} y={midY + 3} textAnchor="end" className="fill-white/30 text-[9px] font-mono">50%</text>
           <text x={PAD.left - 4} y={y(0)} textAnchor="end" className="fill-white/20 text-[9px] font-mono">0%</text>
 
           {/* Team labels */}
-          <text x={PAD.left + 4} y={y(0.92)} className="fill-[#FF8A4C]/40 text-[9px] font-mono">PHI favored</text>
+          <text x={PAD.left + 4} y={y(0.92)} className="fill-[var(--team-accent)]/40 text-[9px] font-mono">{TEAM_ABBR} favored</text>
           <text x={PAD.left + 4} y={y(0.08) + 10} className="fill-white/20 text-[9px] font-mono">{oppAbbr} favored</text>
         </svg>
       </div>

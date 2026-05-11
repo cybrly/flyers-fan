@@ -372,7 +372,7 @@ const PhiHeadline = ({ us, running }) => {
     : 'text-red-400';
   return (
     <div className="relative overflow-hidden border border-white/[0.08] bg-[#0C0C0C]/60 rounded-md p-5">
-      <TeamLogoBg abbr="PHI" size={220} opacity={0.06} position="bottom-right" />
+      <TeamLogoBg abbr={TEAM_ABBR} size={220} opacity={0.06} position="bottom-right" />
       <div className="relative grid grid-cols-1 md:grid-cols-[auto_1fr_auto] items-center gap-6">
         <div className="flex items-center gap-3">
           <FlyersMark size={40} />

@@ -121,7 +121,7 @@ export const LiveShotTicker = ({ pbpRaw, isLive, oppAbbr }) => {
       <div className="divide-y divide-white/[0.04] max-h-[420px] overflow-y-auto">
         {shots.map((s) => {
           const cfg = KIND_BADGE[s.kind] || { l: s.kind.toUpperCase(), tone: 'muted' };
-          const teamLabel = s.isUs ? 'PHI' : (oppAbbr || 'OPP');
+          const teamLabel = s.isUs ? TEAM_ABBR : (oppAbbr || 'OPP');
           return (
             <div key={s.id} className="px-3 py-2 flex items-center gap-3">
               <span className={cx(

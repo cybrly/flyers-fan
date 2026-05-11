@@ -5,6 +5,8 @@
 import { TEAM_ABBR, OPP_FULL, fmtDate } from '../config.js';
 import { pct } from './hockey.js';
 
+const teamShort = () => { const full = OPP_FULL[TEAM_ABBR] || TEAM_ABBR; return full.split(' ').pop() || TEAM_ABBR; };
+
 /* ═══════════════════════════════════════════════════════════════
    HELPERS
    ═══════════════════════════════════════════════════════════════ */
@@ -38,16 +40,16 @@ export function dashboardNarrative({ standings, schedule, streak, series }) {
   const nextGame = schedule?.nextGame;
   const lastGame = schedule?.games?.[0];
 
-  if (!us) return 'Connecting to NHL feeds for the latest Flyers data.';
+  if (!us) return `Connecting to NHL feeds for the latest ${teamShort()} data.`;
 
   // Current state
   if (series) {
     const ahead = series.usWins > series.oppWins;
     const tied = series.usWins === series.oppWins;
     const down = series.usWins < series.oppWins;
-    if (ahead) parts.push(`The Flyers lead the ${oppName(series.opponentAbbr)} ${series.usWins}–${series.oppWins} in the ${series.round}.`);
+    if (ahead) parts.push(`${teamShort()} lead the ${oppName(series.opponentAbbr)} ${series.usWins}–${series.oppWins} in the ${series.round}.`);
     else if (tied) parts.push(`The series against ${oppName(series.opponentAbbr)} is tied ${series.usWins}–${series.oppWins}.`);
-    else if (down) parts.push(`The Flyers trail ${oppName(series.opponentAbbr)} ${series.usWins}–${series.oppWins} in the ${series.round}.`);
+    else if (down) parts.push(`${teamShort()} trail ${oppName(series.opponentAbbr)} ${series.usWins}–${series.oppWins} in the ${series.round}.`);
   } else if (liveGame) {
     const leading = liveGame.us > liveGame.them;
     const tied = liveGame.us === liveGame.them;
@@ -55,7 +57,7 @@ export function dashboardNarrative({ standings, schedule, streak, series }) {
     else if (tied) parts.push(`Tied ${liveGame.us}–${liveGame.them} against ${oppName(liveGame.opp)}.`);
     else parts.push(`Trailing ${oppName(liveGame.opp)} ${liveGame.them}–${liveGame.us}.`);
   } else {
-    parts.push(`The Flyers are ${us.w}–${us.l}–${us.ot || 0}, sitting ${ordinal(us.divRank)} in the Metro with ${us.pts} points.`);
+    parts.push(`${teamShort()} are ${us.w}–${us.l}–${us.ot || 0}, sitting ${ordinal(us.divRank)} in the division with ${us.pts} points.`);
   }
 
   // Streak context
@@ -111,7 +113,7 @@ export function postGameRecap({ game, topScorer, xg }) {
     } else if (!won && xgDiff > 0.5) {
       parts.push(`Expected goals favored the Flyers ${xg.totalUs.toFixed(1)}–${xg.totalThem.toFixed(1)} — an unlucky result.`);
     } else if (Math.abs(xgDiff) > 1.0) {
-      const dominant = xgDiff > 0 ? 'the Flyers' : opp;
+      const dominant = xgDiff > 0 ? teamShort() : opp;
       parts.push(`${dominant} dominated expected goals ${Math.max(xg.totalUs, xg.totalThem).toFixed(1)}–${Math.min(xg.totalUs, xg.totalThem).toFixed(1)}.`);
     }
   }
@@ -120,7 +122,7 @@ export function postGameRecap({ game, topScorer, xg }) {
   if (game.stats?.shots?.us != null) {
     const shotDiff = game.stats.shots.us - game.stats.shots.them;
     if (Math.abs(shotDiff) >= 10) {
-      const who = shotDiff > 0 ? 'Flyers' : opp;
+      const who = shotDiff > 0 ? teamShort() : opp;
       parts.push(`The ${who} held a ${Math.abs(shotDiff)}-shot advantage (${Math.max(game.stats.shots.us, game.stats.shots.them)}–${Math.min(game.stats.shots.us, game.stats.shots.them)}).`);
     }
   }

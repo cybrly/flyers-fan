@@ -4,7 +4,7 @@
 // a future dedicated "Game Night" page.
 
 import { useMemo } from 'react';
-import { cx, OPP_FULL, SEASON, fmtTime, fmtDateFull } from '../config.js';
+import { cx, OPP_FULL, TEAM_ABBR, SEASON, fmtTime, fmtDateFull } from '../config.js';
 import { useNHL } from '../api.js';
 import { Section, Label, Chip, Skeleton } from './primitives.jsx';
 import { TeamLogo } from './Logo.jsx';
@@ -24,7 +24,7 @@ export const OpponentPreview = ({ nextGame, standings }) => {
 
   // Opponent Edge data
   const oppTeamId = oppRow ? null : null; // We'd need team ID mapping; use abbr-based lookup
-  const oppEdgePath = opp ? `v1/edge/team-detail/${opp === 'PHI' ? 4 : 0}/${SEASON}/2` : null;
+  const oppEdgePath = opp ? `v1/edge/team-detail/${opp === TEAM_ABBR ? 4 : 0}/${SEASON}/2` : null;
   // Edge team endpoints use numeric IDs, not abbreviations. Skip if we don't have the mapping.
 
   // Opponent club stats for top scorers
@@ -83,7 +83,7 @@ export const OpponentPreview = ({ nextGame, standings }) => {
         {/* Matchup header */}
         <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-4">
           <div className="text-center">
-            <TeamLogo abbr="PHI" size={48} />
+            <TeamLogo abbr={TEAM_ABBR} size={48} />
             <div className="text-[14px] font-semibold mt-2">PHI</div>
             {usRow && (
               <div className="text-[11px] font-mono text-white/50 mt-0.5">

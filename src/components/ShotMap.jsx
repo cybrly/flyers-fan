@@ -249,7 +249,7 @@ const ShotTooltip = ({ hover, oppAbbr, containerW }) => {
   const cfg = KIND_BADGE[s.kind] || { label: s.kind, tone: 'default' };
   const isGoal = s.kind === 'goal';
   const isBlock = s.kind === 'blocked-shot';
-  const teamLabel = s.isUs ? 'PHI' : (oppAbbr || 'OPP');
+  const teamLabel = s.isUs ? TEAM_ABBR : (oppAbbr || 'OPP');
 
   // Best-effort position: 14px right of cursor, 8px above. If the tooltip
   // would overflow the right edge, flip it to the left of the cursor.
@@ -265,10 +265,10 @@ const ShotTooltip = ({ hover, oppAbbr, containerW }) => {
     >
       <div className="px-3 py-2 border-b border-white/[0.06] flex items-center justify-between">
         <span className={cx('text-[10px] font-mono uppercase tracking-wider font-semibold',
-          cfg.tone === 'orange' ? 'text-[#FF8A4C]' : cfg.tone === 'muted' ? 'text-white/45' : 'text-white/85'
+          cfg.tone === 'orange' ? 'text-[var(--team-accent)]' : cfg.tone === 'muted' ? 'text-white/45' : 'text-white/85'
         )}>{cfg.label}</span>
         <span className={cx('text-[10px] font-mono',
-          s.isUs ? 'text-[#FF8A4C]' : 'text-white/65'
+          s.isUs ? 'text-[var(--team-accent)]' : 'text-white/65'
         )}>{teamLabel}</span>
       </div>
 
@@ -284,7 +284,7 @@ const ShotTooltip = ({ hover, oppAbbr, containerW }) => {
             {s.shotType ? (SHOT_TYPE_LABEL[s.shotType] || s.shotType) : '—'}
             {s.distFt != null && <span className="text-white/35"> · {s.distFt} ft</span>}
             {s.xG != null && <span className="text-white/35"> · </span>}
-            {s.xG != null && <span className={s.xG >= 0.15 ? 'text-[#FF8A4C]' : 'text-white/55'}>{s.xG.toFixed(2)} xG</span>}
+            {s.xG != null && <span className={s.xG >= 0.15 ? 'text-[var(--team-accent)]' : 'text-white/55'}>{s.xG.toFixed(2)} xG</span>}
           </div>
         )}
         <div className="text-[10px] font-mono text-white/50 tabular-nums">
@@ -442,7 +442,7 @@ export const ShotMap = ({ pbpData, oppAbbr }) => {
     <div className="p-3 sm:p-4">
       <div className="flex items-center justify-between flex-wrap gap-2 mb-3">
         <div className="flex items-center gap-3 text-[11px] font-mono">
-          <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-[#F74902]" /><span className="text-[#FF8A4C]">PHI</span><span className="text-white/65 tabular-nums">{usCounts.g}G · {usCounts.sog}SOG · {usCounts.miss}M</span><span className="text-white/35 tabular-nums">· {usCounts.xG.toFixed(1)} xG</span></span>
+          <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-[var(--team-primary)]" /><span className="text-[var(--team-accent)]">{TEAM_ABBR}</span><span className="text-white/65 tabular-nums">{usCounts.g}G · {usCounts.sog}SOG · {usCounts.miss}M</span><span className="text-white/35 tabular-nums">· {usCounts.xG.toFixed(1)} xG</span></span>
           <span className="text-white/15">|</span>
           <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-white" /><span className="text-white/65">{oppAbbr}</span><span className="text-white/65 tabular-nums">{themCounts.g}G · {themCounts.sog}SOG · {themCounts.miss}M</span><span className="text-white/35 tabular-nums">· {themCounts.xG.toFixed(1)} xG</span></span>
         </div>
@@ -463,7 +463,7 @@ export const ShotMap = ({ pbpData, oppAbbr }) => {
           <div className="flex items-center gap-0.5 p-0.5 border border-white/[0.08] rounded-md bg-white/[0.02]">
             {[
               { id: 'all',  l: 'Both' },
-              { id: 'us',   l: 'PHI' },
+              { id: 'us',   l: TEAM_ABBR },
               { id: 'them', l: oppAbbr || 'Opp' },
             ].map((t) => (
               <button key={t.id} onClick={() => setFilter(t.id)}
@@ -501,7 +501,7 @@ export const ShotMap = ({ pbpData, oppAbbr }) => {
         <div className="flex items-center justify-center gap-4 mt-3 text-[10px] font-mono text-white/40 uppercase tracking-wider">
           <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-white/85 inline-block" />SOG</span>
           <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full border border-white/65 inline-block" />Miss/Block</span>
-          <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-full bg-[#F74902] inline-block" />Goal</span>
+          <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-full bg-[var(--team-primary)] inline-block" />Goal</span>
         </div>
       ) : (
         <div className="flex items-center justify-center gap-3 mt-3 text-[10px] font-mono text-white/40 uppercase tracking-wider">

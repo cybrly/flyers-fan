@@ -115,11 +115,11 @@ export function MomentumChart({ events, isHome, mode: initialMode, periods = 3 }
       <div className="px-4 py-3">
         <div className="flex items-center justify-between mb-2">
           <div className="text-[11px] text-white/50">
-            <span className="text-[#FF8A4C] font-medium">PHI advantage</span> above the line,
+            <span className="text-[var(--team-accent)] font-medium">{TEAM_ABBR} advantage</span> above the line,
             opponent below
           </div>
           <div className="flex items-center gap-3 text-[10px] font-mono text-white/40">
-            <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-[#F74902]" /> PHI goal</span>
+            <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-[var(--team-primary)]" />  {TEAM_ABBR} goal</span>
             <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-white/40" /> OPP goal</span>
           </div>
         </div>

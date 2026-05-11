@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { ArrowLeft, AlertCircle } from 'lucide-react';
-import { cx, isLive } from '../config.js';
+import { cx, isLive, TEAM_ABBR } from '../config.js';
 import { useNHL } from '../api.js';
 import { Chip, Section, Skeleton, ScoreReadout } from '../components/primitives.jsx';
-import { FlyersMark, TeamLogo } from '../components/Logo.jsx';
+import { TeamLogo } from '../components/Logo.jsx';
 import { PlayerLink } from '../components/PlayerLink.jsx';
 import { Headshot } from '../components/Headshot.jsx';
 import { ShotMap } from '../components/ShotMap.jsx';
@@ -89,7 +89,7 @@ const CompareRow = ({ label, us, them, higherBetter = true, suffix = '', format 
               width: `${usShare}%`,
               background: tied
                 ? 'rgba(255,255,255,0.20)'
-                : 'linear-gradient(to left, rgba(247,73,2,0.95), rgba(247,73,2,0.55))',
+                : 'linear-gradient(to left, color-mix(in srgb, var(--team-primary) 95%, transparent), color-mix(in srgb, var(--team-primary) 55%, transparent))',
             }}
           />
         </div>
@@ -156,14 +156,14 @@ const TeamComparisonFooter = ({ game }) => {
   if (stats.length === 0) return null;
 
   const edge = usWins - themWins;
-  const verdict = edge > 0 ? 'PHI ahead in the box score' :
+  const verdict = edge > 0 ? `${TEAM_ABBR} ahead in the box score` :
                   edge < 0 ? `${game.oppAbbr || 'Opp'} ahead in the box score` :
                   'Box score is even';
 
   return (
     <div className="border-t border-white/[0.05] px-5 py-3 flex items-center justify-between flex-wrap gap-3 bg-gradient-to-t from-white/[0.012] to-transparent">
       <div className="flex items-center gap-2 text-[11px] font-mono uppercase tracking-wider">
-        <span className="text-[#FF8A4C] font-semibold tabular-nums">PHI {usWins}</span>
+        <span className="text-[var(--team-accent)] font-semibold tabular-nums">{TEAM_ABBR} {usWins}</span>
         <span className="text-white/25">·</span>
         <span className="text-white/40">Tied {ties}</span>
         <span className="text-white/25">·</span>
@@ -213,7 +213,7 @@ const PBPRow = ({ ev }) => {
   return (
     <div className={cx(
       'grid grid-cols-[44px_46px_1fr] items-start gap-3 px-4 py-2 transition-colors',
-      ev.us && 'bg-[#F74902]/[0.04]',
+      ev.us && 'bg-[var(--team-primary)]/[0.04]',
       isGoal && !ev.us && 'bg-white/[0.02]',
       fresh && 'pulse-row',
     )}>
@@ -227,7 +227,7 @@ const PBPRow = ({ ev }) => {
       <div className="min-w-0">
         <div className="flex items-center gap-1.5">
           <span className={cx('text-[10px] font-mono shrink-0',
-            ev.us ? 'text-[#FF8A4C]' : 'text-white/40'
+            ev.us ? 'text-[var(--team-accent)]' : 'text-white/40'
           )}>{ev.team}</span>
           <span className={cx('text-[12px] truncate',
             isGoal ? 'font-medium text-white' : 'text-white/80'
@@ -255,7 +255,7 @@ const GoalieRow = ({ g, isUs, teamAbbr }) => (
         {g.starter && <span className="text-[9px] font-mono text-white/35">START</span>}
         {g.decision && (
           <span className={cx('text-[10px] font-mono px-1 rounded',
-            g.decision === 'W' ? 'bg-[#F74902]/15 text-[#FF8A4C]' :
+            g.decision === 'W' ? 'bg-[var(--team-primary)]/15 text-[var(--team-accent)]' :
             g.decision === 'L' ? 'bg-white/[0.04] text-white/45' :
             'bg-white/[0.04] text-white/55'
           )}>{g.decision}</span>
@@ -268,7 +268,7 @@ const GoalieRow = ({ g, isUs, teamAbbr }) => (
       g.ga === 0 ? 'text-emerald-400' : g.ga >= 4 ? 'text-red-400' : 'text-white/65'
     )}>{g.ga ?? '—'}</td>
     <td className={cx('px-2 text-right text-[11px] font-mono tabular-nums',
-      g.savePct >= 92 ? (isUs ? 'text-[#FF8A4C]' : 'text-emerald-400') : 'text-white/65'
+      g.savePct >= 92 ? (isUs ? 'text-[var(--team-accent)]' : 'text-emerald-400') : 'text-white/65'
     )}>{g.savePct != null ? `${g.savePct}%` : '—'}</td>
     <td className="px-4 text-right text-[11px] font-mono tabular-nums text-white/55">{g.toi}</td>
   </tr>
@@ -287,10 +287,10 @@ export const GameTape = ({ game, loading, pbp, pbpRaw, liveSnap, liveConnected, 
   if (!game) {
     return (
       <div className="p-4 md:p-6">
-        <div className="border border-[#F74902]/[0.18] bg-[#0C0C0C]/60 rounded-md p-10 text-center relative overflow-hidden">
+        <div className="border border-[var(--team-primary)]/[0.18] bg-[#0C0C0C]/60 rounded-md p-10 text-center relative overflow-hidden">
           <div className="absolute -top-20 -right-20 w-60 h-60 rounded-full pointer-events-none"
             style={{ background: 'radial-gradient(circle, rgba(255,255,255,0.03), transparent 60%)' }} />
-          <div className="flex justify-center"><FlyersMark size={28} /></div>
+          <div className="flex justify-center"><TeamLogo abbr={TEAM_ABBR} size={28} /></div>
           <div className="text-[14px] text-white/85 mt-4">Between periods.</div>
           <div className="text-[11px] font-mono text-white/40 mt-1">No game in progress. Tape will populate after the next puck drop.</div>
         </div>
@@ -451,7 +451,7 @@ export const GameTape = ({ game, loading, pbp, pbpRaw, liveSnap, liveConnected, 
       {/* Periods strip — kept under the Hero since it's a Game Tape
           specific surface (scoring by period across the full game) and
           doesn't live on the Dashboard Hero. */}
-      <div className="border border-[#F74902]/[0.18] bg-[#0C0C0C]/60 rounded-md p-4 relative overflow-hidden">
+      <div className="border border-[var(--team-primary)]/[0.18] bg-[#0C0C0C]/60 rounded-md p-4 relative overflow-hidden">
         {periods.length > 0 && (
           <div className="relative grid grid-cols-4 gap-2">
             {periods.map((p) => {
@@ -460,16 +460,16 @@ export const GameTape = ({ game, loading, pbp, pbpRaw, liveSnap, liveConnected, 
                 <div key={p} className="flex items-center justify-between bg-white/[0.02] border border-white/[0.04] rounded-sm px-3 h-9">
                   <span className="text-[10px] font-mono text-white/40 uppercase">P{p}</span>
                   <span className="font-mono tabular-nums text-[13px]">
-                    <span className={u > t ? 'text-[#FF8A4C] font-medium' : 'text-white/60'}>{u}</span>
+                    <span className={u > t ? 'text-[var(--team-accent)] font-medium' : 'text-white/60'}>{u}</span>
                     <span className="text-white/20 mx-1">–</span>
                     <span className={t > u ? 'text-white font-medium' : 'text-white/60'}>{t}</span>
                   </span>
                 </div>
               );
             })}
-            <div className="flex items-center justify-between bg-[#F74902]/[0.08] border border-[#F74902]/20 rounded-sm px-3 h-9">
-              <span className="text-[10px] font-mono text-[#FF8A4C]/70 uppercase">{liveNow ? 'Now' : 'Final'}</span>
-              <span className="font-mono tabular-nums text-[13px] text-[#FF8A4C] font-medium">
+            <div className="flex items-center justify-between bg-[var(--team-primary)]/[0.08] border border-[var(--team-primary)]/20 rounded-sm px-3 h-9">
+              <span className="text-[10px] font-mono text-[var(--team-accent)]/70 uppercase">{liveNow ? 'Now' : 'Final'}</span>
+              <span className="font-mono tabular-nums text-[13px] text-[var(--team-accent)] font-medium">
                 {liveScore.us}–{liveScore.them}
               </span>
             </div>
@@ -488,10 +488,10 @@ export const GameTape = ({ game, loading, pbp, pbpRaw, liveSnap, liveConnected, 
           <div className="grid grid-cols-[1fr_72px_140px_72px_1fr] items-center gap-4 h-16 px-5 border-b border-white/[0.05] bg-gradient-to-b from-white/[0.015] to-transparent">
             <div className="col-span-2 flex items-center justify-end gap-3">
               <div className="text-right">
-                <div className="text-[18px] font-semibold tracking-tight text-[#FF8A4C] leading-none">PHI</div>
-                <div className="text-[10px] font-mono text-white/35 uppercase tracking-wider mt-1">Flyers</div>
+                <div className="text-[18px] font-semibold tracking-tight text-[var(--team-accent)] leading-none">{TEAM_ABBR}</div>
+                <div className="text-[10px] font-mono text-white/35 uppercase tracking-wider mt-1">{TEAM_ABBR}</div>
               </div>
-              <FlyersMark size={36} />
+              <TeamLogo abbr={TEAM_ABBR} size={36} />
             </div>
             <div className="flex flex-col items-center gap-1">
               <span className="text-[9px] font-mono text-white/30 tracking-[0.22em] uppercase">vs</span>
@@ -547,7 +547,7 @@ export const GameTape = ({ game, loading, pbp, pbpRaw, liveSnap, liveConnected, 
               <div className="divide-y divide-white/[0.04]">
                 {game.stars.map((s) => (
                   <div key={s.star} className="flex items-center gap-3 px-4 py-3">
-                    <span className="text-[22px] font-semibold tabular-nums text-[#F74902]/60 w-8">★{s.star}</span>
+                    <span className="text-[22px] font-semibold tabular-nums text-[var(--team-primary)]/60 w-8">★{s.star}</span>
                     <Headshot playerId={s.id} teamAbbrev={s.teamAbbrev} size={32} />
                     <div className="flex-1 min-w-0">
                       <div className="flex items-baseline justify-between gap-2">
@@ -669,11 +669,11 @@ export const GameTape = ({ game, loading, pbp, pbpRaw, liveSnap, liveConnected, 
                   </thead>
                   <tbody className="divide-y divide-white/[0.04]">
                     {game.goalies.us.length > 0 && (
-                      <tr className="bg-[#F74902]/[0.04]">
-                        <td colSpan={7} className="px-4 h-7 text-[10px] font-mono text-[#FF8A4C]/80 uppercase tracking-wider">PHI</td>
+                      <tr className="bg-[var(--team-primary)]/[0.04]">
+                        <td colSpan={7} className="px-4 h-7 text-[10px] font-mono text-[var(--team-accent)]/80 uppercase tracking-wider">{TEAM_ABBR}</td>
                       </tr>
                     )}
-                    {game.goalies.us.map((g) => <GoalieRow key={`u-${g.num}`} g={g} isUs teamAbbr="PHI" />)}
+                    {game.goalies.us.map((g) => <GoalieRow key={`u-${g.num}`} g={g} isUs teamAbbr={TEAM_ABBR} />)}
                     {game.goalies.them.length > 0 && (
                       <tr className="bg-white/[0.02]">
                         <td colSpan={7} className="px-4 h-7 text-[10px] font-mono text-white/45 uppercase tracking-wider">{game.oppAbbr}</td>
@@ -692,7 +692,7 @@ export const GameTape = ({ game, loading, pbp, pbpRaw, liveSnap, liveConnected, 
                 {game.timeline.map((g, i) => (
                   <div key={i} className={cx(
                     'grid grid-cols-[36px_56px_1fr_84px_auto] items-center gap-3 px-4 py-2 min-h-[48px]',
-                    g.us ? 'bg-[#F74902]/[0.04]' : 'hover:bg-white/[0.02]',
+                    g.us ? 'bg-[var(--team-primary)]/[0.04]' : 'hover:bg-white/[0.02]',
                   )}>
                     <span className="text-[10px] font-mono text-white/40 uppercase">
                       P{g.period}{g.periodType === 'OT' ? ' OT' : g.periodType === 'SO' ? ' SO' : ''}
@@ -716,7 +716,7 @@ export const GameTape = ({ game, loading, pbp, pbpRaw, liveSnap, liveConnected, 
                             assists: {g.assists.map((a, i) => (
                               <React.Fragment key={a.id || i}>
                                 {i > 0 && ', '}
-                                <PlayerLink playerId={a.id} className="text-white/55 hover:text-[#FF8A4C]">{a.name}</PlayerLink>
+                                <PlayerLink playerId={a.id} className="text-white/55 hover:text-[var(--team-accent)]">{a.name}</PlayerLink>
                               </React.Fragment>
                             ))}
                           </div>
@@ -737,7 +737,7 @@ export const GameTape = ({ game, loading, pbp, pbpRaw, liveSnap, liveConnected, 
                         target="_blank"
                         rel="noopener noreferrer"
                         title="Watch highlight on NHL.com"
-                        className="inline-flex items-center gap-1 px-2 py-1 rounded-md border border-[#F74902]/30 bg-[#F74902]/10 text-[#FF8A4C] hover:bg-[#F74902]/20 hover:border-[#F74902]/50 transition-colors text-[10px] font-mono leading-none whitespace-nowrap"
+                        className="inline-flex items-center gap-1 px-2 py-1 rounded-md border border-[var(--team-primary)]/30 bg-[var(--team-primary)]/10 text-[var(--team-accent)] hover:bg-[var(--team-primary)]/20 hover:border-[var(--team-primary)]/50 transition-colors text-[10px] font-mono leading-none whitespace-nowrap"
                         aria-label="Watch highlight"
                       >
                         <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor" className="shrink-0"><path d="M8 5v14l11-7z" /></svg>
@@ -775,10 +775,10 @@ const GameInfoPanel = ({ game }) => {
             <div className="text-[10px] font-mono text-white/40 uppercase tracking-wider mb-2">Officials</div>
             {o.referees.length > 0 && (
               <div className="space-y-1 mb-2">
-                <div className="text-[10px] font-mono text-[#FF8A4C]/70">Referees</div>
+                <div className="text-[10px] font-mono text-[var(--team-accent)]/70">Referees</div>
                 {o.referees.map((n, i) => (
                   <div key={i} className="text-[12px] text-white/85 flex items-center gap-2">
-                    <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-[#F74902]/15 border border-[#F74902]/30 text-[9px] font-mono text-[#FF8A4C]">R</span>
+                    <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-[var(--team-primary)]/15 border border-[var(--team-primary)]/30 text-[9px] font-mono text-[var(--team-accent)]">R</span>
                     <span>{n}</span>
                   </div>
                 ))}
@@ -803,7 +803,7 @@ const GameInfoPanel = ({ game }) => {
             <div className="text-[10px] font-mono text-white/40 uppercase tracking-wider mb-2">Head Coaches</div>
             {c.us && (
               <div className="text-[12px] text-white/85 mb-1">
-                <span className="text-[#FF8A4C] font-mono text-[10px] mr-2">PHI</span>
+                <span className="text-[var(--team-accent)] font-mono text-[10px] mr-2">{TEAM_ABBR}</span>
                 {c.us}
               </div>
             )}
@@ -821,7 +821,7 @@ const GameInfoPanel = ({ game }) => {
             <div className="text-[10px] font-mono text-white/40 uppercase tracking-wider mb-2">Scratches</div>
             {sc.us?.length > 0 && (
               <div className="mb-2">
-                <div className="text-[10px] font-mono text-[#FF8A4C]/70 mb-1">PHI · {sc.us.length}</div>
+                <div className="text-[10px] font-mono text-[var(--team-accent)]/70 mb-1">{TEAM_ABBR} · {sc.us.length}</div>
                 <div className="flex flex-wrap gap-1">
                   {sc.us.map((p) => (
                     <span key={p.id} className="inline-flex items-center gap-1 text-[11px] font-mono px-2 h-5 rounded-sm bg-white/[0.04] text-white/70">

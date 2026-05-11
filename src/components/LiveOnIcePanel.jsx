@@ -311,7 +311,7 @@ const LiveMatchup = ({ phiOn, oppOn, oppAbbr, periodLabel, periodElapsed }) => {
       }
     >
       <div className="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-white/[0.05]">
-        <MatchupSide skaters={phiOn} label="PHI" logo={<FlyersMark size={20} />} accent="text-[#FF8A4C]" abbr="PHI" side="left" />
+        <MatchupSide skaters={phiOn} label={TEAM_ABBR} logo={<FlyersMark size={20} />} accent="text-[#FF8A4C]" abbr={TEAM_ABBR} side="left" />
         <MatchupSide skaters={oppOn} label={oppAbbr || 'OPP'} logo={<TeamLogo abbr={oppAbbr} size={20} />} accent="text-white/85" abbr={oppAbbr} side="right" />
       </div>
     </Section>

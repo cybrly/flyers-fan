@@ -6,6 +6,7 @@ import { FlyersMark, TeamLogo } from './Logo.jsx';
 import { NAV_ITEMS, NAV_GROUPS } from './nav.js';
 import { navigate, playerHref } from '../router.js';
 import { TeamSwitcherPrank } from './TeamSwitcherPrank.jsx';
+import { useTeam, TEAM_COLORS, ALL_TEAMS } from '../teamContext.jsx';
 
 const COLLAPSED_KEY = 'flyersfan.sidebar-collapsed';
 
@@ -79,7 +80,7 @@ export const Sidebar = ({ page, setPage, team, liveGame, metro, roster, lastFetc
         mobileOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0',
       )}>
       <div className={cx(
-        'h-12 flex items-center border-b border-[#F74902]/[0.22] gap-1',
+        'h-12 flex items-center border-b border-white/[0.08] gap-1',
         collapsed ? 'justify-center px-1' : 'justify-between px-3',
       )}>
         {collapsed ? (
@@ -133,23 +134,7 @@ export const Sidebar = ({ page, setPage, team, liveGame, metro, roster, lastFetc
         </button>
       )}
 
-      {!collapsed && (
-        <div className="px-3 py-3 border-b border-white/[0.05]">
-          <div className="w-full group flex items-center justify-between px-2 py-1.5 rounded-md">
-            <div className="flex items-center gap-2 min-w-0">
-              <div className="w-5 h-5 bg-gradient-to-br from-[#F74902] to-[#A82E00] rounded-sm flex items-center justify-center shrink-0">
-                <span className="text-[9px] font-bold text-black font-mono">PHI</span>
-              </div>
-              <div className="min-w-0 text-left">
-                <div className="text-[11px] font-medium truncate">{SEASON_LABEL} Season</div>
-                <div className="text-[10px] text-white/40 font-mono">
-                  {team ? `${team.w}–${team.l} · Metro #${team.divRank}` : <span className="text-white/30">loading…</span>}
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+      {!collapsed && <SidebarTeamSelector team={team} />}
 
       <nav aria-label="Primary navigation" className={cx('flex-1 overflow-y-auto py-3', collapsed ? 'px-1' : 'px-2')}>
         {NAV_GROUPS.map((group) => {
@@ -366,6 +351,36 @@ const SidebarRoster = ({ roster }) => {
             </div>
           </div>
         ))}
+      </div>
+    </div>
+  );
+};
+
+const SidebarTeamSelector = ({ team }) => {
+  const { teamAbbr, setTeamAbbr, colors, teamName } = useTeam();
+  return (
+    <div className="px-3 py-3 border-b border-white/[0.05]">
+      <div className="flex items-center gap-2 px-2 py-1.5">
+        <TeamLogo abbr={teamAbbr} size={20} />
+        <div className="flex-1 min-w-0">
+          <select
+            value={teamAbbr}
+            onChange={(e) => setTeamAbbr(e.target.value)}
+            className="w-full bg-transparent text-[11px] font-medium text-white/85 border-none outline-none cursor-pointer appearance-none"
+            style={{ colorScheme: 'dark' }}
+            aria-label="Select team"
+          >
+            {ALL_TEAMS.map((abbr) => (
+              <option key={abbr} value={abbr} style={{ background: '#111', color: '#ddd' }}>
+                {TEAM_COLORS[abbr].name}
+              </option>
+            ))}
+          </select>
+          <div className="text-[10px] text-white/40 font-mono">
+            {team ? `${team.w}–${team.l} · ${team.division || 'Metro'} #${team.divRank}` : <span className="text-white/30">loading…</span>}
+          </div>
+        </div>
+        <ChevronRight size={12} className="text-white/30 shrink-0" />
       </div>
     </div>
   );

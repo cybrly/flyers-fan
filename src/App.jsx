@@ -2,7 +2,8 @@ import { useState, useEffect, useMemo, useCallback, lazy, Suspense } from 'react
 import { SpeedInsights } from '@vercel/speed-insights/react';
 import { Analytics } from '@vercel/analytics/react';
 
-import { TEAM_ABBR, SEASON, POLL, PLAYOFF_YEAR, UPCOMING_DRAFT_YEAR, PRIOR_DRAFT_YEAR, isLive, isFuture } from './config.js';
+import { SEASON, POLL, PLAYOFF_YEAR, UPCOMING_DRAFT_YEAR, PRIOR_DRAFT_YEAR, isLive, isFuture, setActiveTeam } from './config.js';
+import { useTeam } from './teamContext.jsx';
 import { useNHL, useClockTick, useLiveStream } from './api.js';
 import { PlayerCtx } from './context.js';
 import { useRoute, navigate, setOverlay, pageHref, gameHref } from './router.js';
@@ -70,6 +71,11 @@ const Definitions = lazyPage(() => import('./pages/Definitions.jsx'), 'Definitio
 const Forecast = lazyPage(() => import('./pages/Forecast.jsx'), 'Forecast');
 
 export default function App() {
+  const { teamAbbr: TEAM_ABBR, colors: teamColors, teamName, isPHI } = useTeam();
+  // Sync the mutable config.js TEAM_ABBR so adapters (which import from
+  // config.js, not React context) see the correct team on every render.
+  setActiveTeam(TEAM_ABBR);
+
   // Route-derived state — URL is the source of truth. /game/123, ?player=8478,
   // ?series=A all survive refresh and become shareable links.
   const { page, gameId: routeGameId, profileId, playerId, seriesLetter } = useRoute();
@@ -337,7 +343,11 @@ export default function App() {
     </a>
     <div
       className="min-h-screen bg-[#0A0A0A] text-white/90 relative"
-      style={{ '--header-offset': schedule.liveGame && page !== 'game' ? '84px' : '48px' }}
+      style={{
+        '--header-offset': schedule.liveGame && page !== 'game' ? '84px' : '48px',
+        '--team-primary': teamColors.primary,
+        '--team-accent': teamColors.accent,
+      }}
     >
       {/* Page-top Flyers watermark — only on the dashboard. Other pages
           stay on a flat charcoal surface with no logo wash so dense data

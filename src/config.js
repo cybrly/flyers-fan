@@ -1,6 +1,10 @@
 // Constants, formatters, and tiny utilities. No React, no fetch — pure.
 
-export const TEAM_ABBR = 'PHI';
+// Active team — mutable at runtime. When the user picks a different team
+// from the sidebar dropdown, setActiveTeam() updates this and App re-renders,
+// causing all hooks/adapters to re-read the new value.
+export let TEAM_ABBR = 'PHI';
+export const setActiveTeam = (abbr) => { TEAM_ABBR = abbr; };
 
 // Auto-rollover season. NHL seasons span Oct → Apr/Jun (regular season +
 // playoffs); the new season's schedule lands in late summer. We flip on

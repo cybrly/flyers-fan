@@ -1,7 +1,7 @@
 import { DollarSign, ExternalLink } from 'lucide-react';
 import { cx } from '../config.js';
 import { getTeamContracts, fmtMillions, fmtCapPct, SALARY_CAP_CEILING } from '../data/playerContracts.js';
-import { TEAM_ABBR } from '../config.js';
+import { useTeam } from '../teamContext.jsx';
 
 // Contract card on the Player Profile hero. Two states mirror the
 // signature panel pattern: render the curated terms when present,
@@ -28,8 +28,9 @@ const Stat = ({ label, value, tone }) => (
 );
 
 export const ContractPanel = ({ playerId, fullName }) => {
+  const { teamAbbr } = useTeam();
   const c = (() => {
-    const contracts = getTeamContracts(TEAM_ABBR);
+    const contracts = getTeamContracts(teamAbbr);
     if (!contracts.length || !fullName) return null;
     const name = fullName.toLowerCase().trim();
     const lastName = name.split(' ').pop();

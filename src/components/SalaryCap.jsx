@@ -5,7 +5,7 @@ import { TeamLogoBg } from './Watermark.jsx';
 import {
   getTeamContracts, SALARY_CAP_CEILING, fmtMillions, fmtCapPct,
 } from '../data/playerContracts.js';
-import { TEAM_ABBR } from '../config.js';
+import { useTeam } from '../teamContext.jsx';
 
 // Team-wide salary cap dashboard for the Roster page. Reads from the
 // curated PuckPedia snapshot in playerContracts.js — TEAM_CAP for the
@@ -23,9 +23,9 @@ const POSITION_BUCKETS = {
 
 const inBucket = (pos, key) => POSITION_BUCKETS[key].some((p) => pos === p);
 
-const sumByBucket = () => {
+const sumByBucket = (abbr) => {
   const totals = { F: 0, D: 0, G: 0, total: 0 };
-  const contracts = getTeamContracts(TEAM_ABBR);
+  const contracts = getTeamContracts(abbr);
   for (const c of contracts) {
     if (!c.capHit) continue;
     totals.total += c.capHit;
@@ -50,7 +50,8 @@ const Stat = ({ label, value, sub, tone }) => (
 );
 
 export const SalaryCap = ({ roster }) => {
-  const totals = useMemo(() => sumByBucket(), []);
+  const { teamAbbr } = useTeam();
+  const totals = useMemo(() => sumByBucket(teamAbbr), [roster, teamAbbr]);
   const projectedHit = totals.total;
   const projectedSpace = SALARY_CAP_CEILING - totals.total;
   const ceiling = SALARY_CAP_CEILING;
@@ -110,12 +111,12 @@ export const SalaryCap = ({ roster }) => {
           />
           <Stat
             label="Players"
-            value={getTeamContracts(TEAM_ABBR).length}
+            value={getTeamContracts(teamAbbr).length}
             sub="on file"
           />
           <Stat
             label="Avg Cap Hit"
-            value={totals.total && getTeamContracts(TEAM_ABBR).length ? fmtMillions(Math.round(totals.total / getTeamContracts(TEAM_ABBR).length)) : '—'}
+            value={totals.total && getTeamContracts(teamAbbr).length ? fmtMillions(Math.round(totals.total / getTeamContracts(teamAbbr).length)) : '—'}
             sub="per player"
           />
         </div>

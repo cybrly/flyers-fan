@@ -4,7 +4,7 @@ import { Section } from './primitives.jsx';
 import { Headshot } from './Headshot.jsx';
 import { PlayerLink } from './PlayerLink.jsx';
 import { getTeamContracts, fmtMillions } from '../data/playerContracts.js';
-import { TEAM_ABBR } from '../config.js';
+import { useTeam } from '../teamContext.jsx';
 
 // PuckPedia-style year-by-year contract grid for the Roster page.
 // Each row: player ▸ 5 season columns (current + next 4) ▸ expiry
@@ -112,6 +112,7 @@ const Group = ({ title, players, totals, seasons, color }) => {
 };
 
 export const ContractGrid = ({ roster }) => {
+  const { teamAbbr } = useTeam();
   const seasons = useMemo(
     () => Array.from({ length: 5 }, (_, i) => FIRST_SEASON + i),
     [],
@@ -119,7 +120,7 @@ export const ContractGrid = ({ roster }) => {
 
   const groups = useMemo(() => {
     if (!roster) return null;
-    const teamContracts = getTeamContracts(TEAM_ABBR);
+    const teamContracts = getTeamContracts(teamAbbr);
     // Match roster players to contract data by name or jersey number
     const findContract = (p) => {
       const name = (p.fullName || p.name || '').toLowerCase();
@@ -137,7 +138,7 @@ export const ContractGrid = ({ roster }) => {
     const def = tag(roster.defense  || []).sort(sortByCap);
     const goa = tag(roster.goalies  || []).sort(sortByCap);
     return { fwd, def, goa };
-  }, [roster]);
+  }, [roster, teamAbbr]);
 
   const totalsForSeason = (entries, yearStart) => {
     return entries.reduce((sum, { contract }) => {

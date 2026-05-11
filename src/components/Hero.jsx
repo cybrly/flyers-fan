@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { cx, OPP_FULL, fmtTime, fmtDateFull } from '../config.js';
+import { cx, OPP_FULL, TEAM_ABBR, fmtTime, fmtDateFull } from '../config.js';
 import { useScoreBurst } from '../api.js';
 import { Chip } from './primitives.jsx';
 import { FlyersMark, TeamLogo } from './Logo.jsx';
@@ -328,9 +328,9 @@ const HeroLive = ({ liveGame, liveDetail, liveSnap, oppFull, recentGames, oppRow
       <div className="relative grid grid-cols-2 sm:grid-cols-[1fr_auto_1fr] items-center gap-y-4 gap-x-3 sm:gap-x-8 mt-5">
         {goalBurst && <GoalCelebration />}
         <TeamSide
-          logoSm={<FlyersMark size={44} />}
-          logoLg={<FlyersMark size={88} />}
-          abbr="PHI"
+          logoSm={<TeamLogo abbr={TEAM_ABBR} size={44} />}
+          logoLg={<TeamLogo abbr={TEAM_ABBR} size={88} />}
+          abbr={TEAM_ABBR}
           side="left"
           sub={<FormDots games={recentGames} />}
         />
@@ -442,9 +442,9 @@ const HeroNext = ({ nextGame, oppFull, recentGames, oppRow }) => {
       </div>
       <div className="grid grid-cols-2 sm:grid-cols-[1fr_auto_1fr] items-center gap-y-4 gap-x-3 sm:gap-x-8 mt-5">
         <TeamSide
-          logoSm={<FlyersMark size={44} />}
-          logoLg={<FlyersMark size={88} />}
-          abbr="PHI"
+          logoSm={<TeamLogo abbr={TEAM_ABBR} size={44} />}
+          logoLg={<TeamLogo abbr={TEAM_ABBR} size={88} />}
+          abbr={TEAM_ABBR}
           side="left"
           sub={<FormDots games={recentGames} />}
         />
@@ -501,9 +501,9 @@ const HeroLatest = ({ lastResult, oppFull, recentGames, oppRow }) => (
     </div>
     <div className="grid grid-cols-2 sm:grid-cols-[1fr_auto_1fr] items-center gap-y-4 gap-x-3 sm:gap-x-8 mt-5">
       <TeamSide
-        logoSm={<FlyersMark size={44} />}
-        logoLg={<FlyersMark size={88} />}
-        abbr="PHI"
+        logoSm={<TeamLogo abbr={TEAM_ABBR} size={44} />}
+        logoLg={<TeamLogo abbr={TEAM_ABBR} size={88} />}
+        abbr={TEAM_ABBR}
         side="left"
         sub={<FormDots games={recentGames} />}
       />
@@ -596,7 +596,7 @@ export const Hero = ({ liveGame, liveDetail, liveSnap, nextGame, lastResult, us,
             preserves the dramatic background presence the user wants while
             avoiding the brown / tinted-surface problem that solid-color
             watermarks always cause on a dark panel. */}
-        <Watermark url={PHI_LOGO} side="left" />
+        <Watermark url={teamLogoUrl(TEAM_ABBR)} side="left" />
         <Watermark url={teamLogoUrl(opp)} side="right" />
         {/* Page-width hockey-rink graphic + skating sweep — adds motion and a
             hockey-themed centerpiece to the otherwise empty middle band. The
@@ -614,9 +614,9 @@ export const Hero = ({ liveGame, liveDetail, liveSnap, nextGame, lastResult, us,
           lastResult ? <HeroLatest lastResult={lastResult} oppFull={oppFull} recentGames={recentGames} oppRow={oppRow} /> :
           (
             <div className="flex items-center gap-3">
-              <FlyersMark size={48} />
+              <TeamLogo abbr={TEAM_ABBR} size={48} />
               <div>
-                <div className="text-[20px] font-semibold tracking-tight">Philadelphia Flyers</div>
+                <div className="text-[20px] font-semibold tracking-tight">{OPP_FULL[TEAM_ABBR] || TEAM_ABBR}</div>
                 <div className="text-[12px] font-mono text-white/45">Loading season data…</div>
               </div>
             </div>

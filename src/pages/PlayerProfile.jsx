@@ -207,6 +207,11 @@ export const PlayerProfile = ({ playerId }) => {
                 </>
               )}
             </div>
+            {career?.gamesPlayed != null && (
+              <div className="text-[13px] font-mono text-[var(--team-accent)] mt-2 font-medium">
+                {career.gamesPlayed} career NHL games
+              </div>
+            )}
             <div className="text-[12px] font-mono text-white/45 mt-1.5 flex items-center gap-2 flex-wrap">
               {HEIGHT(data.heightInInches) !== '—' && <span>{HEIGHT(data.heightInInches)}</span>}
               {data.weightInPounds && <><span className="text-white/25">·</span><span>{data.weightInPounds} lb</span></>}

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { cx } from '../config.js';
+import { cx, TEAM_ABBR, OPP_FULL } from '../config.js';
 import { Section, Skeleton } from '../components/primitives.jsx';
 import { SkaterHotCold, GoalieHotCold } from '../components/HotCold.jsx';
 import { SalaryCap } from '../components/SalaryCap.jsx';
@@ -228,7 +228,7 @@ export const Roster = ({ roster, clubStats, prospects, draftPicks }) => {
         <div>
           <h1 className="text-[20px] font-semibold tracking-tight">Roster</h1>
           <p className="text-[12px] text-white/45 mt-1 font-mono">
-            Philadelphia Flyers · {roster.forwards.length}F · {roster.defense.length}D · {roster.goalies.length}G
+            {OPP_FULL[TEAM_ABBR] || TEAM_ABBR} · {roster.forwards.length}F · {roster.defense.length}D · {roster.goalies.length}G
           </p>
         </div>
         <div className="flex items-center gap-0.5 p-0.5 border border-white/[0.08] rounded-md bg-white/[0.02]">

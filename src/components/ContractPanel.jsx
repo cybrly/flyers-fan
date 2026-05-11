@@ -30,8 +30,13 @@ const Stat = ({ label, value, tone }) => (
 export const ContractPanel = ({ playerId, fullName }) => {
   const c = (() => {
     const contracts = getTeamContracts(TEAM_ABBR);
-    const name = (fullName || '').toLowerCase();
-    return contracts.find((ct) => (ct.name || '').toLowerCase() === name) || null;
+    if (!contracts.length || !fullName) return null;
+    const name = fullName.toLowerCase().trim();
+    const lastName = name.split(' ').pop();
+    // Try exact match first, then last-name match
+    return contracts.find((ct) => (ct.name || '').toLowerCase() === name)
+      || contracts.find((ct) => (ct.name || '').toLowerCase().endsWith(lastName))
+      || null;
   })();
   const puckpediaUrl = `https://puckpedia.com/player/${slugify(fullName)}`;
 

@@ -3,7 +3,8 @@ import { cx } from '../config.js';
 import { Section } from './primitives.jsx';
 import { Headshot } from './Headshot.jsx';
 import { PlayerLink } from './PlayerLink.jsx';
-import { PLAYER_CONTRACTS, fmtMillions } from '../data/playerContracts.js';
+import { getTeamContracts, fmtMillions } from '../data/playerContracts.js';
+import { TEAM_ABBR } from '../config.js';
 
 // PuckPedia-style year-by-year contract grid for the Roster page.
 // Each row: player ▸ 5 season columns (current + next 4) ▸ expiry
@@ -118,7 +119,19 @@ export const ContractGrid = ({ roster }) => {
 
   const groups = useMemo(() => {
     if (!roster) return null;
-    const tag = (list) => list.map((p) => ({ player: p, contract: PLAYER_CONTRACTS[p.id] || null }));
+    const teamContracts = getTeamContracts(TEAM_ABBR);
+    // Match roster players to contract data by name or jersey number
+    const findContract = (p) => {
+      const name = (p.fullName || p.name || '').toLowerCase();
+      const num = String(p.num || '');
+      return teamContracts.find((c) => {
+        const cName = (c.name || '').toLowerCase();
+        if (cName && name && (cName === name || name.includes(cName) || cName.includes(name))) return true;
+        if (num && c.num === num) return true;
+        return false;
+      }) || null;
+    };
+    const tag = (list) => list.map((p) => ({ player: p, contract: findContract(p) }));
     const sortByCap = (a, b) => (b.contract?.capHit || 0) - (a.contract?.capHit || 0);
     const fwd = tag(roster.forwards || []).sort(sortByCap);
     const def = tag(roster.defense  || []).sort(sortByCap);

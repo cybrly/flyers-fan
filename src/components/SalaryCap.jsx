@@ -3,8 +3,9 @@ import { cx } from '../config.js';
 import { Section } from './primitives.jsx';
 import { TeamLogoBg } from './Watermark.jsx';
 import {
-  TEAM_CAP, SALARY_CAP_CEILING, PLAYER_CONTRACTS, fmtMillions, fmtCapPct,
+  getTeamContracts, SALARY_CAP_CEILING, fmtMillions, fmtCapPct,
 } from '../data/playerContracts.js';
+import { TEAM_ABBR } from '../config.js';
 
 // Team-wide salary cap dashboard for the Roster page. Reads from the
 // curated PuckPedia snapshot in playerContracts.js — TEAM_CAP for the
@@ -22,16 +23,15 @@ const POSITION_BUCKETS = {
 
 const inBucket = (pos, key) => POSITION_BUCKETS[key].some((p) => pos === p);
 
-const sumByBucket = (roster) => {
-  const totals = { F: 0, D: 0, G: 0 };
-  if (!roster) return totals;
-  const all = [...(roster.forwards || []), ...(roster.defense || []), ...(roster.goalies || [])];
-  for (const p of all) {
-    const c = PLAYER_CONTRACTS[p.id];
-    if (!c?.capHit) continue;
-    if (inBucket(p.pos, 'F')) totals.F += c.capHit;
-    else if (inBucket(p.pos, 'D')) totals.D += c.capHit;
-    else if (inBucket(p.pos, 'G')) totals.G += c.capHit;
+const sumByBucket = () => {
+  const totals = { F: 0, D: 0, G: 0, total: 0 };
+  const contracts = getTeamContracts(TEAM_ABBR);
+  for (const c of contracts) {
+    if (!c.capHit) continue;
+    totals.total += c.capHit;
+    if (inBucket(c.pos, 'F')) totals.F += c.capHit;
+    else if (inBucket(c.pos, 'D')) totals.D += c.capHit;
+    else if (inBucket(c.pos, 'G')) totals.G += c.capHit;
   }
   return totals;
 };
@@ -50,9 +50,9 @@ const Stat = ({ label, value, sub, tone }) => (
 );
 
 export const SalaryCap = ({ roster }) => {
-  const totals = useMemo(() => sumByBucket(roster), [roster]);
-  const projectedHit = TEAM_CAP.projectedCapHit;
-  const projectedSpace = TEAM_CAP.projectedCapSpace;
+  const totals = useMemo(() => sumByBucket(), []);
+  const projectedHit = totals.total;
+  const projectedSpace = SALARY_CAP_CEILING - totals.total;
   const ceiling = SALARY_CAP_CEILING;
   const usedPct = projectedHit / ceiling;
   const fPct = totals.F / ceiling;

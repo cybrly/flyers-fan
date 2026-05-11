@@ -1,6 +1,7 @@
 import { DollarSign, ExternalLink } from 'lucide-react';
 import { cx } from '../config.js';
-import { getContract, fmtMillions, fmtCapPct, SALARY_CAP_CEILING } from '../data/playerContracts.js';
+import { getTeamContracts, fmtMillions, fmtCapPct, SALARY_CAP_CEILING } from '../data/playerContracts.js';
+import { TEAM_ABBR } from '../config.js';
 
 // Contract card on the Player Profile hero. Two states mirror the
 // signature panel pattern: render the curated terms when present,
@@ -27,7 +28,11 @@ const Stat = ({ label, value, tone }) => (
 );
 
 export const ContractPanel = ({ playerId, fullName }) => {
-  const c = getContract(playerId);
+  const c = (() => {
+    const contracts = getTeamContracts(TEAM_ABBR);
+    const name = (fullName || '').toLowerCase();
+    return contracts.find((ct) => (ct.name || '').toLowerCase() === name) || null;
+  })();
   const puckpediaUrl = `https://puckpedia.com/player/${slugify(fullName)}`;
 
   return (

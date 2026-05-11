@@ -109,19 +109,14 @@ export const SalaryCap = ({ roster }) => {
             sub="projected"
           />
           <Stat
-            label="LTIR Pool"
-            value={fmtMillions(TEAM_CAP.ltirPool)}
-            sub={TEAM_CAP.ltirPool > 0 ? 'available' : 'none'}
+            label="Players"
+            value={getTeamContracts(TEAM_ABBR).length}
+            sub="on file"
           />
           <Stat
-            label="Active Roster"
-            value={`${TEAM_CAP.activeRoster.count}/${TEAM_CAP.activeRoster.max}`}
-            sub="incl. exceptions"
-          />
-          <Stat
-            label="Contracts"
-            value={`${TEAM_CAP.standardContracts.count}/${TEAM_CAP.standardContracts.max}`}
-            sub="standard SPCs"
+            label="Avg Cap Hit"
+            value={totals.total && getTeamContracts(TEAM_ABBR).length ? fmtMillions(Math.round(totals.total / getTeamContracts(TEAM_ABBR).length)) : '—'}
+            sub="per player"
           />
         </div>
 

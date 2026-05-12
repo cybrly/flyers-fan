@@ -86,7 +86,7 @@ export const Sidebar = ({ page, setPage, team, liveGame, metro, roster, lastFetc
         {collapsed ? (
           <button
             onClick={() => navigate('/')}
-            aria-label="flyers.fan home"
+            aria-label="Home"
             className="flex items-center justify-center w-8 h-8 rounded-md hover:bg-white/[0.04] transition-colors"
           >
             <FlyersMark size={20} />

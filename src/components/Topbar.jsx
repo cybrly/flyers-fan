@@ -1,8 +1,26 @@
 import { ChevronRight, Search, Command, Menu } from 'lucide-react';
 import { cx, connStatus } from '../config.js';
+import { getHostBrand } from '../host.js';
 import { Kbd, Chip } from './primitives.jsx';
 import { FlyersMark } from './Logo.jsx';
 import { NAV_ITEMS } from './nav.js';
+
+// Wordmark splits on the dot so the TLD gets the active team-color
+// treatment — "flyers.fan" becomes flyers<accent>.fan</accent>, and
+// "scumbag.hockey" becomes scumbag<accent>.hockey</accent>. Uses the
+// runtime team-primary CSS var so the accent re-tints when the user
+// switches teams. Falls back gracefully on brand strings without a dot.
+const BrandWordmark = () => {
+  const brand = getHostBrand().short;
+  const dot = brand.lastIndexOf('.');
+  if (dot < 0) return <span className="text-[12px] font-semibold">{brand}</span>;
+  return (
+    <span className="text-[12px] font-semibold">
+      {brand.slice(0, dot)}
+      <span style={{ color: 'var(--team-primary)' }}>{brand.slice(dot)}</span>
+    </span>
+  );
+};
 
 export const Topbar = ({ page, liveGame, lastFetch, error, onOpenPalette, onOpenNav }) => {
   const current = NAV_ITEMS.find((n) => n.id === page) || NAV_ITEMS[0];
@@ -25,10 +43,10 @@ export const Topbar = ({ page, liveGame, lastFetch, error, onOpenPalette, onOpen
           </button>
           <div className="lg:hidden flex items-center gap-2">
             <FlyersMark size={18} />
-            <span className="text-[12px] font-semibold">flyers<span className="text-[var(--team-primary)]">.fan</span></span>
+            <BrandWordmark />
           </div>
           <div className="hidden sm:flex items-center gap-2 text-[11px] font-mono text-white/40">
-            <span>PHI</span>
+            <span>{getHostBrand().short === 'scumbag.hockey' ? 'NHL' : 'PHI'}</span>
             <ChevronRight size={11} />
             <span className="text-white/80 flex items-center gap-1.5"><Icon size={11} strokeWidth={2} />{current.label}</span>
           </div>

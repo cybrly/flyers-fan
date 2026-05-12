@@ -1,9 +1,13 @@
 import { useEffect, useState } from 'react';
+import { getDefaultRootPage } from './host.js';
 
 // Tiny path-based router for shareable URLs.
 //
 // Routes:
-//   /             → dashboard
+//   /             → host-aware default. flyers.fan opens to Game Tape of
+//                   the latest Flyers game; scumbag.hockey opens to the
+//                   league-wide Dashboard. See src/host.js.
+//   /dashboard    → Dashboard (explicit — reachable from either host)
 //   /schedule
 //   /standings
 //   /game         → live or most recent game
@@ -26,12 +30,17 @@ const REDIRECTS = { 'on-ice': 'game' };
 export function parseRoute(pathname, search) {
   const [, first = '', second = ''] = pathname.split('/');
   const params = new URLSearchParams(search);
-  const page = PAGES.has(first) ? first : (REDIRECTS[first] || 'dashboard');
+  // Bare '/' is the host's entrypoint and resolves per-domain (Flyers
+  // game on flyers.fan; Dashboard on scumbag.hockey). Anything else
+  // falls back to a known page or the dashboard as a safety net.
+  const resolved = first === ''
+    ? getDefaultRootPage()
+    : (PAGES.has(first) ? first : (REDIRECTS[first] || 'dashboard'));
   return {
-    page,
-    gameId: page === 'game' && second ? second : null,
-    profileId: page === 'player' && second ? second : null,  // /player/:id full page
-    playerId: params.get('player') || null,                   // ?player=:id modal overlay
+    page: resolved,
+    gameId: resolved === 'game' && second ? second : null,
+    profileId: resolved === 'player' && second ? second : null,  // /player/:id full page
+    playerId: params.get('player') || null,                       // ?player=:id modal overlay
     seriesLetter: params.get('series') || null,
   };
 }
@@ -70,6 +79,9 @@ export function setOverlay(key, value) {
   navigate(url.pathname + (url.search ? url.search : ''));
 }
 
-export const pageHref = (page) => (page === 'dashboard' ? '/' : `/${page}`);
+// Dashboard gets an explicit path because '/' is now host-aware — on
+// flyers.fan the bare root resolves to Game Tape, so the Dashboard nav
+// link can't just be '/' or it'd round-trip back to Game Tape.
+export const pageHref = (page) => `/${page}`;
 export const gameHref = (id) => (id ? `/game/${id}` : '/game');
 export const playerHref = (id) => `/player/${id}`;

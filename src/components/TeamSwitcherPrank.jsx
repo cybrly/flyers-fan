@@ -2,7 +2,21 @@ import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { ChevronDown } from 'lucide-react';
 import { OPP_FULL, cx } from '../config.js';
+import { getHostBrand } from '../host.js';
 import { FlyersMark, TeamLogo } from './Logo.jsx';
+
+// Host-aware wordmark — flyers.fan or scumbag.hockey, TLD colored.
+const BrandSplit = () => {
+  const brand = getHostBrand().short;
+  const dot = brand.lastIndexOf('.');
+  if (dot < 0) return <span className="text-[13px] font-semibold tracking-tight">{brand}</span>;
+  return (
+    <div className="flex items-baseline gap-1">
+      <span className="text-[13px] font-semibold tracking-tight">{brand.slice(0, dot)}</span>
+      <span className="text-[13px] font-semibold" style={{ color: 'var(--team-primary)' }}>{brand.slice(dot)}</span>
+    </div>
+  );
+};
 
 // Sidebar prank widget — looks like a team switcher but every selection
 // (except PHI) opens a fullscreen modal that gently informs the user
@@ -64,10 +78,7 @@ export const TeamSwitcherPrank = () => {
           className="flex items-center gap-1.5 px-1.5 py-1 -mx-1.5 rounded hover:bg-white/[0.04] transition-colors"
         >
           <FlyersMark size={20} />
-          <div className="flex items-baseline gap-1">
-            <span className="text-[13px] font-semibold tracking-tight">flyers</span>
-            <span className="text-[13px] text-[#F74902] font-semibold">.fan</span>
-          </div>
+          <BrandSplit />
           <ChevronDown size={12} className={cx('text-white/40 transition-transform', open && 'rotate-180')} />
         </button>
 

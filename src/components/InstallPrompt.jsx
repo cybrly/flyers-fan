@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Download, X } from 'lucide-react';
+import { getHostBrand } from '../host.js';
 
 // Browsers fire `beforeinstallprompt` once when the app meets PWA install
 // criteria. We capture the event, surface our own banner, and call
@@ -52,7 +53,7 @@ export const InstallPrompt = () => {
         <Download size={16} className="text-[#FF8A4C]" />
       </div>
       <div className="min-w-0 flex-1">
-        <div className="text-[12px] font-medium text-white/90">Install flyers.fan</div>
+        <div className="text-[12px] font-medium text-white/90">Install {getHostBrand().short}</div>
         <div className="text-[11px] font-mono text-white/45 mt-0.5">Add to home screen for fast offline launches.</div>
         <div className="flex items-center gap-2 mt-2">
           <button

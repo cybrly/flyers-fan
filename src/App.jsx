@@ -7,6 +7,7 @@ import { useTeam } from './teamContext.jsx';
 import { useNHL, useClockTick, useLiveStream } from './api.js';
 import { PlayerCtx } from './context.js';
 import { useRoute, navigate, setOverlay, pageHref, gameHref } from './router.js';
+import { getHostBrand } from './host.js';
 import {
   adaptSchedule, adaptStandings, adaptGame,
   adaptPlayByPlay, adaptBracket, adaptRoster, adaptClubStats, adaptScoreboard,
@@ -91,25 +92,28 @@ export default function App() {
   useClockTick(1000);
 
   // Per-page document title — meaningful tabs and history entries.
+  // Brand string switches per host (flyers.fan vs scumbag.hockey).
   useEffect(() => {
-    const titles = {
-      dashboard: 'flyers.fan',
-      schedule: 'Schedule · flyers.fan',
-      standings: 'Standings · flyers.fan',
-      game: 'Game Tape · flyers.fan',
-      playoffs: 'Playoffs · flyers.fan',
-      roster: 'Roster · flyers.fan',
-      player: 'Player · flyers.fan',
-      compare: 'Compare · flyers.fan',
-      trends: 'Trends · flyers.fan',
-      coaches: 'Coaches · flyers.fan',
-      draft: 'Draft Rankings · flyers.fan',
-      records: 'Records · flyers.fan',
-      goalies: 'Goalies · flyers.fan',
-      forecast: 'Forecast · flyers.fan',
-      definitions: 'Definitions · flyers.fan',
+    const brand = getHostBrand().short;
+    const labels = {
+      dashboard: null,
+      schedule: 'Schedule',
+      standings: 'Standings',
+      game: 'Game Tape',
+      playoffs: 'Playoffs',
+      roster: 'Roster',
+      player: 'Player',
+      compare: 'Compare',
+      trends: 'Trends',
+      coaches: 'Coaches',
+      draft: 'Draft Rankings',
+      records: 'Records',
+      goalies: 'Goalies',
+      forecast: 'Forecast',
+      definitions: 'Definitions',
     };
-    document.title = titles[page] || 'flyers.fan';
+    const prefix = labels[page];
+    document.title = prefix ? `${prefix} · ${brand}` : brand;
   }, [page]);
 
   useEffect(() => {

@@ -7,7 +7,7 @@ import { useTeam } from './teamContext.jsx';
 import { useNHL, useClockTick, useLiveStream } from './api.js';
 import { PlayerCtx } from './context.js';
 import { useRoute, navigate, setOverlay, pageHref, gameHref } from './router.js';
-import { getHostBrand, getHostMeta } from './host.js';
+import { getHostBrand, getHostMeta, getHostScope } from './host.js';
 import {
   adaptSchedule, adaptStandings, adaptGame,
   adaptPlayByPlay, adaptBracket, adaptRoster, adaptClubStats, adaptScoreboard,
@@ -207,18 +207,39 @@ export default function App() {
   const standingsRaw = useNHL('v1/standings/now', POLL.standings);
   const standings = useMemo(() => adaptStandings(standingsRaw.data), [standingsRaw.data]);
 
-  // Around-the-league scoreboard — only fetched on Dashboard. Polls on POLL.live
-  // when any game is live so scores stay fresh.
-  const scoreboardPath = page === 'dashboard' ? 'v1/score/now' : null;
+  // Around-the-league scoreboard. Always fetched on the league host so
+  // /game with no id can pick the most recent NHL game across all 32
+  // teams. On the team host (flyers.fan) it's still only needed on the
+  // Dashboard ticker.
+  const isLeague = getHostScope() === 'league';
+  const scoreboardPath = (page === 'dashboard' || isLeague) ? 'v1/score/now' : null;
   const scoreboardRaw = useNHL(scoreboardPath, (d) => {
     const games = d?.games || [];
     return games.some((g) => isLive(g.gameState)) ? POLL.live : POLL.near;
   });
   const scoreboard = useMemo(() => adaptScoreboard(scoreboardRaw.data), [scoreboardRaw.data]);
 
+  // On scumbag.hockey, the league-wide most-recent game is the natural
+  // "what's on right now" answer. Prefer live games; else the one with
+  // the latest puck-drop time. Falls back to the selected team's
+  // schedule when the scoreboard is empty (offseason / mid-day before
+  // tonight's slate posts).
+  const leagueLatestGameId = useMemo(() => {
+    if (!isLeague || !scoreboard?.games?.length) return null;
+    const live = scoreboard.games.find((g) => g.state === 'LIVE' || g.state === 'CRIT');
+    if (live) return live.id;
+    const sorted = [...scoreboard.games].sort((a, b) => (b.startUTC || '').localeCompare(a.startUTC || ''));
+    return sorted[0]?.id || null;
+  }, [isLeague, scoreboard]);
+
   // Pick game ID for Game Tape: explicit selection (URL /game/:id) wins,
-  // otherwise live game, otherwise most recent finished.
-  const gameId = routeGameId || schedule.liveGame?.id || schedule.games[0]?.id || null;
+  // then league-wide latest on scumbag.hockey, then the locked-team's
+  // live game, then their most recent finished game.
+  const gameId = routeGameId
+    || (isLeague ? leagueLatestGameId : null)
+    || schedule.liveGame?.id
+    || schedule.games[0]?.id
+    || null;
 
   const boxscore = useNHL(gameId ? `v1/gamecenter/${gameId}/boxscore` : null,
     (d) => (d && isLive(d.gameState)) ? POLL.live : POLL.idle);

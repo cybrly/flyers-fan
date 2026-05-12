@@ -54,10 +54,12 @@ export const getHostBrand = () => {
   };
 };
 
-// Default page the bare root path resolves to. Team scope opens straight
-// into Game Tape (the user is here for one team, show their game).
-// League scope opens to Dashboard (broader entry, lots of teams).
-export const getDefaultRootPage = () => (getHostScope() === 'team' ? 'game' : 'dashboard');
+// Default page the bare root path resolves to. Both scopes open
+// straight into Game Tape — team scope shows the locked team's most
+// recent game (live > last final); league scope picks the most recent
+// game league-wide via the NHL scoreboard. The fallback resolution
+// lives in App.jsx where the schedule + scoreboard data is available.
+export const getDefaultRootPage = () => 'game';
 
 // Full SEO/social-card metadata per host. Used by the runtime head
 // updater to swap <title>, <meta name=description>, og:*, twitter:*,

@@ -3,6 +3,7 @@
 // dynamic value that a dropdown selector controls.
 
 import { createContext, useContext, useState, useMemo, useCallback } from 'react';
+import { getHostScope } from './host.js';
 
 const STORAGE_KEY = 'flyersfan.selected-team';
 
@@ -49,7 +50,14 @@ export const ALL_TEAMS = Object.keys(TEAM_COLORS).sort();
 const TeamContext = createContext(null);
 
 export const TeamProvider = ({ children }) => {
+  // flyers.fan is a Flyers-fan site by name and intent — the team is
+  // locked to PHI regardless of what the user previously selected.
+  // scumbag.hockey is the league-wide variant where the dropdown is
+  // meaningful and the choice persists across visits.
+  const lockedToPHI = getHostScope() === 'team';
+
   const [teamAbbr, setTeamAbbrState] = useState(() => {
+    if (lockedToPHI) return 'PHI';
     try {
       const saved = localStorage.getItem(STORAGE_KEY);
       return saved && TEAM_COLORS[saved] ? saved : 'PHI';
@@ -57,10 +65,11 @@ export const TeamProvider = ({ children }) => {
   });
 
   const setTeamAbbr = useCallback((abbr) => {
+    if (lockedToPHI) return; // ignore — flyers.fan stays on PHI
     if (!TEAM_COLORS[abbr]) return;
     setTeamAbbrState(abbr);
     try { localStorage.setItem(STORAGE_KEY, abbr); } catch { /* ignore */ }
-  }, []);
+  }, [lockedToPHI]);
 
   const colors = TEAM_COLORS[teamAbbr] || TEAM_COLORS.PHI;
   const teamName = colors.name;

@@ -111,31 +111,33 @@ export const Dashboard = ({ schedule, standings, scoreboard, clubStats, roster, 
     : [];
   const lastGameGoals = lastGame?.timeline || [];
 
-  // scumbag.hockey is the league-wide variant of the site. The Hero
-  // below still shows the currently-selected team (so other panels
-  // stay coherent), but the league host gets a small "Most Recent NHL
-  // Game" card pinned above it — that's the actual homepage answer
-  // for a viewer who's here for the league, not one team.
+  // scumbag.hockey is the league-wide variant. The team-perspective
+  // Hero (which would show whatever team the user picked, including
+  // stale dropdown selections like NJ → "NJD vs BOS Apr 13") is the
+  // wrong banner for a league-wide host — it puts a single team's
+  // last game on the front page when the user is here for the NHL.
+  // On league scope we replace the Hero with a team-neutral
+  // LatestNhlGameBanner that reads directly off the scoreboard.
   const isLeague = getHostScope() === 'league';
   const latestNhl = isLeague ? pickLatestNhlGame(scoreboard?.games) : null;
 
   return (
     <div className="p-4 md:p-6 space-y-6">
-      {isLeague && latestNhl && (
-        <LatestNhlGameCard game={latestNhl} onOpen={() => onOpenGame?.(latestNhl.id)} />
+      {isLeague ? (
+        <LatestNhlGameBanner game={latestNhl} onOpen={(id) => onOpenGame?.(id)} />
+      ) : (
+        /* ─── HERO ─────────────────────────────────────────────────────────── */
+        <Hero
+          liveGame={liveGame}
+          liveDetail={liveDetail}
+          liveSnap={liveSnap}
+          nextGame={nextGame}
+          lastResult={lastResult}
+          us={us}
+          recentGames={games}
+          standings={standings}
+        />
       )}
-
-      {/* ─── HERO ─────────────────────────────────────────────────────────── */}
-      <Hero
-        liveGame={liveGame}
-        liveDetail={liveDetail}
-        liveSnap={liveSnap}
-        nextGame={nextGame}
-        lastResult={lastResult}
-        us={us}
-        recentGames={games}
-        standings={standings}
-      />
 
       {/* Narrative + Streak Alerts */}
       {narrative && (
@@ -1411,9 +1413,36 @@ function pickLatestNhlGame(games) {
   return upcoming[0] || null;
 }
 
-// Team-neutral matchup card for scumbag.hockey. Renders the scoreboard
-// row directly (no adaptGame / TEAM_ABBR perspective) so a CAR-vs-BOS
-// game looks like a CAR-vs-BOS game, not a "PHI vs ???" mangle.
+// Team-neutral matchup banner for scumbag.hockey. Replaces the Hero
+// in league scope. Reads the scoreboard row directly (no adaptGame
+// / TEAM_ABBR perspective) so a CAR-vs-BOS game looks like a
+// CAR-vs-BOS game, not a "PHI vs ???" mangle. Falls back to a
+// "no games today" panel when the scoreboard is empty (offseason).
+const LatestNhlGameBanner = ({ game, onOpen }) => {
+  if (!game) {
+    return (
+      <div className="relative overflow-hidden rounded-lg border border-white/[0.08] bg-gradient-to-br from-[#101010] via-[#0B0B0B] to-[#070707] px-6 sm:px-8 py-8 sm:py-10">
+        <div className="flex items-center gap-2 text-[10px] font-mono uppercase tracking-[0.2em] text-white/45 mb-3">
+          <span className="w-1.5 h-1.5 rounded-full bg-[var(--team-primary,#F74902)]" />
+          NHL · league-wide
+        </div>
+        <h2 className="text-[22px] sm:text-[28px] font-semibold tracking-tight">No NHL games on the slate.</h2>
+        <p className="text-[12px] font-mono text-white/45 mt-2">
+          The scoreboard is empty. Check the schedule for the next puck drop.
+        </p>
+        <button
+          type="button"
+          onClick={() => navigate('/schedule')}
+          className="mt-4 inline-flex items-center gap-1.5 px-3 h-8 border border-white/[0.08] hover:border-white/20 bg-white/[0.02] rounded-md text-[12px] font-mono text-white/70 hover:text-white transition-colors"
+        >
+          Open schedule →
+        </button>
+      </div>
+    );
+  }
+  return <LatestNhlGameCard game={game} onOpen={() => onOpen?.(game.id)} />;
+};
+
 const LatestNhlGameCard = ({ game, onOpen }) => {
   const isLiveState = game.state === 'LIVE' || game.state === 'CRIT';
   const isFinalState = game.state === 'FINAL' || game.state === 'OFF';
@@ -1443,15 +1472,15 @@ const LatestNhlGameCard = ({ game, onOpen }) => {
       type="button"
       onClick={onOpen}
       aria-label={`Open ${game.away?.abbr} at ${game.home?.abbr} game tape`}
-      className="w-full text-left relative overflow-hidden rounded-lg border border-white/[0.08] hover:border-white/20 bg-gradient-to-br from-[#101010] via-[#0B0B0B] to-[#070707] px-5 sm:px-6 py-4 transition-colors group"
+      className="w-full text-left relative overflow-hidden rounded-lg border border-white/[0.08] hover:border-white/20 bg-gradient-to-br from-[#141414] via-[#0E0E0E] to-[#070707] px-6 sm:px-8 py-6 sm:py-8 shadow-[0_0_0_1px_rgba(255,255,255,0.02)_inset,0_24px_48px_-24px_rgba(0,0,0,0.9)] transition-colors group"
     >
-      <div className="flex items-center justify-between gap-4 flex-wrap">
-        <div className="flex items-center gap-2 text-[10px] font-mono uppercase tracking-[0.2em] text-white/45">
+      <div className="flex items-center justify-between gap-4 flex-wrap mb-5">
+        <div className="flex items-center gap-2 text-[10px] sm:text-[11px] font-mono uppercase tracking-[0.22em] text-white/55">
           <span className="w-1.5 h-1.5 rounded-full bg-[var(--team-primary,#F74902)]" />
-          Most Recent NHL Game
+          {isLiveState ? 'Live NHL Game' : isFinalState ? 'Most Recent NHL Game' : 'Next NHL Game'}
         </div>
         <span className={cx(
-          'inline-flex items-center gap-1.5 px-2 h-6 rounded-md border text-[10px] font-mono uppercase tracking-wider',
+          'inline-flex items-center gap-1.5 px-2.5 h-7 rounded-md border text-[11px] font-mono uppercase tracking-wider',
           isLiveState ? 'border-red-500/45 bg-red-500/[0.10] text-red-300'
             : isFinalState ? 'border-white/[0.10] bg-white/[0.04] text-white/65'
             : 'border-sky-400/35 bg-sky-400/[0.06] text-sky-300',
@@ -1461,38 +1490,39 @@ const LatestNhlGameCard = ({ game, onOpen }) => {
         </span>
       </div>
 
-      <div className="mt-3 grid grid-cols-[1fr_auto_1fr] items-center gap-3 sm:gap-6">
+      <div className="grid grid-cols-2 sm:grid-cols-[1fr_auto_1fr] items-center gap-y-3 gap-x-3 sm:gap-x-8">
         <MatchupSide team={game.away} align="left" />
-        <div className="flex items-center gap-2 sm:gap-3">
+        <MatchupSide team={game.home} align="right" />
+        <div className="col-span-2 sm:col-span-1 sm:row-start-1 sm:col-start-2 flex items-baseline justify-center gap-3 sm:gap-4">
           {showScore ? (
             <>
-              <span className="text-[28px] sm:text-[40px] font-semibold tabular-nums tracking-tight text-white/85 leading-none">{aScore ?? 0}</span>
-              <span className="text-[20px] sm:text-[28px] text-white/20 leading-none">–</span>
-              <span className="text-[28px] sm:text-[40px] font-semibold tabular-nums tracking-tight text-white/85 leading-none">{hScore ?? 0}</span>
+              <span className="text-[44px] sm:text-[64px] font-semibold tabular-nums tracking-tight text-white/90 leading-none">{aScore ?? 0}</span>
+              <span className="text-[28px] sm:text-[40px] text-white/20 leading-none">–</span>
+              <span className="text-[44px] sm:text-[64px] font-semibold tabular-nums tracking-tight text-white/90 leading-none">{hScore ?? 0}</span>
             </>
           ) : (
-            <span className="text-[20px] sm:text-[28px] text-white/40 font-mono">vs</span>
+            <span className="text-[36px] sm:text-[56px] text-white/35 font-semibold tracking-tight leading-none">VS</span>
           )}
         </div>
-        <MatchupSide team={game.home} align="right" />
       </div>
 
-      <div className="mt-2 text-[10px] font-mono text-white/35 group-hover:text-white/60 transition-colors">
-        tap to open game tape →
+      <div className="mt-5 flex items-center justify-between gap-3 text-[10px] font-mono uppercase tracking-wider text-white/35">
+        <span>NHL · league-wide</span>
+        <span className="text-white/45 group-hover:text-white/75 transition-colors">tap to open game tape →</span>
       </div>
     </button>
   );
 };
 
 const MatchupSide = ({ team, align }) => (
-  <div className={cx('flex items-center gap-2 min-w-0', align === 'right' ? 'justify-end' : '')}>
-    {align === 'left' && <TeamLogo abbr={team?.abbr} size={36} />}
+  <div className={cx('flex items-center gap-3 min-w-0', align === 'right' ? 'justify-end' : '')}>
+    {align === 'left' && <TeamLogo abbr={team?.abbr} size={56} className="sm:!w-[72px] sm:!h-[72px]" />}
     <div className={cx('min-w-0', align === 'right' ? 'text-right' : '')}>
-      <div className="text-[16px] sm:text-[18px] font-semibold tracking-tight truncate">
+      <div className="text-[10px] font-mono text-white/40 uppercase tracking-[0.18em]">{team?.abbr}</div>
+      <div className="text-[16px] sm:text-[22px] font-semibold tracking-tight truncate mt-0.5">
         {OPP_FULL[team?.abbr] || team?.abbr || '—'}
       </div>
-      <div className="text-[10px] font-mono text-white/40 uppercase tracking-wider">{team?.abbr}</div>
     </div>
-    {align === 'right' && <TeamLogo abbr={team?.abbr} size={36} />}
+    {align === 'right' && <TeamLogo abbr={team?.abbr} size={56} className="sm:!w-[72px] sm:!h-[72px]" />}
   </div>
 );

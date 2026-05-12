@@ -54,12 +54,13 @@ export const getHostBrand = () => {
   };
 };
 
-// Default page the bare root path resolves to. Both scopes open
-// straight into Game Tape — team scope shows the locked team's most
-// recent game (live > last final); league scope picks the most recent
-// game league-wide via the NHL scoreboard. The fallback resolution
-// lives in App.jsx where the schedule + scoreboard data is available.
-export const getDefaultRootPage = () => 'game';
+// Default page the bare root path resolves to. Both hosts land on the
+// Dashboard — it's the broadest entry surface. The featured game on
+// the Dashboard's Hero is what differs per host:
+//   • flyers.fan     → most recent PHI game (live > last final)
+//   • scumbag.hockey → most recent NHL game (any team), pulled from
+//                      the league scoreboard. Resolved in Dashboard.
+export const getDefaultRootPage = () => 'dashboard';
 
 // Full SEO/social-card metadata per host. Used by the runtime head
 // updater to swap <title>, <meta name=description>, og:*, twitter:*,

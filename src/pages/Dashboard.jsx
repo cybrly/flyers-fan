@@ -21,8 +21,9 @@ import { OpponentScout } from '../components/OpponentScout.jsx';
 import { ThisDayInHistory } from '../components/ThisDayInHistory.jsx';
 import { ScheduleStrength } from '../components/ScheduleStrength.jsx';
 import { PlayoffRace } from '../components/PlayoffRace.jsx';
-import { navigate } from '../router.js';
+import { navigate, gameHref } from '../router.js';
 import { teamRanks } from '../lib/stats.js';
+import { getHostScope } from '../host.js';
 import { dashboardNarrative, playoffRaceNarrative } from '../lib/narrative.js';
 import { StreakAlerts } from '../components/StreakAlerts.jsx';
 import { TeamEdgePanel } from '../components/EdgeStats.jsx';
@@ -110,8 +111,20 @@ export const Dashboard = ({ schedule, standings, scoreboard, clubStats, roster, 
     : [];
   const lastGameGoals = lastGame?.timeline || [];
 
+  // scumbag.hockey is the league-wide variant of the site. The Hero
+  // below still shows the currently-selected team (so other panels
+  // stay coherent), but the league host gets a small "Most Recent NHL
+  // Game" card pinned above it — that's the actual homepage answer
+  // for a viewer who's here for the league, not one team.
+  const isLeague = getHostScope() === 'league';
+  const latestNhl = isLeague ? pickLatestNhlGame(scoreboard?.games) : null;
+
   return (
     <div className="p-4 md:p-6 space-y-6">
+      {isLeague && latestNhl && (
+        <LatestNhlGameCard game={latestNhl} onOpen={() => onOpenGame?.(latestNhl.id)} />
+      )}
+
       {/* ─── HERO ─────────────────────────────────────────────────────────── */}
       <Hero
         liveGame={liveGame}
@@ -1380,3 +1393,106 @@ const HonorsPanel = () => {
     </Section>
   );
 };
+
+
+// Pick the most relevant NHL game from the league scoreboard. Live
+// games beat finished ones; among finished games the most recent puck
+// drop wins; future-only days fall back to the earliest upcoming game
+// so the card never disappears once the season is rolling.
+function pickLatestNhlGame(games) {
+  if (!games?.length) return null;
+  const live = games.find((g) => g.state === 'LIVE' || g.state === 'CRIT');
+  if (live) return live;
+  const finished = games
+    .filter((g) => g.state === 'FINAL' || g.state === 'OFF')
+    .sort((a, b) => (b.startUTC || '').localeCompare(a.startUTC || ''));
+  if (finished[0]) return finished[0];
+  const upcoming = [...games].sort((a, b) => (a.startUTC || '').localeCompare(b.startUTC || ''));
+  return upcoming[0] || null;
+}
+
+// Team-neutral matchup card for scumbag.hockey. Renders the scoreboard
+// row directly (no adaptGame / TEAM_ABBR perspective) so a CAR-vs-BOS
+// game looks like a CAR-vs-BOS game, not a "PHI vs ???" mangle.
+const LatestNhlGameCard = ({ game, onOpen }) => {
+  const isLiveState = game.state === 'LIVE' || game.state === 'CRIT';
+  const isFinalState = game.state === 'FINAL' || game.state === 'OFF';
+  const periodLabel = (() => {
+    if (isLiveState) {
+      const n = game.period?.number;
+      const t = game.period?.periodType;
+      const base = t === 'OT' ? 'OT' : t === 'SO' ? 'SO' : (n ? `P${n}` : 'LIVE');
+      return game.clock?.timeRemaining ? `${base} · ${game.clock.timeRemaining}` : base;
+    }
+    if (isFinalState) {
+      const t = game.period?.periodType;
+      return t && t !== 'REG' ? `FINAL · ${t}` : 'FINAL';
+    }
+    if (game.startUTC) {
+      try {
+        return new Date(game.startUTC).toLocaleString(undefined, { weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
+      } catch { return 'UPCOMING'; }
+    }
+    return 'UPCOMING';
+  })();
+  const aScore = game.away?.score;
+  const hScore = game.home?.score;
+  const showScore = isLiveState || isFinalState;
+  return (
+    <button
+      type="button"
+      onClick={onOpen}
+      aria-label={`Open ${game.away?.abbr} at ${game.home?.abbr} game tape`}
+      className="w-full text-left relative overflow-hidden rounded-lg border border-white/[0.08] hover:border-white/20 bg-gradient-to-br from-[#101010] via-[#0B0B0B] to-[#070707] px-5 sm:px-6 py-4 transition-colors group"
+    >
+      <div className="flex items-center justify-between gap-4 flex-wrap">
+        <div className="flex items-center gap-2 text-[10px] font-mono uppercase tracking-[0.2em] text-white/45">
+          <span className="w-1.5 h-1.5 rounded-full bg-[var(--team-primary,#F74902)]" />
+          Most Recent NHL Game
+        </div>
+        <span className={cx(
+          'inline-flex items-center gap-1.5 px-2 h-6 rounded-md border text-[10px] font-mono uppercase tracking-wider',
+          isLiveState ? 'border-red-500/45 bg-red-500/[0.10] text-red-300'
+            : isFinalState ? 'border-white/[0.10] bg-white/[0.04] text-white/65'
+            : 'border-sky-400/35 bg-sky-400/[0.06] text-sky-300',
+        )}>
+          {isLiveState && <span className="w-1.5 h-1.5 rounded-full bg-red-400 animate-pulse" />}
+          {periodLabel}
+        </span>
+      </div>
+
+      <div className="mt-3 grid grid-cols-[1fr_auto_1fr] items-center gap-3 sm:gap-6">
+        <MatchupSide team={game.away} align="left" />
+        <div className="flex items-center gap-2 sm:gap-3">
+          {showScore ? (
+            <>
+              <span className="text-[28px] sm:text-[40px] font-semibold tabular-nums tracking-tight text-white/85 leading-none">{aScore ?? 0}</span>
+              <span className="text-[20px] sm:text-[28px] text-white/20 leading-none">–</span>
+              <span className="text-[28px] sm:text-[40px] font-semibold tabular-nums tracking-tight text-white/85 leading-none">{hScore ?? 0}</span>
+            </>
+          ) : (
+            <span className="text-[20px] sm:text-[28px] text-white/40 font-mono">vs</span>
+          )}
+        </div>
+        <MatchupSide team={game.home} align="right" />
+      </div>
+
+      <div className="mt-2 text-[10px] font-mono text-white/35 group-hover:text-white/60 transition-colors">
+        tap to open game tape →
+      </div>
+    </button>
+  );
+};
+
+const MatchupSide = ({ team, align }) => (
+  <div className={cx('flex items-center gap-2 min-w-0', align === 'right' ? 'justify-end' : '')}>
+    {align === 'left' && <TeamLogo abbr={team?.abbr} size={36} />}
+    <div className={cx('min-w-0', align === 'right' ? 'text-right' : '')}>
+      <div className="text-[16px] sm:text-[18px] font-semibold tracking-tight truncate">
+        {OPP_FULL[team?.abbr] || team?.abbr || '—'}
+      </div>
+      <div className="text-[10px] font-mono text-white/40 uppercase tracking-wider">{team?.abbr}</div>
+    </div>
+    {align === 'right' && <TeamLogo abbr={team?.abbr} size={36} />}
+  </div>
+);

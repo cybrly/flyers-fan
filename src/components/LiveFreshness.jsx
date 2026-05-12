@@ -22,8 +22,12 @@ export const LiveFreshness = ({ liveGame, liveSnap, liveConnected, lastFetch }) 
 
   if (!liveGame) {
     return (
-      <span className="inline-flex items-center gap-1.5 text-[10px] font-mono text-white/40">
-        <span className="w-1.5 h-1.5 rounded-full bg-white/30" />
+      <span
+        role="status"
+        aria-label="Showing recap, game is not live"
+        className="inline-flex items-center gap-1.5 text-[10px] font-mono text-white/40"
+      >
+        <span aria-hidden className="w-1.5 h-1.5 rounded-full bg-white/30" />
         showing recap · not live
       </span>
     );
@@ -60,13 +64,18 @@ export const LiveFreshness = ({ liveGame, liveSnap, liveConnected, lastFetch }) 
     : `${ageS}s ago`;
 
   return (
-    <span className={cx('inline-flex items-center gap-1.5 text-[10px] font-mono', textColor)}>
-      <span className={cx('w-1.5 h-1.5 rounded-full ring-2 animate-pulse', dotColor, ringColor)} />
-      <span>● live</span>
-      <span className="text-white/35">·</span>
-      <span>{channel}</span>
-      <span className="text-white/35">·</span>
-      <span className="tabular-nums">updated {ageLabel}</span>
+    <span
+      role="status"
+      aria-live="polite"
+      aria-label={`Live data via ${channel}, updated ${ageLabel}`}
+      className={cx('inline-flex items-center gap-1.5 text-[10px] font-mono', textColor)}
+    >
+      <span aria-hidden className={cx('w-1.5 h-1.5 rounded-full ring-2 animate-pulse', dotColor, ringColor)} />
+      <span aria-hidden>● live</span>
+      <span aria-hidden className="text-white/35">·</span>
+      <span aria-hidden>{channel}</span>
+      <span aria-hidden className="text-white/35">·</span>
+      <span aria-hidden className="tabular-nums">updated {ageLabel}</span>
     </span>
   );
 };

@@ -19,10 +19,7 @@ import { Sidebar } from './components/Sidebar.jsx';
 import { Topbar } from './components/Topbar.jsx';
 import { Statusbar } from './components/Statusbar.jsx';
 import { ErrorBoundary } from './components/ErrorBoundary.jsx';
-import { PlayerModal } from './components/PlayerModal.jsx';
-import { CommandPalette } from './components/CommandPalette.jsx';
 import { InstallPrompt } from './components/InstallPrompt.jsx';
-import { SeriesModal } from './components/SeriesModal.jsx';
 import { LiveRibbon } from './components/LiveRibbon.jsx';
 import { MobileBottomNav } from './components/MobileBottomNav.jsx';
 import { useGoalHorn, useGoalHornEnabled } from './components/GoalHorn.jsx';
@@ -70,6 +67,14 @@ const Records  = lazyPage(() => import('./pages/Records.jsx'),  'Records');
 const Goalies  = lazyPage(() => import('./pages/Goalies.jsx'),  'Goalies');
 const Definitions = lazyPage(() => import('./pages/Definitions.jsx'), 'Definitions');
 const Forecast = lazyPage(() => import('./pages/Forecast.jsx'), 'Forecast');
+
+// Overlay modals are lazy-loaded — none render until the user triggers
+// them (player click, series click, Cmd+K). Saves ~10kB on first paint.
+// The conditional mounts below ensure the chunk only downloads on
+// first open; after that the module cache holds it.
+const PlayerModal    = lazyPage(() => import('./components/PlayerModal.jsx'),    'PlayerModal');
+const SeriesModal    = lazyPage(() => import('./components/SeriesModal.jsx'),    'SeriesModal');
+const CommandPalette = lazyPage(() => import('./components/CommandPalette.jsx'), 'CommandPalette');
 
 export default function App() {
   const { teamAbbr: TEAM_ABBR, colors: teamColors, teamName, isPHI } = useTeam();
@@ -533,18 +538,25 @@ export default function App() {
         liveGame={schedule.liveGame}
       />
 
-      <PlayerModal playerId={playerId} onClose={playerCtx.close} />
-      <SeriesModal letter={seriesLetter} onClose={closeSeries} />
-      <CommandPalette
-        open={paletteOpen}
-        onClose={() => setPaletteOpen(false)}
-        setPage={setPage}
-        schedule={schedule}
-        roster={roster}
-        clubStats={clubStats}
-        onOpenGame={openGame}
-        onOpenPlayer={playerCtx.open}
-      />
+      {/* Lazy-mount modals — only pay for them once the user opens one.
+          Suspense fallback is null because each is an overlay; nothing
+          visible should be missing during the brief download. */}
+      <Suspense fallback={null}>
+        {playerId      && <PlayerModal playerId={playerId} onClose={playerCtx.close} />}
+        {seriesLetter  && <SeriesModal letter={seriesLetter} onClose={closeSeries} />}
+        {paletteOpen   && (
+          <CommandPalette
+            open={paletteOpen}
+            onClose={() => setPaletteOpen(false)}
+            setPage={setPage}
+            schedule={schedule}
+            roster={roster}
+            clubStats={clubStats}
+            onOpenGame={openGame}
+            onOpenPlayer={playerCtx.open}
+          />
+        )}
+      </Suspense>
       {/* Vercel Speed Insights — Core Web Vitals beacon. Renders nothing
           visible; ships LCP/CLS/INP measurements to Vercel for the
           performance dashboard once the deploy is live. */}

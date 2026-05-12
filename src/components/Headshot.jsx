@@ -29,6 +29,7 @@ export const Headshot = ({ src, playerId, teamAbbrev, num, size = 28, className 
       width={size}
       height={size}
       loading="lazy"
+      decoding="async"
       onError={() => setFailed(true)}
       className={cx('shrink-0 rounded-full object-cover bg-white/[0.04]', className)}
       style={{ width: size, height: size }}

@@ -41,6 +41,7 @@ export const FlyersMark = ({ size = 18, className = '', abbr }) => {
       width={size}
       height={size}
       loading="lazy"
+      decoding="async"
       onError={() => setFailed(true)}
       className={cx('shrink-0 select-none object-contain', className)}
       style={{ width: size, height: size }}
@@ -71,6 +72,7 @@ export const TeamLogo = ({ abbr, size = 20, className = '' }) => {
       width={size}
       height={size}
       loading="lazy"
+      decoding="async"
       onError={() => setFailed(true)}
       className={cx('shrink-0 select-none object-contain', className)}
       style={{ width: size, height: size }}

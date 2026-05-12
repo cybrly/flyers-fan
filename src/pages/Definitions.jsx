@@ -265,7 +265,7 @@ export const Definitions = () => {
         <div key={cat.id} className="space-y-2">
           <SectionBand label={cat.title} color={cat.color} sub={`${cat.items.length} term${cat.items.length === 1 ? '' : 's'}`} />
           <div className="border border-white/[0.05] rounded-md bg-[#0A0A0A] divide-y divide-white/[0.04] overflow-hidden">
-            {cat.items.map((it, i) => <DefinitionRow key={i} item={it} highlight={q} />)}
+            {cat.items.map((it) => <DefinitionRow key={`${cat.id}-${it.term}`} item={it} highlight={q} />)}
           </div>
         </div>
       ))}

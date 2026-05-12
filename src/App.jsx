@@ -7,7 +7,7 @@ import { useTeam } from './teamContext.jsx';
 import { useNHL, useClockTick, useLiveStream } from './api.js';
 import { PlayerCtx } from './context.js';
 import { useRoute, navigate, setOverlay, pageHref, gameHref } from './router.js';
-import { getHostBrand } from './host.js';
+import { getHostBrand, getHostMeta } from './host.js';
 import {
   adaptSchedule, adaptStandings, adaptGame,
   adaptPlayByPlay, adaptBracket, adaptRoster, adaptClubStats, adaptScoreboard,
@@ -91,10 +91,14 @@ export default function App() {
 
   useClockTick(1000);
 
-  // Per-page document title — meaningful tabs and history entries.
-  // Brand string switches per host (flyers.fan vs scumbag.hockey).
+  // Per-page document title + host-aware head meta. Updates <title>,
+  // description, OG, Twitter, canonical, and apple-mobile-web-app-title
+  // at runtime so that scumbag.hockey isn't introduced to users as
+  // flyers.fan. Static index.html still ships flyers.fan defaults for
+  // crawlers — a middleware-level rewrite would cover them; that's a
+  // follow-up.
   useEffect(() => {
-    const brand = getHostBrand().short;
+    const meta = getHostMeta();
     const labels = {
       dashboard: null,
       schedule: 'Schedule',
@@ -113,7 +117,41 @@ export default function App() {
       definitions: 'Definitions',
     };
     const prefix = labels[page];
-    document.title = prefix ? `${prefix} · ${brand}` : brand;
+    document.title = prefix ? `${prefix} · ${meta.brand}` : meta.brand;
+
+    const upsertMeta = (selector, attrs) => {
+      let el = document.head.querySelector(selector);
+      if (!el) {
+        el = document.createElement('meta');
+        for (const [k, v] of Object.entries(attrs.create || {})) el.setAttribute(k, v);
+        document.head.appendChild(el);
+      }
+      for (const [k, v] of Object.entries(attrs.set || {})) el.setAttribute(k, v);
+    };
+    upsertMeta('meta[name="description"]',
+      { create: { name: 'description' }, set: { content: meta.desc } });
+    upsertMeta('meta[name="apple-mobile-web-app-title"]',
+      { create: { name: 'apple-mobile-web-app-title' }, set: { content: meta.brand } });
+    upsertMeta('meta[property="og:title"]',
+      { create: { property: 'og:title' }, set: { content: meta.ogTitle } });
+    upsertMeta('meta[property="og:description"]',
+      { create: { property: 'og:description' }, set: { content: meta.ogDesc } });
+    upsertMeta('meta[property="og:site_name"]',
+      { create: { property: 'og:site_name' }, set: { content: meta.brand } });
+    upsertMeta('meta[property="og:url"]',
+      { create: { property: 'og:url' }, set: { content: meta.url } });
+    upsertMeta('meta[name="twitter:title"]',
+      { create: { name: 'twitter:title' }, set: { content: meta.ogTitle } });
+    upsertMeta('meta[name="twitter:description"]',
+      { create: { name: 'twitter:description' }, set: { content: meta.ogDesc } });
+
+    let canon = document.head.querySelector('link[rel="canonical"]');
+    if (!canon) {
+      canon = document.createElement('link');
+      canon.setAttribute('rel', 'canonical');
+      document.head.appendChild(canon);
+    }
+    canon.setAttribute('href', meta.url);
   }, [page]);
 
   useEffect(() => {

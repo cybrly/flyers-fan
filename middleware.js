@@ -23,13 +23,18 @@ export default async function middleware(request) {
   }
 
   const url = new URL(request.url);
+  const host = (url.hostname || '').toLowerCase();
+  const isLeague = host === 'scumbag.hockey' || host.endsWith('.scumbag.hockey');
+  const brand = isLeague ? 'scumbag.hockey' : 'flyers.fan';
   const m = url.pathname.match(/\/game\/(\d+)/);
   const gameId = m ? m[1] : null;
 
   // Try to fetch the boxscore so we can write a precise title/desc; if
   // it fails the OG image still renders (it falls back inside /api/og).
-  let title = 'flyers.fan · Game Recap';
-  let description = 'Live tracker · stats · forecast · Philadelphia Flyers';
+  let title = `${brand} · Game Recap`;
+  let description = isLeague
+    ? 'NHL live tracker · stats · forecast'
+    : 'Live tracker · stats · forecast · Philadelphia Flyers';
   if (gameId) {
     try {
       const r = await fetch(`https://api-web.nhle.com/v1/gamecenter/${gameId}/boxscore`, {
@@ -39,16 +44,33 @@ export default async function middleware(request) {
         const game = await r.json();
         const a = game.awayTeam;
         const h = game.homeTeam;
-        const isPhiHome = h?.abbrev === 'PHI';
-        const oppAbbr = isPhiHome ? a?.abbrev : h?.abbrev;
-        const phiScore = isPhiHome ? (h?.score ?? 0) : (a?.score ?? 0);
-        const oppScore = isPhiHome ? (a?.score ?? 0) : (h?.score ?? 0);
+        const aAbbr = a?.abbrev || 'AWAY';
+        const hAbbr = h?.abbrev || 'HOME';
+        const aScore = a?.score ?? 0;
+        const hScore = h?.score ?? 0;
         const isFinal = game.gameState === 'FINAL' || game.gameState === 'OFF';
-        const verb = isFinal
-          ? (phiScore > oppScore ? 'beat' : 'fell to')
-          : 'vs';
-        title = `PHI ${verb} ${oppAbbr || 'OPP'} · ${phiScore}–${oppScore}`;
-        description = `Philadelphia Flyers ${isFinal ? 'final' : 'live'}: ${phiScore}–${oppScore} ${isPhiHome ? 'vs' : '@'} ${oppAbbr || 'OPP'}`;
+
+        if (isLeague) {
+          // League scope: team-agnostic "AWAY @ HOME · score" framing.
+          const verb = isFinal
+            ? (hScore === aScore ? 'tied' : (hScore > aScore ? 'beat' : 'fell to'))
+            : 'vs';
+          title = isFinal
+            ? `${hAbbr} ${verb} ${aAbbr} · ${hScore}–${aScore}`
+            : `${aAbbr} @ ${hAbbr} · ${aScore}–${hScore}`;
+          description = `${isFinal ? 'Final' : 'Live'}: ${aAbbr} ${aScore} — ${hScore} ${hAbbr}`;
+        } else {
+          // Team scope (flyers.fan): keep the PHI-centric framing.
+          const isPhiHome = hAbbr === 'PHI';
+          const oppAbbr  = isPhiHome ? aAbbr : hAbbr;
+          const phiScore = isPhiHome ? hScore : aScore;
+          const oppScore = isPhiHome ? aScore : hScore;
+          const verb = isFinal
+            ? (phiScore > oppScore ? 'beat' : 'fell to')
+            : 'vs';
+          title = `PHI ${verb} ${oppAbbr} · ${phiScore}–${oppScore}`;
+          description = `Philadelphia Flyers ${isFinal ? 'final' : 'live'}: ${phiScore}–${oppScore} ${isPhiHome ? 'vs' : '@'} ${oppAbbr}`;
+        }
       }
     } catch { /* fall back to defaults */ }
   }
@@ -75,7 +97,7 @@ export default async function middleware(request) {
   </head>
   <body>
     <p>${escapeHtml(title)}</p>
-    <p><a href="${url.origin}${url.pathname}">Open on flyers.fan</a></p>
+    <p><a href="${url.origin}${url.pathname}">Open on ${escapeHtml(brand)}</a></p>
   </body>
 </html>`;
 

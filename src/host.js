@@ -58,3 +58,31 @@ export const getHostBrand = () => {
 // into Game Tape (the user is here for one team, show their game).
 // League scope opens to Dashboard (broader entry, lots of teams).
 export const getDefaultRootPage = () => (getHostScope() === 'team' ? 'game' : 'dashboard');
+
+// Full SEO/social-card metadata per host. Used by the runtime head
+// updater to swap <title>, <meta name=description>, og:*, twitter:*,
+// canonical, and apple-mobile-web-app-title so that — for users at
+// least — the active brand is reflected everywhere. (Crawlers reading
+// static index.html still see the flyers.fan defaults; that's solved
+// separately by middleware when we get to it.)
+export const getHostMeta = () => {
+  const scope = getHostScope();
+  if (scope === 'league') {
+    return {
+      brand:    'scumbag.hockey',
+      tagline:  'Live NHL stats',
+      url:      'https://scumbag.hockey/',
+      desc:     'Live NHL stats, schedule, standings, and game tape — every team, real-time.',
+      ogTitle:  'scumbag.hockey — Live NHL stats',
+      ogDesc:   'Real-time terminal for the entire NHL. Live scores, standings, shifts, and shot maps.',
+    };
+  }
+  return {
+    brand:    'flyers.fan',
+    tagline:  'Live Philadelphia Flyers stats',
+    url:      'https://flyers.fan/',
+    desc:     'Live Philadelphia Flyers stats, schedule, standings, and game tape.',
+    ogTitle:  'flyers.fan — Live Philadelphia Flyers stats',
+    ogDesc:   'Live stats, schedule, standings, and game tape. A real-time terminal for Philadelphia Flyers fans.',
+  };
+};

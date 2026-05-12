@@ -5,4 +5,7 @@ Allow: /
 # Don't waste crawler budget on the API proxy or other non-content paths.
 Disallow: /api/
 
+# Two domains share this deploy — list both sitemaps. Crawlers will
+# pick the one matching the host they're indexing.
 Sitemap: https://flyers.fan/sitemap.xml
+Sitemap: https://scumbag.hockey/sitemap-scumbag.xml

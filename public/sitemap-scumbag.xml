@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url><loc>https://scumbag.hockey/</loc>           <changefreq>hourly</changefreq><priority>1.0</priority></url>
+  <url><loc>https://scumbag.hockey/dashboard</loc>  <changefreq>hourly</changefreq><priority>0.9</priority></url>
+  <url><loc>https://scumbag.hockey/game</loc>       <changefreq>hourly</changefreq><priority>0.9</priority></url>
+  <url><loc>https://scumbag.hockey/schedule</loc>   <changefreq>daily</changefreq> <priority>0.9</priority></url>
+  <url><loc>https://scumbag.hockey/standings</loc>  <changefreq>daily</changefreq> <priority>0.9</priority></url>
+  <url><loc>https://scumbag.hockey/playoffs</loc>   <changefreq>daily</changefreq> <priority>0.9</priority></url>
+  <url><loc>https://scumbag.hockey/roster</loc>     <changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://scumbag.hockey/goalies</loc>    <changefreq>weekly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://scumbag.hockey/trends</loc>     <changefreq>daily</changefreq> <priority>0.7</priority></url>
+  <url><loc>https://scumbag.hockey/forecast</loc>   <changefreq>daily</changefreq> <priority>0.7</priority></url>
+  <url><loc>https://scumbag.hockey/compare</loc>    <changefreq>weekly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://scumbag.hockey/coaches</loc>    <changefreq>weekly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://scumbag.hockey/draft</loc>      <changefreq>weekly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://scumbag.hockey/records</loc>    <changefreq>monthly</changefreq><priority>0.5</priority></url>
+  <url><loc>https://scumbag.hockey/definitions</loc><changefreq>monthly</changefreq><priority>0.5</priority></url>
+</urlset>

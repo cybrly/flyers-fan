@@ -75,6 +75,7 @@ export const getHostMeta = () => {
       desc:     'Live NHL stats, schedule, standings, and game tape — every team, real-time.',
       ogTitle:  'scumbag.hockey — Live NHL stats',
       ogDesc:   'Real-time terminal for the entire NHL. Live scores, standings, shifts, and shot maps.',
+      manifest: '/scumbag.webmanifest',
     };
   }
   return {
@@ -84,5 +85,6 @@ export const getHostMeta = () => {
     desc:     'Live Philadelphia Flyers stats, schedule, standings, and game tape.',
     ogTitle:  'flyers.fan — Live Philadelphia Flyers stats',
     ogDesc:   'Live stats, schedule, standings, and game tape. A real-time terminal for Philadelphia Flyers fans.',
+    manifest: '/manifest.webmanifest',
   };
 };

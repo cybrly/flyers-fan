@@ -152,6 +152,13 @@ export default function App() {
       document.head.appendChild(canon);
     }
     canon.setAttribute('href', meta.url);
+
+    // Per-host PWA manifest — so "Add to home screen" installs as the
+    // right brand. Browsers re-read the manifest when the href changes.
+    const manifestLink = document.head.querySelector('link[rel="manifest"]');
+    if (manifestLink && manifestLink.getAttribute('href') !== meta.manifest) {
+      manifestLink.setAttribute('href', meta.manifest);
+    }
   }, [page]);
 
   useEffect(() => {

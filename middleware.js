@@ -1,19 +1,27 @@
 // middleware.js — Vercel Edge Middleware.
 //
-// On /game/:id requests we sniff the user-agent. Crawler bots (the ones
-// that build link previews for iMessage, Twitter, Discord, Slack, etc.)
-// don't run JavaScript, so the SPA's static /index.html they'd otherwise
-// receive carries the default og:image and they never see a per-game
-// preview. Instead we serve them a tiny HTML stub with og:image pointing
-// at /api/og?game=:id, which renders a custom score card for that game.
+// Two responsibilities:
 //
-// Real users (any UA without a known bot signature) pass through to the
-// normal SPA, so there's zero perf cost to the interactive flow.
+//   1. Bot crawlers (Twitterbot, Slackbot, Discordbot, etc.) on /game/:id
+//      or on the bare root path get a tiny HTML stub with the right
+//      <meta og:*> tags so link previews on iMessage, Twitter, Discord,
+//      Slack, etc. actually carry the per-game (or per-host) preview
+//      card. These bots don't run JavaScript, so the SPA's static
+//      /index.html — which ships the flyers.fan defaults — would
+//      otherwise be all they see.
+//
+//   2. Host-aware framing — flyers.fan vs scumbag.hockey changes the
+//      title, description, OG image, and copy. Real users (no bot UA)
+//      always pass through to the SPA which then runs its own runtime
+//      head update for the same brand swap.
+//
+// Real users (any UA without a known bot signature) pass through with
+// zero work, so there's no perf cost to the interactive flow.
 
 const BOT_RE = /Twitterbot|facebookexternalhit|Discordbot|Slackbot|LinkedInBot|WhatsApp|Pinterest|Telegram|SkypeUriPreview|GoogleBot|bingbot|Applebot|redditbot|Embedly|iframely/i;
 
 export const config = {
-  matcher: ['/game/:path*'],
+  matcher: ['/', '/game/:path*'],
 };
 
 export default async function middleware(request) {
@@ -26,15 +34,25 @@ export default async function middleware(request) {
   const host = (url.hostname || '').toLowerCase();
   const isLeague = host === 'scumbag.hockey' || host.endsWith('.scumbag.hockey');
   const brand = isLeague ? 'scumbag.hockey' : 'flyers.fan';
+  const isRoot = url.pathname === '/';
   const m = url.pathname.match(/\/game\/(\d+)/);
   const gameId = m ? m[1] : null;
 
-  // Try to fetch the boxscore so we can write a precise title/desc; if
-  // it fails the OG image still renders (it falls back inside /api/og).
-  let title = `${brand} · Game Recap`;
-  let description = isLeague
-    ? 'NHL live tracker · stats · forecast'
-    : 'Live tracker · stats · forecast · Philadelphia Flyers';
+  // Root-path bots get the brand introduction, not a game card.
+  // Everything else (game pages) tries to fetch the boxscore for a
+  // precise title/desc and falls back if upstream errors out.
+  let title = isRoot
+    ? (isLeague
+        ? 'scumbag.hockey — Live NHL stats'
+        : 'flyers.fan — Live Philadelphia Flyers stats')
+    : `${brand} · Game Recap`;
+  let description = isRoot
+    ? (isLeague
+        ? 'Real-time terminal for the entire NHL. Live scores, standings, shifts, and shot maps.'
+        : 'Live stats, schedule, standings, and game tape. A real-time terminal for Philadelphia Flyers fans.')
+    : (isLeague
+        ? 'NHL live tracker · stats · forecast'
+        : 'Live tracker · stats · forecast · Philadelphia Flyers');
   if (gameId) {
     try {
       const r = await fetch(`https://api-web.nhle.com/v1/gamecenter/${gameId}/boxscore`, {

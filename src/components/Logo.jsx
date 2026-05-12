@@ -1,33 +1,43 @@
 import { useState } from 'react';
 import { cx } from '../config.js';
+import { useTeam } from '../teamContext.jsx';
 
 const NHL_LOGO = (abbr) => `https://assets.nhle.com/logos/nhl/svg/${abbr}_dark.svg`;
 
-// Stylized fallback used when the real SVG fails to load — orange skewed
-// "P" tile that shares the brand vibe.
-const FlyersBadge = ({ size = 18 }) => (
+// Stylized fallback used when the real SVG fails to load — colored tile
+// with the team's abbreviation. Was a static "P"; now reads the active
+// team's first letter so a fallback for, say, COL renders 'C' rather
+// than the wrong 'P'.
+const TeamBadge = ({ abbr = 'NHL', size = 18 }) => (
   <div
-    className="relative flex items-center justify-center shrink-0 bg-[#F74902] text-black font-black"
+    className="relative flex items-center justify-center shrink-0 text-black font-black"
     style={{
       width: size, height: size,
       transform: 'skewX(-8deg)',
       fontSize: size * 0.65, fontFamily: 'Geist, sans-serif',
       borderRadius: 2, lineHeight: 1,
+      background: 'var(--team-primary, #F74902)',
     }}
   >
-    <span style={{ transform: 'skewX(8deg)' }}>P</span>
+    <span style={{ transform: 'skewX(8deg)' }}>{(abbr || '?')[0]}</span>
   </div>
 );
 
-// Real Philadelphia Flyers winged-P logo. Falls back to the badge if the
-// NHL CDN ever fails to serve the asset.
-export const FlyersMark = ({ size = 18, className = '' }) => {
+// The active team's mark — name's a historical artifact from when this
+// codebase was Flyers-only. Now reads useTeam() so switching to EDM
+// renders the Oilers logo, COL renders the Avalanche, etc. Falls back
+// to a colored tile with the team's first initial if the NHL CDN ever
+// fails to serve the asset. Pass an explicit `abbr` to override the
+// context (used by broadcast / kiosk to pin PHI vs OPP layout).
+export const FlyersMark = ({ size = 18, className = '', abbr }) => {
+  const ctx = useTeam();
+  const resolved = abbr || ctx?.teamAbbr || 'PHI';
   const [failed, setFailed] = useState(false);
-  if (failed) return <FlyersBadge size={size} />;
+  if (failed) return <TeamBadge abbr={resolved} size={size} />;
   return (
     <img
-      src={NHL_LOGO('PHI')}
-      alt="Philadelphia Flyers"
+      src={NHL_LOGO(resolved)}
+      alt={ctx?.teamName || resolved}
       width={size}
       height={size}
       loading="lazy"

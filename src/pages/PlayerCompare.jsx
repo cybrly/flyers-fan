@@ -74,7 +74,7 @@ const PlayerSearch = ({ onPick, label }) => {
       <label className="block text-[10px] font-mono text-white/40 uppercase tracking-wider mb-1">
         {label}
       </label>
-      <div className="flex items-center gap-2 px-2.5 h-9 border border-white/[0.08] hover:border-white/15 focus-within:border-[#FF8A4C]/50 bg-white/[0.02] rounded-md transition-colors">
+      <div className="flex items-center gap-2 px-2.5 h-9 border border-white/[0.08] hover:border-white/15 focus-within:border-[var(--team-accent)]/50 bg-white/[0.02] rounded-md transition-colors">
         <Search size={12} className="text-white/40 shrink-0" />
         <input
           type="text"
@@ -167,7 +167,7 @@ const PlayerCard = ({ slotKey, playerId, label, onClear, onPick }) => {
           <div className="flex items-baseline gap-1 flex-wrap">
             <button
               onClick={() => navigate(playerHref(playerId))}
-              className="text-[13px] font-semibold tracking-tight truncate text-left hover:text-[#FF8A4C] transition-colors"
+              className="text-[13px] font-semibold tracking-tight truncate text-left hover:text-[var(--team-accent)] transition-colors"
             >
               {fullName}
             </button>
@@ -346,7 +346,7 @@ export const PlayerCompare = ({ schedule }) => {
           <h1 className="text-[20px] font-semibold tracking-tight">Compare Players</h1>
           <p className="text-[12px] text-white/45 mt-1 font-mono">
             {oppAbbr
-              ? <>Defaulting to {TEAM_ABBR} vs <span className="text-[#FF8A4C]">{oppAbbr}</span> top scorers · stack up to 4 players</>
+              ? <>Defaulting to {TEAM_ABBR} vs <span className="text-[var(--team-accent)]">{oppAbbr}</span> top scorers · stack up to 4 players</>
               : 'Stack up to 4 NHL players · stat-by-stat comparison'}
           </p>
         </div>

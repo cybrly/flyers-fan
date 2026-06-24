@@ -194,7 +194,7 @@ const RinkSVG = ({ children, ariaLabel }) => (
 );
 
 const ShotDot = ({ s, hover, onHover, onLeave }) => {
-  const usColor = '#F74902';
+  const usColor = 'var(--team-primary)';
   const themColor = '#FFFFFF';
   const cx_ = ftToX(s.x);
   const cy_ = ftToY(s.y);
@@ -357,7 +357,7 @@ const ShotHeat = ({ shots }) => {
         y={row * cellH}
         width={cellW}
         height={cellH}
-        fill="#F74902"
+        fill="var(--team-primary)"
         fillOpacity={opacity}
       />
     );
@@ -376,7 +376,7 @@ const ShotHeat = ({ shots }) => {
       {goals.map((s) => (
         <g key={s.id}>
           <circle cx={ftToX(s.x)} cy={ftToY(s.y)} r="5" fill="#FFFFFF" opacity="0.95" />
-          <circle cx={ftToX(s.x)} cy={ftToY(s.y)} r="3" fill="#F74902" />
+          <circle cx={ftToX(s.x)} cy={ftToY(s.y)} r="3" fill="var(--team-primary)" />
         </g>
       ))}
     </>
@@ -507,10 +507,10 @@ export const ShotMap = ({ pbpData, oppAbbr }) => {
         <div className="flex items-center justify-center gap-3 mt-3 text-[10px] font-mono text-white/40 uppercase tracking-wider">
           <span>Density</span>
           <div className="flex items-center gap-0.5">
-            <span className="w-3 h-3 rounded-sm" style={{ background: 'rgba(247,73,2,0.15)' }} />
-            <span className="w-3 h-3 rounded-sm" style={{ background: 'rgba(247,73,2,0.4)' }} />
-            <span className="w-3 h-3 rounded-sm" style={{ background: 'rgba(247,73,2,0.7)' }} />
-            <span className="w-3 h-3 rounded-sm" style={{ background: 'rgba(247,73,2,1)' }} />
+            <span className="w-3 h-3 rounded-sm" style={{ background: 'color-mix(in srgb, var(--team-primary) 15%, transparent)' }} />
+            <span className="w-3 h-3 rounded-sm" style={{ background: 'color-mix(in srgb, var(--team-primary) 40%, transparent)' }} />
+            <span className="w-3 h-3 rounded-sm" style={{ background: 'color-mix(in srgb, var(--team-primary) 70%, transparent)' }} />
+            <span className="w-3 h-3 rounded-sm" style={{ background: 'color-mix(in srgb, var(--team-primary) 100%, transparent)' }} />
           </div>
           <span className="text-white/30">low → high</span>
         </div>

@@ -151,7 +151,7 @@ const PtsBar = ({ goals, assists, max }) => {
   return (
     <svg width={w} height={6} viewBox={`0 0 ${w} 6`} className="block">
       <rect x={0} y={2} width={w} height={2} fill="rgba(255,255,255,0.04)" />
-      <rect x={0} y={1} width={gw} height={4} fill="#F74902" />
+      <rect x={0} y={1} width={gw} height={4} fill="var(--team-primary)" />
       <rect x={gw} y={1} width={tw - gw} height={4} fill="rgba(255,255,255,0.45)" />
     </svg>
   );
@@ -177,7 +177,7 @@ const Leaderboard = ({ rows, columns, title, withPtsBar = false }) => {
           {rows.map((p, i) => (
             <tr key={p.id} className="hover:bg-white/[0.02]">
               <td className={cx('px-4 text-left text-[10px] font-mono tabular-nums h-9',
-                i < 3 ? 'text-[#FF8A4C]' : 'text-white/30'
+                i < 3 ? 'text-[var(--team-accent)]' : 'text-white/30'
               )}>{i + 1}</td>
               <td className="px-2 text-[12px] text-white/85">
                 <span className="flex items-center gap-2 flex-wrap">
@@ -315,7 +315,7 @@ const DraftPicksPanel = ({ picks }) => {
         {picks.map((p) => (
           <div key={`${p.round}-${p.pickInRound}`} className="grid grid-cols-[60px_28px_1fr_auto] items-center gap-3 px-4 h-12 hover:bg-white/[0.02]">
             <div className="text-center">
-              <div className="text-[16px] font-semibold tabular-nums text-[#FF8A4C] leading-none">#{p.overall}</div>
+              <div className="text-[16px] font-semibold tabular-nums text-[var(--team-accent)] leading-none">#{p.overall}</div>
               <div className="text-[9px] font-mono text-white/35 mt-0.5">R{p.round} · {p.pickInRound}</div>
             </div>
             <span className="text-[10px] font-mono text-white/45 text-center">{p.pos}</span>
@@ -441,7 +441,7 @@ const IceTimeLeaderboard = ({ skaters }) => {
               <div className="relative h-3 bg-white/[0.03] rounded-sm overflow-hidden" style={{ width: `${widthPct}%`, minWidth: 48 }}>
                 <div className="absolute inset-y-0 left-0 bg-sky-500/70" style={{ width: `${(ev / total) * 100}%` }} />
                 <div
-                  className="absolute inset-y-0 bg-[#F74902]/80"
+                  className="absolute inset-y-0 bg-[var(--team-primary)]/80"
                   style={{ left: `${(ev / total) * 100}%`, width: `${(pp / total) * 100}%` }}
                 />
                 <div
@@ -449,14 +449,14 @@ const IceTimeLeaderboard = ({ skaters }) => {
                   style={{ left: `${((ev + pp) / total) * 100}%`, width: `${(sh / total) * 100}%` }}
                 />
               </div>
-              <span className="text-[12px] font-mono tabular-nums text-right text-[#FF8A4C] font-medium">{secToMin(p.avgToi)}</span>
+              <span className="text-[12px] font-mono tabular-nums text-right text-[var(--team-accent)] font-medium">{secToMin(p.avgToi)}</span>
             </div>
           );
         })}
       </div>
       <div className="px-4 py-2 flex items-center gap-4 text-[10px] font-mono text-white/45 border-t border-white/[0.04]">
         <span className="flex items-center gap-1.5"><span className="w-2 h-2 bg-sky-500/70 rounded-sm" /> Even strength</span>
-        <span className="flex items-center gap-1.5"><span className="w-2 h-2 bg-[#F74902]/80 rounded-sm" /> Power play</span>
+        <span className="flex items-center gap-1.5"><span className="w-2 h-2 bg-[var(--team-primary)]/80 rounded-sm" /> Power play</span>
         <span className="flex items-center gap-1.5"><span className="w-2 h-2 bg-amber-500/80 rounded-sm" /> Shorthanded</span>
       </div>
     </Section>

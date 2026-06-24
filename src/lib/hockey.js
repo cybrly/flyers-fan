@@ -74,6 +74,27 @@ export function streakFromGames(games) {
   return `${type ? 'W' : 'L'}${n}`;
 }
 
+// Cumulative standings points across a season's finished regular-season games,
+// in chronological order: +2 for a win, +1 for an OT/SO loss, 0 for a
+// regulation loss. Input is an adapted schedule's `games` array (newest-first,
+// as adaptSchedule returns), so we reverse to chronological. Used to overlay a
+// past season's points pace onto the current season on the Trends chart.
+export function cumulativePoints(games) {
+  if (!Array.isArray(games)) return [];
+  const chrono = games
+    .filter((g) => g.gameType === 2 && typeof g.w === 'boolean')
+    .slice()
+    .reverse();
+  const out = [];
+  let pts = 0;
+  for (const g of chrono) {
+    if (g.w) pts += 2;
+    else if (wentExtra(g)) pts += 1;
+    out.push(pts);
+  }
+  return out;
+}
+
 // Hours elapsed between an ISO timestamp and `now` (ms epoch). Negative for
 // future timestamps. Returns Infinity for a missing/invalid date so callers
 // treat "no data" as maximally stale.

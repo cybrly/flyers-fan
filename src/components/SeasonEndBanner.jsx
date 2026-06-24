@@ -35,10 +35,10 @@ export const SeasonEndBanner = ({ offseason }) => {
 
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm" style={{ animation: 'fadeIn 0.3s ease-out' }}>
-      <div className="relative w-full max-w-lg rounded-xl border border-[#F74902]/30 bg-gradient-to-b from-[#141210] to-[#0A0A0A] shadow-[0_0_60px_-12px_rgba(247,73,2,0.2)] overflow-hidden">
+      <div className="relative w-full max-w-lg rounded-xl border border-[var(--team-primary)]/30 bg-gradient-to-b from-[#141210] to-[#0A0A0A] shadow-[0_0_60px_-12px_rgba(247,73,2,0.2)] overflow-hidden">
         {/* Orange glow at top */}
         <div className="absolute inset-x-0 top-0 h-32 pointer-events-none" style={{ background: 'radial-gradient(ellipse 70% 100% at 50% 0%, rgba(247,73,2,0.12), transparent)' }} />
-        <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[#F74902]/50 to-transparent" />
+        <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[var(--team-primary)]/50 to-transparent" />
 
         {/* Close button */}
         <button
@@ -70,9 +70,9 @@ export const SeasonEndBanner = ({ offseason }) => {
           </p>
 
           {/* Divider */}
-          <div className="mt-6 mb-5 h-px bg-gradient-to-r from-transparent via-[#F74902]/30 to-transparent" />
+          <div className="mt-6 mb-5 h-px bg-gradient-to-r from-transparent via-[var(--team-primary)]/30 to-transparent" />
 
-          <p className="text-[12px] font-mono text-[#FF8A4C] uppercase tracking-wider">
+          <p className="text-[12px] font-mono text-[var(--team-accent)] uppercase tracking-wider">
             See you next season
           </p>
           <p className="mt-2 text-[11px] font-mono text-white/35">
@@ -83,7 +83,7 @@ export const SeasonEndBanner = ({ offseason }) => {
           <button
             type="button"
             onClick={dismiss}
-            className="mt-6 inline-flex items-center px-6 h-10 rounded-lg bg-[#F74902] text-black text-[13px] font-semibold hover:bg-[#ff6426] transition-colors"
+            className="mt-6 inline-flex items-center px-6 h-10 rounded-lg bg-[var(--team-primary)] text-black text-[13px] font-semibold hover:bg-[#ff6426] transition-colors"
           >
             Continue to Site
           </button>

@@ -60,7 +60,7 @@ export const Draft = ({ rankings, loading }) => {
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <div className="flex items-center gap-2 px-2.5 h-7 border border-white/[0.08] focus-within:border-[#FF8A4C]/50 bg-white/[0.02] rounded-md">
+          <div className="flex items-center gap-2 px-2.5 h-7 border border-white/[0.08] focus-within:border-[var(--team-accent)]/50 bg-white/[0.02] rounded-md">
             <Search size={11} className="text-white/40" />
             <input
               type="text"
@@ -129,7 +129,7 @@ export const Draft = ({ rankings, loading }) => {
                         <td className="px-4 h-10">
                           <span className={cx('text-[14px] font-semibold tabular-nums tracking-tight',
                             rank === 1 ? 'text-amber-300'
-                            : rank <= 3 ? 'text-[#FF8A4C]'
+                            : rank <= 3 ? 'text-[var(--team-accent)]'
                             : rank <= 10 ? 'text-emerald-300'
                             : rank <= 31 ? 'text-white/85'
                             : 'text-white/45'
@@ -169,7 +169,7 @@ export const Draft = ({ rankings, loading }) => {
               <div className="px-4 py-3 border-t border-white/[0.05] text-center">
                 <button
                   onClick={() => setShowAll(true)}
-                  className="text-[11px] font-mono text-[#FF8A4C] hover:text-white transition-colors"
+                  className="text-[11px] font-mono text-[var(--team-accent)] hover:text-white transition-colors"
                 >
                   show all {filtered.length} prospects →
                 </button>

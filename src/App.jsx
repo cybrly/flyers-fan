@@ -2,13 +2,14 @@ import { useState, useEffect, useMemo, useCallback, lazy, Suspense } from 'react
 import { SpeedInsights } from '@vercel/speed-insights/react';
 import { Analytics } from '@vercel/analytics/react';
 
-import { SEASON, POLL, PLAYOFF_YEAR, UPCOMING_DRAFT_YEAR, PRIOR_DRAFT_YEAR, isLive, isFuture, setActiveTeam } from './config.js';
+import { SEASON, UPCOMING_SEASON_ID, POLL, PLAYOFF_YEAR, UPCOMING_DRAFT_YEAR, PRIOR_DRAFT_YEAR, isLive, isFuture, setActiveTeam } from './config.js';
 import { useTeam } from './teamContext.jsx';
 import { useNHL, useClockTick, useLiveStream } from './api.js';
-import { scheduleLooksOffseason, streakFromGames } from './lib/hockey.js';
+import { scheduleLooksOffseason, isStaleAsOf, streakFromGames } from './lib/hockey.js';
+import { resolveSeasonState } from './lib/season.js';
 import { PlayerCtx } from './context.js';
 import { useRoute, navigate, setOverlay, pageHref, gameHref } from './router.js';
-import { getHostBrand, getHostMeta, getHostScope } from './host.js';
+import { getHostMeta, getHostScope } from './host.js';
 import {
   adaptSchedule, adaptStandings, adaptGame,
   adaptPlayByPlay, adaptBracket, adaptRoster, adaptClubStats, adaptScoreboard,
@@ -78,7 +79,7 @@ const SeriesModal    = lazyPage(() => import('./components/SeriesModal.jsx'),   
 const CommandPalette = lazyPage(() => import('./components/CommandPalette.jsx'), 'CommandPalette');
 
 export default function App() {
-  const { teamAbbr: TEAM_ABBR, colors: teamColors, teamName, isPHI } = useTeam();
+  const { teamAbbr: TEAM_ABBR, colors: teamColors } = useTeam();
   // Sync the mutable config.js TEAM_ABBR so adapters (which import from
   // config.js, not React context) see the correct team on every render.
   setActiveTeam(TEAM_ABBR);
@@ -202,7 +203,38 @@ export default function App() {
     });
     return soon ? POLL.near : POLL.idle;
   });
-  const schedule = useMemo(() => adaptSchedule(scheduleRaw.data), [scheduleRaw.data]);
+  const calSchedule = useMemo(() => adaptSchedule(scheduleRaw.data), [scheduleRaw.data]);
+
+  // Roll-forward probe. Once the current-season schedule reads as complete
+  // (offseason), check whether the *upcoming* season's schedule has posted
+  // yet. The NHL publishes it mid-summer, before the Sep 1 calendar flip — so
+  // the moment it lands, we adopt it and the whole app rolls forward to the
+  // new season automatically. In-season this path never fetches (null url).
+  const calOffseason = useMemo(() => scheduleLooksOffseason(calSchedule), [calSchedule]);
+  const upcomingSchedRaw = useNHL(
+    calOffseason ? `v1/club-schedule-season/${TEAM_ABBR}/${UPCOMING_SEASON_ID}` : null,
+    POLL.standings,
+  );
+  const upcomingSchedule = useMemo(() => adaptSchedule(upcomingSchedRaw.data), [upcomingSchedRaw.data]);
+  const upcomingPosted = (upcomingSchedule.games?.length || 0) > 0 || !!upcomingSchedule.nextGame;
+  // Active schedule everything else keys off: the upcoming season once it has
+  // posted, otherwise the completed current season.
+  const schedule = upcomingPosted ? upcomingSchedule : calSchedule;
+  const seasonState = useMemo(
+    () => resolveSeasonState({
+      calSeasonId: SEASON,
+      upcomingSeasonId: UPCOMING_SEASON_ID,
+      schedule: calSchedule,
+      upcomingPosted,
+    }),
+    [calSchedule, upcomingPosted],
+  );
+  // Offseason flag — true only when the current season is complete and the
+  // upcoming one hasn't posted yet (once it posts we roll forward and are no
+  // longer "offseason"). Drives the "Final / Most Recent" relabeling on the
+  // Dashboard/Standings, the offseason-aware game picker below, and the
+  // season-end banner. Defined here (before the picker) so both can use it.
+  const offseason = seasonState.phase === 'offseason';
 
   // Standings — lower cadence.
   const standingsRaw = useNHL('v1/standings/now', POLL.standings);
@@ -230,16 +262,26 @@ export default function App() {
     const live = scoreboard.games.find((g) => g.state === 'LIVE' || g.state === 'CRIT');
     if (live) return live.id;
     const sorted = [...scoreboard.games].sort((a, b) => (b.startUTC || '').localeCompare(a.startUTC || ''));
-    return sorted[0]?.id || null;
+    const top = sorted[0];
+    // Offseason guard: the scoreboard pins to the last game played (a June Cup
+    // Final). Don't headline a months-old game as "what's on now" — let the
+    // Game Tape fall through to its offseason empty state instead.
+    if (top && isStaleAsOf(top.startUTC)) return null;
+    return top?.id || null;
   }, [isLeague, scoreboard]);
 
   // Pick game ID for Game Tape: explicit selection (URL /game/:id) wins,
   // then league-wide latest on scumbag.hockey, then the locked-team's
   // live game, then their most recent finished game.
+  // In the offseason the most recent finished game is a months-old playoff
+  // final — opening Game Tape to it makes the whole site look stale. So once
+  // an explicit selection and any live game are ruled out, fall back to the
+  // last finished game only when it isn't stale.
+  const mostRecentFinished = schedule.games[0];
   const gameId = routeGameId
     || (isLeague ? leagueLatestGameId : null)
     || schedule.liveGame?.id
-    || schedule.games[0]?.id
+    || (offseason || isStaleAsOf(mostRecentFinished?.startUTC) ? null : mostRecentFinished?.id)
     || null;
 
   const boxscore = useNHL(gameId ? `v1/gamecenter/${gameId}/boxscore` : null,
@@ -374,16 +416,6 @@ export default function App() {
     };
   }, [standings.us, schedule.games]);
 
-  // Offseason / stale-data guard. The NHL API never returns an "empty"
-  // scoreboard or standings between seasons — it pins to the last game played
-  // (e.g. the Stanley Cup Final in June). So "is there data" is not a freshness
-  // signal; the date is. scheduleLooksOffseason decides the season is over from
-  // the selected team's schedule against the wall clock, and is playoff-aware
-  // so a team between rounds (won its last playoff game, next series not yet
-  // scheduled) is NOT mislabeled as finished. Drives the "Final / Most Recent"
-  // relabeling on the Dashboard/Standings and gates the season-end banner.
-  const offseason = useMemo(() => scheduleLooksOffseason(schedule), [schedule]);
-
   // Most recent refresh timestamp across all feeds.
   const lastFetch = Math.max(
     scheduleRaw.lastFetch || 0,
@@ -416,7 +448,7 @@ export default function App() {
     <PlayerCtx.Provider value={playerCtx}>
     <a
       href="#main-content"
-      className="sr-only focus:not-sr-only focus:absolute focus:top-3 focus:left-3 focus:z-50 focus:px-3 focus:py-1.5 focus:bg-[#F74902] focus:text-black focus:rounded-md focus:text-[12px] focus:font-medium"
+      className="sr-only focus:not-sr-only focus:absolute focus:top-3 focus:left-3 focus:z-50 focus:px-3 focus:py-1.5 focus:bg-[var(--team-primary)] focus:text-black focus:rounded-md focus:text-[12px] focus:font-medium"
     >
       Skip to main content
     </a>
@@ -465,17 +497,17 @@ export default function App() {
            without seams. Any colored overlay shifts perception (blue → navy,
            orange → brown), so we keep it pure. */
         body { background: #0A0A0A; background-attachment: fixed; }
-        ::selection { background: #F74902; color: #000; }
+        ::selection { background: var(--team-primary); color: #000; }
         ::-webkit-scrollbar { width: 8px; height: 8px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.06); border-radius: 4px; }
         ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.12); }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
-        @keyframes pulseRow { 0% { background-color: rgba(247,73,2,0.18); } 100% { background-color: transparent; } }
+        @keyframes pulseRow { 0% { background-color: color-mix(in srgb, var(--team-primary) 18%, transparent); } 100% { background-color: transparent; } }
         .pulse-row { animation: pulseRow 1.4s ease-out; }
         @keyframes scoreFlash {
-          0%   { color: #FF8A4C; transform: scale(1.18); }
-          60%  { color: #FF8A4C; transform: scale(1.05); }
+          0%   { color: var(--team-accent); transform: scale(1.18); }
+          60%  { color: var(--team-accent); transform: scale(1.05); }
           100% { transform: scale(1); }
         }
         .score-flash { animation: scoreFlash 0.7s ease-out; }
@@ -484,8 +516,8 @@ export default function App() {
         thead.sticky th { position: sticky; top: var(--header-offset, 48px); background: rgba(10,10,12,0.92); z-index: 1; backdrop-filter: blur(6px); }
         /* A11y — visible focus ring for keyboard nav, mouse clicks stay clean. */
         :focus { outline: none; }
-        :focus-visible { outline: 2px solid #FF8A4C; outline-offset: 2px; border-radius: 3px; }
-        button:focus-visible, a:focus-visible, [role="button"]:focus-visible { outline: 2px solid #FF8A4C; outline-offset: 2px; }
+        :focus-visible { outline: 2px solid var(--team-accent); outline-offset: 2px; border-radius: 3px; }
+        button:focus-visible, a:focus-visible, [role="button"]:focus-visible { outline: 2px solid var(--team-accent); outline-offset: 2px; }
         /* Respect users who opt out of motion. */
         @media (prefers-reduced-motion: reduce) {
           *, *::before, *::after { animation-duration: 0.001ms !important; animation-iteration-count: 1 !important; transition-duration: 0.001ms !important; scroll-behavior: auto !important; }

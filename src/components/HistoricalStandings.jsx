@@ -66,9 +66,9 @@ export const HistoricalStandings = ({ currentUs }) => {
             </div>
           </div>
           {/* This year */}
-          <div className="border border-[#F74902]/[0.18] rounded-lg p-3 bg-[#F74902]/[0.03]">
+          <div className="border border-[var(--team-primary)]/[0.18] rounded-lg p-3 bg-[var(--team-primary)]/[0.03]">
             <Label>This Season</Label>
-            <div className="text-[18px] font-semibold tabular-nums mt-1 text-[#FF8A4C]">
+            <div className="text-[18px] font-semibold tabular-nums mt-1 text-[var(--team-accent)]">
               {currentUs.w}–{currentUs.l}–{currentUs.ot || 0}
             </div>
             <div className="text-[11px] font-mono text-white/55 mt-1">

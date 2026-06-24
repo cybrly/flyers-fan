@@ -275,7 +275,7 @@ export const Forecast = ({ standings }) => {
                 type="button"
                 onClick={reroll}
                 disabled={running}
-                className="mt-3 w-full h-8 rounded-md bg-[#F74902]/15 border border-[#F74902]/30 text-[#FF8A4C] text-[12px] font-medium hover:bg-[#F74902]/25 disabled:opacity-50 transition-colors"
+                className="mt-3 w-full h-8 rounded-md bg-[var(--team-primary)]/15 border border-[var(--team-primary)]/30 text-[var(--team-accent)] text-[12px] font-medium hover:bg-[var(--team-primary)]/25 disabled:opacity-50 transition-colors"
               >
                 Re-run with {lockedGames.size} locked {lockedGames.size === 1 ? 'game' : 'games'}
               </button>
@@ -317,7 +317,7 @@ const SeasonOverBanner = () => (
     <div className="text-[13px] text-white/85 font-medium">Regular season complete</div>
     <div className="text-[11px] font-mono text-white/55 mt-1 leading-relaxed">
       Standings are locked — there are no remaining regular-season games to simulate.
-      For in-progress playoff series, see the <a href="/playoffs" onClick={(e) => { e.preventDefault(); navigate('/playoffs'); }} className="text-[#FF8A4C] hover:underline">Playoffs</a> page.
+      For in-progress playoff series, see the <a href="/playoffs" onClick={(e) => { e.preventDefault(); navigate('/playoffs'); }} className="text-[var(--team-accent)] hover:underline">Playoffs</a> page.
     </div>
   </div>
 );
@@ -331,8 +331,8 @@ const ForecastRunBar = ({ running, pct, progress, onClickRun, canRun, hasResult 
         className={cx(
           'flex items-center justify-center gap-2 h-11 px-5 rounded-md text-[13px] font-semibold tracking-tight transition-colors shrink-0',
           canRun
-            ? 'bg-[#F74902] hover:bg-[#FF5A1F] text-white cursor-pointer'
-            : 'bg-[#F74902]/40 text-white/70 cursor-not-allowed',
+            ? 'bg-[var(--team-primary)] hover:bg-[#FF5A1F] text-white cursor-pointer'
+            : 'bg-[var(--team-primary)]/40 text-white/70 cursor-not-allowed',
         )}
       >
         {running
@@ -354,7 +354,7 @@ const ForecastRunBar = ({ running, pct, progress, onClickRun, canRun, hasResult 
         <div className="h-1.5 bg-white/[0.06] rounded-full overflow-hidden">
           <div
             className={cx('h-full transition-[width] duration-150 ease-out',
-              running ? 'bg-[#FF8A4C]' : hasResult ? 'bg-emerald-500/70' : 'bg-white/20',
+              running ? 'bg-[var(--team-accent)]' : hasResult ? 'bg-emerald-500/70' : 'bg-white/20',
             )}
             style={{ width: `${pct * 100}%` }}
           />
@@ -368,7 +368,7 @@ const PhiHeadline = ({ us, running }) => {
   const playoff = us.playoffPct;
   const tone =
     playoff >= 0.7 ? 'text-emerald-400'
-    : playoff >= 0.45 ? 'text-[#FF8A4C]'
+    : playoff >= 0.45 ? 'text-[var(--team-accent)]'
     : playoff >= 0.20 ? 'text-amber-300'
     : 'text-red-400';
   return (
@@ -380,7 +380,7 @@ const PhiHeadline = ({ us, running }) => {
           <div>
             <div className="text-[11px] text-white/55 flex items-center gap-1.5">
               Philadelphia Flyers
-              {running && <span className="w-1.5 h-1.5 rounded-full bg-[#FF8A4C] animate-pulse" />}
+              {running && <span className="w-1.5 h-1.5 rounded-full bg-[var(--team-accent)] animate-pulse" />}
             </div>
             <div className="text-[14px] text-white/90 font-medium">Playoff probability</div>
           </div>
@@ -461,8 +461,8 @@ const PointsHistogram = ({ us }) => {
               >
                 <div
                   className={cx('w-full rounded-sm transition-[height] duration-150 ease-out',
-                    isUs ? 'bg-[#FF8A4C]'
-                    : inMode ? 'bg-[#F74902]/60'
+                    isUs ? 'bg-[var(--team-accent)]'
+                    : inMode ? 'bg-[var(--team-primary)]/60'
                     : 'bg-white/15',
                   )}
                   style={{ height: `${Math.max(2, h)}%` }}
@@ -513,10 +513,10 @@ const ConferenceTable = ({ result }) => {
               return (
                 <tr key={t.abbr} className={cx(
                   'transition-colors',
-                  isUs ? 'bg-[#F74902]/[0.06] hover:bg-[#F74902]/[0.10]' : 'hover:bg-white/[0.02]',
+                  isUs ? 'bg-[var(--team-primary)]/[0.06] hover:bg-[var(--team-primary)]/[0.10]' : 'hover:bg-white/[0.02]',
                 )}>
                   <td className={cx('px-4 h-10 text-[11px] font-mono tabular-nums',
-                    i === 0 ? 'text-amber-300 font-semibold' : isUs ? 'text-[#FF8A4C] font-semibold' : 'text-white/40'
+                    i === 0 ? 'text-amber-300 font-semibold' : isUs ? 'text-[var(--team-accent)] font-semibold' : 'text-white/40'
                   )}>{i + 1}</td>
                   <td className="px-2">
                     <div className="flex items-center gap-2">
@@ -533,7 +533,7 @@ const ConferenceTable = ({ result }) => {
                   <td className="px-2 text-right text-[11px] font-mono tabular-nums text-sky-300/80">{(t.wildcardPct * 100).toFixed(1)}</td>
                   <td className={cx('px-4 text-right text-[12px] font-mono tabular-nums font-semibold',
                     t.playoffPct >= 0.85 ? 'text-emerald-400'
-                    : t.playoffPct >= 0.55 ? 'text-[#FF8A4C]'
+                    : t.playoffPct >= 0.55 ? 'text-[var(--team-accent)]'
                     : t.playoffPct >= 0.25 ? 'text-amber-300'
                     : 'text-red-400'
                   )}>{(t.playoffPct * 100).toFixed(1)}%</td>

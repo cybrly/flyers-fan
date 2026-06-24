@@ -116,12 +116,12 @@ const CutlineRow = ({ row, label, emphasis, highlightLine }) => {
     <div className={cx(
       'px-3 py-2 flex items-center gap-3',
       emphasis && 'bg-white/[0.02]',
-      isUs && 'bg-[#F74902]/[0.06]',
+      isUs && 'bg-[var(--team-primary)]/[0.06]',
       highlightLine && 'border-y border-amber-500/20',
     )}>
       <span className="text-[10px] font-mono text-white/35 uppercase tracking-wider w-32 shrink-0">{label}</span>
       <TeamLogo abbr={row.abbr} size={18} />
-      <span className={cx('text-[12px] flex-1 truncate', isUs ? 'text-[#FF8A4C] font-semibold' : 'text-white/85')}>
+      <span className={cx('text-[12px] flex-1 truncate', isUs ? 'text-[var(--team-accent)] font-semibold' : 'text-white/85')}>
         {row.team}
       </span>
       <span className="text-[11px] font-mono tabular-nums text-white/55 shrink-0">{row.w}-{row.l}{row.ot ? `-${row.ot}` : ''}</span>

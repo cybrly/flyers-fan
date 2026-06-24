@@ -74,12 +74,12 @@ export const FaceoffSplits = ({ pbpRaw }) => {
           const t = tone(pct ?? 0);
           const tColor =
             t === 'good' ? 'text-emerald-400' :
-            t === 'warm' ? 'text-[#FF8A4C]' :
+            t === 'warm' ? 'text-[var(--team-accent)]' :
             t === 'amber' ? 'text-amber-300' :
             'text-red-400';
           const barColor =
             t === 'good' ? 'bg-emerald-500/70' :
-            t === 'warm' ? 'bg-[#F74902]/80' :
+            t === 'warm' ? 'bg-[var(--team-primary)]/80' :
             t === 'amber' ? 'bg-amber-500/70' :
             'bg-red-500/70';
           return (

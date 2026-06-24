@@ -74,7 +74,7 @@ export const LeagueLeaders = ({ data }) => {
             className={cx(
               'px-3 h-8 text-[11px] font-mono whitespace-nowrap transition-colors',
               cat === t.id
-                ? 'bg-[#0A0A0A] text-[#FF8A4C]'
+                ? 'bg-[#0A0A0A] text-[var(--team-accent)]'
                 : 'bg-[#0C0C0C]/40 text-white/55 hover:text-white/80'
             )}
           >{t.label}</button>
@@ -92,7 +92,7 @@ export const LeagueLeaders = ({ data }) => {
           return (
             <div key={p.id} className={cx(
               'grid grid-cols-[28px_1fr_auto_auto] items-center gap-2 px-3 h-10',
-              isUs ? 'bg-[#F74902]/[0.05]' : 'hover:bg-white/[0.02]',
+              isUs ? 'bg-[var(--team-primary)]/[0.05]' : 'hover:bg-white/[0.02]',
             )}>
               <span className={cx('text-[11px] font-mono tabular-nums',
                 i === 0 ? 'text-amber-300 font-semibold'
@@ -103,7 +103,7 @@ export const LeagueLeaders = ({ data }) => {
               <span className="flex items-center gap-2 min-w-0">
                 <Headshot src={p.headshot} num={p.num} size={22} />
                 <PlayerLink playerId={p.id}>
-                  <span className={cx('text-[12px] truncate', isUs && 'text-[#FF8A4C] font-medium')}>
+                  <span className={cx('text-[12px] truncate', isUs && 'text-[var(--team-accent)] font-medium')}>
                     {p.name}
                   </span>
                 </PlayerLink>
@@ -114,7 +114,7 @@ export const LeagueLeaders = ({ data }) => {
                 {p.team}
               </span>
               <span className={cx('text-[14px] font-mono tabular-nums tracking-tight font-semibold ml-2 shrink-0',
-                isUs ? 'text-[#FF8A4C]' : 'text-white'
+                isUs ? 'text-[var(--team-accent)]' : 'text-white'
               )}>
                 {tab.fmt(p.value)}
               </span>

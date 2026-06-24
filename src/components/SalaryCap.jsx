@@ -41,7 +41,7 @@ const Stat = ({ label, value, sub, tone }) => (
     <div className="text-[9px] font-mono text-white/40 uppercase tracking-wider">{label}</div>
     <div className={cx('text-[15px] font-mono tabular-nums mt-0.5 font-semibold',
       tone === 'good' ? 'text-emerald-400'
-      : tone === 'warm' ? 'text-[#FF8A4C]'
+      : tone === 'warm' ? 'text-[var(--team-accent)]'
       : tone === 'bad' ? 'text-red-400'
       : 'text-white/85',
     )}>{value}</div>
@@ -70,7 +70,7 @@ export const SalaryCap = ({ roster }) => {
 
         {/* Headline: cap hit vs ceiling */}
         <div className="relative flex items-baseline gap-3 flex-wrap">
-          <span className="text-[32px] font-semibold tabular-nums tracking-tight text-[#FF8A4C] leading-none">
+          <span className="text-[32px] font-semibold tabular-nums tracking-tight text-[var(--team-accent)] leading-none">
             {fmtMillions(projectedHit)}
           </span>
           <span className="text-[12px] font-mono text-white/45">projected cap hit</span>
@@ -81,7 +81,7 @@ export const SalaryCap = ({ roster }) => {
 
         {/* Segmented bar — F / D / G / other */}
         <div className="relative h-3 rounded-full overflow-hidden bg-white/[0.05]">
-          <div className="absolute left-0 top-0 h-full bg-[#FF8A4C]"
+          <div className="absolute left-0 top-0 h-full bg-[var(--team-accent)]"
             style={{ width: `${fPct * 100}%` }} title={`Forwards · ${fmtMillions(totals.F)}`} />
           <div className="absolute top-0 h-full bg-sky-400/80"
             style={{ left: `${fPct * 100}%`, width: `${dPct * 100}%` }} title={`Defence · ${fmtMillions(totals.D)}`} />
@@ -93,7 +93,7 @@ export const SalaryCap = ({ roster }) => {
           <div className="absolute top-0 h-full w-px bg-white/40 right-0" />
         </div>
         <div className="relative flex items-center gap-4 text-[10px] font-mono text-white/55 flex-wrap">
-          <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-sm bg-[#FF8A4C]" /> Forwards · {fmtMillions(totals.F)}</span>
+          <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-sm bg-[var(--team-accent)]" /> Forwards · {fmtMillions(totals.F)}</span>
           <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-sm bg-sky-400/80" /> Defence · {fmtMillions(totals.D)}</span>
           <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-sm bg-emerald-400/80" /> Goaltenders · {fmtMillions(totals.G)}</span>
           {otherPct > 0 && (

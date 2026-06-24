@@ -16,7 +16,7 @@ const ITEMS = [
 export const MobileBottomNav = ({ page, setPage, onOpenMore, liveGame }) => (
   <nav
     aria-label="Primary"
-    className="sm:hidden fixed bottom-0 inset-x-0 z-30 h-14 border-t border-[#F74902]/[0.22] bg-[#080808]/96 backdrop-blur-md flex items-stretch"
+    className="sm:hidden fixed bottom-0 inset-x-0 z-30 h-14 border-t border-[var(--team-primary)]/[0.22] bg-[#080808]/96 backdrop-blur-md flex items-stretch"
     style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
   >
     {ITEMS.map((it) => {
@@ -30,7 +30,7 @@ export const MobileBottomNav = ({ page, setPage, onOpenMore, liveGame }) => (
           aria-current={active ? 'page' : undefined}
           className={cx(
             'relative flex-1 flex flex-col items-center justify-center gap-0.5 transition-colors',
-            active ? 'text-[#FF8A4C]' : 'text-white/55 hover:text-white/85',
+            active ? 'text-[var(--team-accent)]' : 'text-white/55 hover:text-white/85',
           )}
         >
           <div className="relative">

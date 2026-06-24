@@ -47,7 +47,7 @@ export const PlayerModal = ({ playerId, onClose }) => {
         <div className="absolute top-3 right-3 z-10 flex items-center gap-1.5">
           <button
             onClick={() => { onClose(); navigate(playerHref(playerId)); }}
-            className="hidden sm:flex items-center gap-1.5 h-7 px-2.5 rounded-md bg-[#F74902]/15 hover:bg-[#F74902]/25 border border-[#F74902]/30 text-[#FF8A4C] text-[11px] font-mono transition-colors"
+            className="hidden sm:flex items-center gap-1.5 h-7 px-2.5 rounded-md bg-[var(--team-primary)]/15 hover:bg-[var(--team-primary)]/25 border border-[var(--team-primary)]/30 text-[var(--team-accent)] text-[11px] font-mono transition-colors"
             aria-label="View full profile"
           >
             full profile <ArrowRight size={11} />
@@ -228,7 +228,7 @@ export const PlayerModal = ({ playerId, onClose }) => {
             <div className="p-4 border-t border-white/[0.06] bg-white/[0.015]">
               <button
                 onClick={() => { onClose(); navigate(playerHref(playerId)); }}
-                className="w-full flex items-center justify-center gap-2 h-9 rounded-md bg-[#F74902]/15 hover:bg-[#F74902]/25 border border-[#F74902]/30 text-[#FF8A4C] text-[12px] font-medium transition-colors"
+                className="w-full flex items-center justify-center gap-2 h-9 rounded-md bg-[var(--team-primary)]/15 hover:bg-[var(--team-primary)]/25 border border-[var(--team-primary)]/30 text-[var(--team-accent)] text-[12px] font-medium transition-colors"
               >
                 View full profile <ArrowRight size={13} />
               </button>

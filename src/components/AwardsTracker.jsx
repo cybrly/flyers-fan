@@ -77,11 +77,11 @@ export const AwardsTracker = ({ awardContenders }) => {
                   return (
                     <div key={c.id || i} className={cx(
                       'flex items-center gap-3 px-4 py-2.5',
-                      isPHI && 'bg-[#F74902]/[0.04]',
+                      isPHI && 'bg-[var(--team-primary)]/[0.04]',
                     )}>
                       <span className={cx(
                         'text-[14px] font-semibold tabular-nums w-6 shrink-0',
-                        i === 0 ? 'text-[#FF8A4C]' : 'text-white/35',
+                        i === 0 ? 'text-[var(--team-accent)]' : 'text-white/35',
                       )}>{i + 1}</span>
                       <Headshot playerId={c.id} teamAbbrev={c.team} size={28} />
                       <div className="flex-1 min-w-0">

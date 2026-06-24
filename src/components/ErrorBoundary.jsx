@@ -27,7 +27,7 @@ export class ErrorBoundary extends React.Component {
             {isStaleChunk ? (
               <button
                 onClick={() => window.location.reload()}
-                className="mt-3 px-3 h-8 rounded-md text-[12px] font-mono bg-[#F74902] hover:bg-[#FF8A4C] text-white transition-colors"
+                className="mt-3 px-3 h-8 rounded-md text-[12px] font-mono bg-[var(--team-primary)] hover:bg-[var(--team-accent)] text-white transition-colors"
               >
                 Reload page
               </button>

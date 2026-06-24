@@ -138,7 +138,7 @@ export const OpponentScout = ({ nextGame }) => {
                 <span className="text-red-400">{last5.l}</span>
               </span>
               <span className={cx('text-[11px] font-mono tabular-nums',
-                last5.gf - last5.ga > 0 ? 'text-[#FF8A4C]' : last5.gf - last5.ga < 0 ? 'text-red-400' : 'text-white/50',
+                last5.gf - last5.ga > 0 ? 'text-[var(--team-accent)]' : last5.gf - last5.ga < 0 ? 'text-red-400' : 'text-white/50',
               )}>
                 {last5.gf - last5.ga > 0 ? '+' : ''}{last5.gf - last5.ga} diff
               </span>
@@ -192,7 +192,7 @@ export const OpponentScout = ({ nextGame }) => {
                       <span className="text-[9px] font-mono text-white/30 ml-1.5">{p.pos}</span>
                     </div>
                     <span className="text-[11px] font-mono tabular-nums text-white/85 shrink-0">
-                      <span className="text-[#FF8A4C] font-semibold">{p.pts}</span>
+                      <span className="text-[var(--team-accent)] font-semibold">{p.pts}</span>
                       <span className="text-white/30 mx-1">·</span>
                       <span className="text-emerald-400/80">{p.g}G</span>
                       <span className="text-white/25 mx-0.5">/</span>
@@ -223,7 +223,7 @@ export const OpponentScout = ({ nextGame }) => {
                     {hotGoalie.gp} GP · {hotGoalie.w}-{hotGoalie.l}-{hotGoalie.otl}
                   </div>
                   <div className="flex items-center gap-2 mt-1 text-[11px] font-mono tabular-nums">
-                    <span className="text-[#FF8A4C]">{fmtPct3(hotGoalie.svPct)}</span>
+                    <span className="text-[var(--team-accent)]">{fmtPct3(hotGoalie.svPct)}</span>
                     <span className="text-white/30">·</span>
                     <span className="text-red-400">{hotGoalie.gaa != null ? hotGoalie.gaa.toFixed(2) : '—'} GAA</span>
                   </div>

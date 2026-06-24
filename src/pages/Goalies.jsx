@@ -98,7 +98,7 @@ const GoalieRow = ({ goalie, seasonStr }) => {
             <div className="grid grid-cols-4 gap-3 mt-2 text-[11px] font-mono tabular-nums">
               <div>
                 <div className="text-[9px] text-white/35 uppercase tracking-wider">Save %</div>
-                <div className="text-[#FF8A4C]">{goalie.savePct != null ? `${goalie.savePct.toFixed(1)}%` : '—'}</div>
+                <div className="text-[var(--team-accent)]">{goalie.savePct != null ? `${goalie.savePct.toFixed(1)}%` : '—'}</div>
               </div>
               <div>
                 <div className="text-[9px] text-white/35 uppercase tracking-wider">GAA</div>
@@ -120,12 +120,12 @@ const GoalieRow = ({ goalie, seasonStr }) => {
           <div className="border border-white/[0.05] rounded-md px-3 py-2.5 bg-white/[0.01]">
             <div className="flex items-center justify-between gap-2">
               <span className="text-[9px] font-mono text-white/40 uppercase tracking-wider">Save % · trend</span>
-              <span className="text-[11px] font-mono tabular-nums text-[#FF8A4C]">
+              <span className="text-[11px] font-mono tabular-nums text-[var(--team-accent)]">
                 {savePctSeries.length ? fmtPct(savePctSeries[savePctSeries.length - 1]) : '—'}
               </span>
             </div>
             <div className="mt-1.5 flex items-center justify-center min-h-[32px]">
-              {loading ? <Skeleton width={140} height={20} /> : <Sparkline values={savePctSeries} color="#FF8A4C" />}
+              {loading ? <Skeleton width={140} height={20} /> : <Sparkline values={savePctSeries} color="var(--team-accent)" />}
             </div>
             <div className="mt-1 text-[9px] font-mono text-white/30">{savePctSeries.length} games</div>
           </div>
@@ -188,11 +188,11 @@ const LeaderRow = ({ entry, rank, formatVal, valueLabel, accent }) => {
     <div
       className={cx(
         'grid grid-cols-[28px_28px_1fr_auto] items-center gap-2 px-3 h-10',
-        isPhi ? 'bg-[#F74902]/[0.08] border-l-2 border-[#F74902]/70' : 'hover:bg-white/[0.02] border-l-2 border-transparent',
+        isPhi ? 'bg-[var(--team-primary)]/[0.08] border-l-2 border-[var(--team-primary)]/70' : 'hover:bg-white/[0.02] border-l-2 border-transparent',
       )}
     >
       <span className={cx('text-[11px] font-mono tabular-nums',
-        rank === 1 ? 'text-amber-300 font-semibold' : isPhi ? 'text-[#FF8A4C] font-semibold' : 'text-white/40'
+        rank === 1 ? 'text-amber-300 font-semibold' : isPhi ? 'text-[var(--team-accent)] font-semibold' : 'text-white/40'
       )}>{rank}</span>
       <Headshot src={entry.headshot} num={entry.num} size={24} />
       <div className="flex items-center gap-1.5 min-w-0">
@@ -321,7 +321,7 @@ export const Goalies = ({ clubStats, schedule, goalieLeaders }) => {
           title="Save %"
           sub="higher is better"
           list={svList}
-          accent="#FF8A4C"
+          accent="var(--team-accent)"
           valueLabel="SV%"
           formatVal={(v) => v == null ? '—' : `.${Math.round(v * 1000).toString().padStart(3, '0')}`}
           loading={llLoading}

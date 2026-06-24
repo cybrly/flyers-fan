@@ -1,12 +1,13 @@
 import { useMemo, useState, useRef } from 'react';
-import { cx, SEASON, teamIdFor } from '../config.js';
+import { cx, SEASON, teamIdFor, franchiseIdFor } from '../config.js';
 import { useTeam } from '../teamContext.jsx';
-import { getHostScope } from '../host.js';
 import { Section, Chip, Label } from '../components/primitives.jsx';
-import { useNHL } from '../api.js';
+import { useNHL, useRecords } from '../api.js';
 import { navigate, gameHref } from '../router.js';
-import { rollingWindow, rollingAvg } from '../lib/stats.js';
-import { HISTORICAL_SEASONS } from '../data/historicalSeasons.js';
+import { rollingWindow } from '../lib/stats.js';
+import { cumulativePoints } from '../lib/hockey.js';
+import { adaptSchedule } from '../adapters.js';
+import { adaptRecords } from '../lib/records.js';
 import { adaptTeamEdge } from '../adapters-edge.js';
 import { HistoricalStandings } from '../components/HistoricalStandings.jsx';
 
@@ -26,7 +27,7 @@ const PLAYOFF_LINE = 95;   // typical wild-card threshold for a full 82-game sea
 const SEASON_GAMES = 82;
 
 const SERIES = {
-  diff: { label: 'Goal Diff (running)', color: '#F74902', accent: true },
+  diff: { label: 'Goal Diff (running)', color: 'var(--team-primary)', accent: true },
   gf:   { label: 'Goals For (cumulative)', color: '#10B981' },
   ga:   { label: 'Goals Against (cumulative)', color: '#EF4444' },
   form: { label: 'Form % (last 5)', color: '#8AB4FF' },
@@ -50,6 +51,7 @@ const xForIndex = (i, n) => PAD.left + (n <= 1 ? 0 : (i / (n - 1)) * PLOT_W);
 const yForCum = (v, scale) => PAD.top + PLOT_H - ((v - scale.min) / Math.max(1, scale.max - scale.min)) * PLOT_H;
 
 export const Trends = ({ schedule, standings, roster, clubStats }) => {
+  const { teamAbbr } = useTeam();
   const [active, setActive] = useState({ diff: true, gf: true, ga: true, form: false, pts: true });
   const [hoverIdx, setHoverIdx] = useState(null);
   const [playerId, setPlayerId] = useState('');
@@ -131,19 +133,31 @@ export const Trends = ({ schedule, standings, roster, clubStats }) => {
     return windows.map((w) => ({ index: w.index, value: (w.pointsPct ?? 0) * 100 }));
   }, [games, rollWindow]);
 
-  // Historical season overlay data (cumulative points, trimmed to current N).
-  const histSeason = useMemo(() => {
-    if (!histOverlay) return null;
-    const s = HISTORICAL_SEASONS.find((h) => h.id === histOverlay);
-    if (!s) return null;
-    return { ...s, pts: s.points.slice(0, N) };
-  }, [histOverlay, N]);
+  // Historical season overlay — the selected team's notable past seasons, live
+  // from the NHL Records API (best regular seasons by points), not a static
+  // Flyers-only list. Works for any team on any host.
+  const fid = franchiseIdFor(teamAbbr);
+  const seasonResults = useRecords(fid ? `franchise-season-results?cayenneExp=franchiseId=${fid}` : null);
+  const notableSeasons = useMemo(
+    () => adaptRecords({ seasons: seasonResults.data }).bestSeasons,
+    [seasonResults.data],
+  );
 
-  // Historical season overlays are Flyers seasons (Philadelphia-only data), so
-  // the overlay control only makes sense on the team host. On the league host
-  // we hide it rather than letting a fan overlay famous Flyers seasons onto
-  // another team's trajectory.
-  const teamScope = getHostScope() === 'team';
+  // When an overlay season is chosen, fetch that season's full schedule and
+  // compute its cumulative points pace to draw against the current season.
+  const histSchedRaw = useNHL(histOverlay ? `v1/club-schedule-season/${teamAbbr}/${histOverlay}` : null, 0);
+  const histPts = useMemo(
+    () => cumulativePoints(adaptSchedule(histSchedRaw.data).games),
+    [histSchedRaw.data],
+  );
+  const histSeason = useMemo(() => {
+    if (!histOverlay || histPts.length === 0) return null;
+    const meta = notableSeasons.find((s) => s.id === histOverlay);
+    return { id: meta ? meta.season : histOverlay, pts: histPts.slice(0, N) };
+  }, [histOverlay, histPts, notableSeasons, N]);
+
+  // Show the overlay control whenever we have notable seasons to offer.
+  const teamScope = notableSeasons.length > 0;
 
   // Projected pace — extend cumulative points to game 82 using the current
   // points-per-game rate. Drawn as a faint dashed extension of the pts line.
@@ -378,7 +392,7 @@ export const Trends = ({ schedule, standings, roster, clubStats }) => {
           <select
             value={playerId}
             onChange={(e) => setPlayerId(e.target.value)}
-            className="h-7 px-2 bg-white/[0.03] border border-white/[0.08] hover:border-white/20 text-[11px] font-mono text-white/85 rounded-md outline-none focus:border-[#FF8A4C]/50"
+            className="h-7 px-2 bg-white/[0.03] border border-white/[0.08] hover:border-white/20 text-[11px] font-mono text-white/85 rounded-md outline-none focus:border-[var(--team-accent)]/50"
           >
             <option value="">— none —</option>
             {skaters.length > 0 && (
@@ -440,11 +454,11 @@ export const Trends = ({ schedule, standings, roster, clubStats }) => {
             <select
               value={histOverlay || ''}
               onChange={(e) => setHistOverlay(e.target.value || null)}
-              className="h-7 px-2 bg-white/[0.03] border border-white/[0.08] hover:border-white/20 text-[11px] font-mono text-white/85 rounded-md outline-none focus:border-[#FF8A4C]/50"
+              className="h-7 px-2 bg-white/[0.03] border border-white/[0.08] hover:border-white/20 text-[11px] font-mono text-white/85 rounded-md outline-none focus:border-[var(--team-accent)]/50"
             >
               <option value="">— none —</option>
-              {HISTORICAL_SEASONS.map((s) => (
-                <option key={s.id} value={s.id}>{s.label}</option>
+              {notableSeasons.map((s) => (
+                <option key={s.id} value={s.id}>{s.season} · {s.points} pts</option>
               ))}
             </select>
             {histOverlay && (
@@ -797,7 +811,7 @@ export const Trends = ({ schedule, standings, roster, clubStats }) => {
       {/* Compact summary tiles for current values */}
       <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
         {[
-          { l: 'Goal Diff', v: (series.diff[N - 1] > 0 ? '+' : '') + series.diff[N - 1], color: '#F74902' },
+          { l: 'Goal Diff', v: (series.diff[N - 1] > 0 ? '+' : '') + series.diff[N - 1], color: 'var(--team-primary)' },
           { l: 'Goals For', v: series.gf[N - 1], color: '#10B981' },
           { l: 'Goals Ag.', v: series.ga[N - 1], color: '#EF4444' },
           { l: 'Points',    v: series.pts[N - 1], color: '#FFA85C' },
@@ -914,7 +928,7 @@ const SplitCard = ({ label, sub, b }) => {
         </div>
         <div>
           <div className="text-white/30 text-[9px] uppercase tracking-wider">Diff</div>
-          <div className={diff > 0 ? 'text-[#FF8A4C]' : diff < 0 ? 'text-red-400' : 'text-white/50'}>
+          <div className={diff > 0 ? 'text-[var(--team-accent)]' : diff < 0 ? 'text-red-400' : 'text-white/50'}>
             {diff > 0 ? '+' : ''}{diff}
           </div>
         </div>
@@ -948,12 +962,12 @@ const SituationalSplits = ({ splits, clubStats }) => {
             <div className="space-y-1.5">
               <div className="flex items-center gap-3 text-[10px] font-mono text-white/50">
                 <span className="flex items-center gap-1"><span className="w-2 h-2 bg-[#10B981] rounded-sm" /> Even Strength</span>
-                <span className="flex items-center gap-1"><span className="w-2 h-2 bg-[#FF8A4C] rounded-sm" /> Power Play</span>
+                <span className="flex items-center gap-1"><span className="w-2 h-2 bg-[var(--team-accent)] rounded-sm" /> Power Play</span>
                 <span className="flex items-center gap-1"><span className="w-2 h-2 bg-[#8AB4FF] rounded-sm" /> Shorthanded</span>
               </div>
               <div className="flex h-4 w-full rounded-md overflow-hidden">
                 <div className="bg-[#10B981]" style={{ width: `${(strengthSplit.evG / strengthSplit.totalG * 100).toFixed(1)}%` }} />
-                <div className="bg-[#FF8A4C]" style={{ width: `${(strengthSplit.ppG / strengthSplit.totalG * 100).toFixed(1)}%` }} />
+                <div className="bg-[var(--team-accent)]" style={{ width: `${(strengthSplit.ppG / strengthSplit.totalG * 100).toFixed(1)}%` }} />
                 <div className="bg-[#8AB4FF]" style={{ width: `${(strengthSplit.shG / strengthSplit.totalG * 100).toFixed(1)}%` }} />
               </div>
             </div>
@@ -965,7 +979,7 @@ const SituationalSplits = ({ splits, clubStats }) => {
               </div>
               <div className="border border-white/[0.06] rounded-md p-3 bg-white/[0.01]">
                 <div className="text-[10px] font-mono text-white/40 uppercase tracking-wider">Power Play</div>
-                <div className="text-[18px] font-semibold tabular-nums mt-1 text-[#FF8A4C]">{strengthSplit.ppG}</div>
+                <div className="text-[18px] font-semibold tabular-nums mt-1 text-[var(--team-accent)]">{strengthSplit.ppG}</div>
                 <div className="text-[9px] font-mono text-white/35 mt-0.5">{(strengthSplit.ppG / strengthSplit.totalG * 100).toFixed(1)}% of goals</div>
               </div>
               <div className="border border-white/[0.06] rounded-md p-3 bg-white/[0.01]">
@@ -975,7 +989,7 @@ const SituationalSplits = ({ splits, clubStats }) => {
               </div>
               <div className="border border-white/[0.06] rounded-md p-3 bg-white/[0.01]">
                 <div className="text-[10px] font-mono text-white/40 uppercase tracking-wider">PP Points</div>
-                <div className="text-[18px] font-semibold tabular-nums mt-1 text-[#FF8A4C]">{strengthSplit.ppPts}</div>
+                <div className="text-[18px] font-semibold tabular-nums mt-1 text-[var(--team-accent)]">{strengthSplit.ppPts}</div>
                 <div className="text-[9px] font-mono text-white/35 mt-0.5">goals + assists on PP</div>
               </div>
             </div>
@@ -1030,7 +1044,7 @@ const SituationalSplits = ({ splits, clubStats }) => {
                       <td className="px-2 text-right text-[11px] font-mono tabular-nums text-[#10B981]">{m.gf}</td>
                       <td className="px-2 text-right text-[11px] font-mono tabular-nums text-[#EF4444]">{m.ga}</td>
                       <td className={cx('px-2 text-right text-[11px] font-mono tabular-nums',
-                        diff > 0 ? 'text-[#FF8A4C]' : diff < 0 ? 'text-red-400' : 'text-white/50'
+                        diff > 0 ? 'text-[var(--team-accent)]' : diff < 0 ? 'text-red-400' : 'text-white/50'
                       )}>
                         {diff > 0 ? '+' : ''}{diff}
                       </td>
@@ -1067,7 +1081,7 @@ const TeamEdgeZoneTime = () => {
     >
       <div className="p-4 space-y-3">
         <div className="flex h-6 w-full rounded-md overflow-hidden">
-          <div className="bg-[#FF8A4C] flex items-center justify-center text-[10px] font-mono text-black font-semibold" style={{ width: `${edge.zoneTime.offensive || 0}%` }}>
+          <div className="bg-[var(--team-accent)] flex items-center justify-center text-[10px] font-mono text-black font-semibold" style={{ width: `${edge.zoneTime.offensive || 0}%` }}>
             {edge.zoneTime.offensive}%
           </div>
           <div className="bg-white/20 flex items-center justify-center text-[10px] font-mono text-white/70 font-medium" style={{ width: `${edge.zoneTime.neutral || 0}%` }}>
@@ -1078,7 +1092,7 @@ const TeamEdgeZoneTime = () => {
           </div>
         </div>
         <div className="flex items-center justify-between text-[10px] font-mono text-white/45">
-          <span className="flex items-center gap-1"><span className="w-2 h-2 bg-[#FF8A4C] rounded-sm" /> Offensive Zone</span>
+          <span className="flex items-center gap-1"><span className="w-2 h-2 bg-[var(--team-accent)] rounded-sm" /> Offensive Zone</span>
           <span className="flex items-center gap-1"><span className="w-2 h-2 bg-white/20 rounded-sm" /> Neutral Zone</span>
           <span className="flex items-center gap-1"><span className="w-2 h-2 bg-sky-400/60 rounded-sm" /> Defensive Zone</span>
         </div>

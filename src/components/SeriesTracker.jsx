@@ -28,12 +28,12 @@ export const SeriesTracker = ({ scoreboard, schedule, onOpenGame }) => {
   let stateLine;
   if (decided) {
     stateLine = us.wins >= needed
-      ? <span className="text-[#FF8A4C] font-medium">Series won {us.wins}–{them.wins}</span>
+      ? <span className="text-[var(--team-accent)] font-medium">Series won {us.wins}–{them.wins}</span>
       : <span className="text-white/55">Eliminated {us.wins}–{them.wins}</span>;
   } else if (tied) {
     stateLine = <span className="text-white/65">Series tied {us.wins}–{them.wins}</span>;
   } else if (usLeading) {
-    stateLine = <span className="text-[#FF8A4C]">Lead {us.wins}–{them.wins}</span>;
+    stateLine = <span className="text-[var(--team-accent)]">Lead {us.wins}–{them.wins}</span>;
   } else {
     stateLine = <span className="text-white/65">Trail {us.wins}–{them.wins}</span>;
   }
@@ -58,7 +58,7 @@ export const SeriesTracker = ({ scoreboard, schedule, onOpenGame }) => {
       branded
       title={
         <span className="flex items-center gap-2">
-          <Trophy size={12} className="text-[#FF8A4C]" />
+          <Trophy size={12} className="text-[var(--team-accent)]" />
           <span>Round {s.round} · vs {oppAbbr}</span>
           {!decided && <Chip tone="green" pulse>ACTIVE</Chip>}
           {decided && us.wins >= needed && <Chip tone="orange">ADVANCED</Chip>}
@@ -80,7 +80,7 @@ export const SeriesTracker = ({ scoreboard, schedule, onOpenGame }) => {
                 title={`Game ${i + 1}`}
                 className={cx(
                   'w-2 h-2 rounded-full',
-                  d === 'us' ? 'bg-[#F74902]' : d === 'them' ? 'bg-white/65' : 'bg-white/15'
+                  d === 'us' ? 'bg-[var(--team-primary)]' : d === 'them' ? 'bg-white/65' : 'bg-white/15'
                 )}
               />
             ))}
@@ -105,7 +105,7 @@ export const SeriesTracker = ({ scoreboard, schedule, onOpenGame }) => {
                     : `${fmtDate(game.startUTC)} · ${fmtTime(game.startUTC)}`}
               </span>
             </div>
-            <span className="text-[10px] font-mono text-[#FF8A4C]">open tape →</span>
+            <span className="text-[10px] font-mono text-[var(--team-accent)]">open tape →</span>
           </button>
         )}
       </div>
@@ -124,7 +124,7 @@ const SeriesRow = ({ t, percent, needed, winning, isUs = false }) => (
       </div>
       <div className="flex items-center gap-2 font-mono tabular-nums">
         <span className={cx('text-[20px]',
-          winning ? (isUs ? 'text-[#FF8A4C] font-semibold' : 'text-white font-semibold') : 'text-white/55'
+          winning ? (isUs ? 'text-[var(--team-accent)] font-semibold' : 'text-white font-semibold') : 'text-white/55'
         )}>{t.wins}</span>
         <span className="text-[10px] text-white/30">/ {needed}</span>
       </div>
@@ -132,7 +132,7 @@ const SeriesRow = ({ t, percent, needed, winning, isUs = false }) => (
     <div className="relative h-1.5 bg-white/[0.04] rounded-full overflow-hidden">
       <div
         className={cx('absolute left-0 top-0 h-full rounded-full transition-all',
-          isUs ? 'bg-[#F74902]' : 'bg-white/55'
+          isUs ? 'bg-[var(--team-primary)]' : 'bg-white/55'
         )}
         style={{ width: `${Math.min(100, percent)}%` }}
       />

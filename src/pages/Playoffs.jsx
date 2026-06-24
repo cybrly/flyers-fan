@@ -63,17 +63,17 @@ const SeriesCell = ({ s, onOpen }) => {
   const teamRow = (t, won) => (
     <div className={cx(
       'flex items-center gap-2.5 px-3 h-[44px]',
-      t.abbr === TEAM_ABBR && 'bg-[#F74902]/[0.08]',
+      t.abbr === TEAM_ABBR && 'bg-[var(--team-primary)]/[0.08]',
     )}>
       <span className={cx('text-[11px] font-mono w-7 shrink-0 text-center',
-        t.abbr === TEAM_ABBR ? 'text-[#FF8A4C]' : 'text-white/35'
+        t.abbr === TEAM_ABBR ? 'text-[var(--team-accent)]' : 'text-white/35'
       )}>{t.rank || ''}</span>
       <TeamLogo abbr={t.abbr} size={28} />
       <span className={cx('flex-1 text-[14px] truncate',
         won ? 'text-white font-medium' : s.complete ? 'text-white/40' : 'text-white/75'
       )}>{t.name || '—'}</span>
       <span className={cx('text-[18px] font-mono tabular-nums shrink-0',
-        won ? 'text-[#FF8A4C] font-semibold' : s.complete ? 'text-white/35' : 'text-white/65'
+        won ? 'text-[var(--team-accent)] font-semibold' : s.complete ? 'text-white/35' : 'text-white/65'
       )}>{t.wins}</span>
     </div>
   );
@@ -84,7 +84,7 @@ const SeriesCell = ({ s, onOpen }) => {
       className={cx(
         'group block w-full text-left border rounded-md overflow-hidden transition-all',
         s.hasUs
-          ? 'border-[#F74902]/40 bg-[#F74902]/[0.04] hover:bg-[#F74902]/[0.08] hover:border-[#F74902]/60'
+          ? 'border-[var(--team-primary)]/40 bg-[var(--team-primary)]/[0.04] hover:bg-[var(--team-primary)]/[0.08] hover:border-[var(--team-primary)]/60'
           : 'border-white/[0.08] bg-[#0E0E0E]/80 hover:bg-[#141414] hover:border-white/20',
       )}
     >
@@ -97,17 +97,17 @@ const SeriesCell = ({ s, onOpen }) => {
           <div className="flex items-center justify-between text-[10px] font-mono uppercase tracking-wider mb-1">
             <span className={cx('tabular-nums',
               s.complete ? (topWon ? 'text-emerald-400' : 'text-white/35')
-                : odds.top >= 60 ? 'text-[#FF8A4C]' : odds.top <= 40 ? 'text-white/45' : 'text-white/65'
+                : odds.top >= 60 ? 'text-[var(--team-accent)]' : odds.top <= 40 ? 'text-white/45' : 'text-white/65'
             )}>{odds.top}%</span>
             <span className="text-white/35">{s.complete ? 'final' : 'series odds'}</span>
             <span className={cx('tabular-nums',
               s.complete ? (botWon ? 'text-emerald-400' : 'text-white/35')
-                : odds.bottom >= 60 ? 'text-[#FF8A4C]' : odds.bottom <= 40 ? 'text-white/45' : 'text-white/65'
+                : odds.bottom >= 60 ? 'text-[var(--team-accent)]' : odds.bottom <= 40 ? 'text-white/45' : 'text-white/65'
             )}>{odds.bottom}%</span>
           </div>
           {/* Two-toned probability bar */}
           <div className="h-1 w-full rounded-full overflow-hidden bg-white/[0.04]">
-            <div className="h-full bg-[#F74902]/70" style={{ width: `${odds.top}%` }} />
+            <div className="h-full bg-[var(--team-primary)]/70" style={{ width: `${odds.top}%` }} />
           </div>
         </div>
       )}
@@ -127,7 +127,7 @@ const Column = ({ series, count, label, onOpen, accent = false }) => {
     <div className="flex flex-col h-full">
       <div className={cx(
         'text-center text-[10px] font-mono uppercase tracking-wider mb-2 shrink-0',
-        accent ? 'text-[#FF8A4C]' : 'text-white/40'
+        accent ? 'text-[var(--team-accent)]' : 'text-white/40'
       )}>
         {label}
       </div>
@@ -145,7 +145,7 @@ const ScfCell = ({ s, onOpen }) => {
   const champ = s?.complete ? (topWon ? s.top : s.bottom) : null;
   return (
     <div className="flex flex-col h-full">
-      <div className="text-center text-[10px] font-mono uppercase tracking-wider mb-2 text-[#FF8A4C] shrink-0 flex items-center justify-center gap-1.5">
+      <div className="text-center text-[10px] font-mono uppercase tracking-wider mb-2 text-[var(--team-accent)] shrink-0 flex items-center justify-center gap-1.5">
         <Trophy size={11} /> Stanley Cup
       </div>
       <div className="flex-1 flex items-center justify-center">
@@ -157,19 +157,19 @@ const ScfCell = ({ s, onOpen }) => {
               className={cx(
                 'w-full block text-left border rounded-md overflow-hidden transition-all',
                 champ?.abbr === TEAM_ABBR
-                  ? 'border-[#F74902]/60 bg-[#F74902]/[0.10] hover:bg-[#F74902]/[0.15]'
-                  : 'border-[#F74902]/30 bg-gradient-to-br from-[#1A1208] via-[#141414] to-[#0E0E0E] hover:border-[#F74902]/50',
+                  ? 'border-[var(--team-primary)]/60 bg-[var(--team-primary)]/[0.10] hover:bg-[var(--team-primary)]/[0.15]'
+                  : 'border-[var(--team-primary)]/30 bg-gradient-to-br from-[#1A1208] via-[#141414] to-[#0E0E0E] hover:border-[var(--team-primary)]/50',
               )}
             >
               <div className="px-2.5 py-1 border-b border-white/[0.08] flex items-center justify-between">
-                <span className="text-[9px] font-mono text-[#FF8A4C]/70 uppercase tracking-wider">Final</span>
+                <span className="text-[9px] font-mono text-[var(--team-accent)]/70 uppercase tracking-wider">Final</span>
                 {s.complete
                   ? <Chip tone="orange">CHAMP</Chip>
                   : <Chip tone="green" pulse>LIVE</Chip>}
               </div>
               <div className="divide-y divide-white/[0.06]">
                 <div className={cx('flex items-center gap-2.5 px-3 h-[52px]',
-                  s.top.abbr === TEAM_ABBR && 'bg-[#F74902]/[0.08]',
+                  s.top.abbr === TEAM_ABBR && 'bg-[var(--team-primary)]/[0.08]',
                 )}>
                   <span className="text-[11px] font-mono w-7 shrink-0 text-center text-white/35">{s.top.rank || ''}</span>
                   <TeamLogo abbr={s.top.abbr} size={36} />
@@ -177,11 +177,11 @@ const ScfCell = ({ s, onOpen }) => {
                     topWon ? 'text-white font-medium' : 'text-white/65'
                   )}>{s.top.name || '—'}</span>
                   <span className={cx('text-[20px] font-mono tabular-nums shrink-0',
-                    topWon ? 'text-[#FF8A4C] font-semibold' : 'text-white/55'
+                    topWon ? 'text-[var(--team-accent)] font-semibold' : 'text-white/55'
                   )}>{s.top.wins}</span>
                 </div>
                 <div className={cx('flex items-center gap-2.5 px-3 h-[52px]',
-                  s.bottom.abbr === TEAM_ABBR && 'bg-[#F74902]/[0.08]',
+                  s.bottom.abbr === TEAM_ABBR && 'bg-[var(--team-primary)]/[0.08]',
                 )}>
                   <span className="text-[11px] font-mono w-7 shrink-0 text-center text-white/35">{s.bottom.rank || ''}</span>
                   <TeamLogo abbr={s.bottom.abbr} size={36} />
@@ -189,14 +189,14 @@ const ScfCell = ({ s, onOpen }) => {
                     botWon ? 'text-white font-medium' : 'text-white/65'
                   )}>{s.bottom.name || '—'}</span>
                   <span className={cx('text-[20px] font-mono tabular-nums shrink-0',
-                    botWon ? 'text-[#FF8A4C] font-semibold' : 'text-white/55'
+                    botWon ? 'text-[var(--team-accent)] font-semibold' : 'text-white/55'
                   )}>{s.bottom.wins}</span>
                 </div>
               </div>
             </button>
           ) : (
-            <div className="border border-dashed border-[#F74902]/20 bg-[#F74902]/[0.02] rounded-md py-8 text-center">
-              <Trophy size={20} className="text-[#F74902]/40 mx-auto mb-2" />
+            <div className="border border-dashed border-[var(--team-primary)]/20 bg-[var(--team-primary)]/[0.02] rounded-md py-8 text-center">
+              <Trophy size={20} className="text-[var(--team-primary)]/40 mx-auto mb-2" />
               <div className="text-[10px] font-mono text-white/30 uppercase tracking-wider">awaiting champions</div>
             </div>
           )}
@@ -244,14 +244,14 @@ export const Playoffs = ({ bracket, onOpenSeries }) => {
           </p>
         </div>
         <div className="flex items-center gap-3 text-[10px] font-mono text-white/40">
-          <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-sm bg-[#F74902]/40 border border-[#F74902]/60" /> {teamAbbr}</span>
+          <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-sm bg-[var(--team-primary)]/40 border border-[var(--team-primary)]/60" /> {teamAbbr}</span>
           <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-sm bg-white/10 border border-white/20" /> other</span>
         </div>
       </div>
 
       {!hasAny && (
         <div className="border border-white/[0.06] bg-[#0C0C0C]/60 rounded-md p-10 text-center">
-          <Trophy size={24} className="text-[#F74902]/40 mx-auto mb-3" />
+          <Trophy size={24} className="text-[var(--team-primary)]/40 mx-auto mb-3" />
           <div className="text-[14px] text-white/85">Bracket not yet set</div>
           <div className="text-[11px] font-mono text-white/40 mt-1">
             Matchups appear once the regular season ends and seeding is finalized.

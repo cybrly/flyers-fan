@@ -71,7 +71,7 @@ const PlayerSplits = ({ player, games }) => {
             {player.name}
           </PlayerLink>
           <span className="text-[10px] font-mono text-white/35">#{player.num} · {player.pos}</span>
-          <span className="text-[10px] font-mono text-[#FF8A4C] tabular-nums ml-auto sm:ml-0">{player.pts} pts</span>
+          <span className="text-[10px] font-mono text-[var(--team-accent)] tabular-nums ml-auto sm:ml-0">{player.pts} pts</span>
         </div>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-2">
           {loading && !splits && Array.from({ length: 4 }).map((_, i) => (
@@ -81,7 +81,7 @@ const PlayerSplits = ({ player, games }) => {
             const pct = s.n ? s.w / s.n : 0;
             const tone =
               pct >= 0.65 ? 'text-emerald-400'
-              : pct >= 0.5 ? 'text-[#FF8A4C]'
+              : pct >= 0.5 ? 'text-[var(--team-accent)]'
               : pct >= 0.4 ? 'text-amber-300'
               : 'text-red-400';
             return (

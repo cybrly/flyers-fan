@@ -122,7 +122,7 @@ const LineupCell = ({ p, center, goalie }) => {
           <PlayerLink playerId={p.id} className="text-[12px] text-white/85 truncate hover:text-white">
             {p.name}
           </PlayerLink>
-          {center && <span className="text-[9px] font-mono text-[#FF8A4C] uppercase tracking-wider shrink-0">C</span>}
+          {center && <span className="text-[9px] font-mono text-[var(--team-accent)] uppercase tracking-wider shrink-0">C</span>}
         </div>
         {!goalie && p.pts != null && (
           <div className="text-[9px] font-mono text-white/40 tabular-nums">

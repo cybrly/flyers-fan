@@ -85,12 +85,12 @@ export const Hometowns = ({ roster }) => {
                   <span className="text-[11px] text-white/75 truncate">{c.name}</span>
                   <div className="flex-1 h-1.5 bg-white/[0.04] rounded-full overflow-hidden">
                     <div
-                      className="h-full bg-[#F74902]/70 rounded-full"
+                      className="h-full bg-[var(--team-primary)]/70 rounded-full"
                       style={{ width: `${(c.count / maxCountry) * 100}%` }}
                     />
                   </div>
                 </div>
-                <span className="text-[11px] font-mono tabular-nums text-[#FF8A4C] font-medium">{c.count}</span>
+                <span className="text-[11px] font-mono tabular-nums text-[var(--team-accent)] font-medium">{c.count}</span>
               </div>
             ))}
           </div>

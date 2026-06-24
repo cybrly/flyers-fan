@@ -67,11 +67,11 @@ export const SeriesModal = ({ letter, onClose }) => {
                 </div>
                 <div className="flex items-baseline gap-2 justify-center">
                   <span className={cx('text-[36px] font-semibold tabular-nums tracking-tight',
-                    series.top.wins > series.bottom.wins ? 'text-[#FF8A4C]' : 'text-white/65'
+                    series.top.wins > series.bottom.wins ? 'text-[var(--team-accent)]' : 'text-white/65'
                   )}>{series.top.wins}</span>
                   <span className="text-[18px] text-white/20">–</span>
                   <span className={cx('text-[36px] font-semibold tabular-nums tracking-tight',
-                    series.bottom.wins > series.top.wins ? 'text-[#FF8A4C]' : 'text-white/65'
+                    series.bottom.wins > series.top.wins ? 'text-[var(--team-accent)]' : 'text-white/65'
                   )}>{series.bottom.wins}</span>
                 </div>
                 <div className="flex items-center gap-3 min-w-0 justify-end">
@@ -112,11 +112,11 @@ export const SeriesModal = ({ letter, onClose }) => {
                             winner === 'away' ? 'text-white font-medium' : 'text-white/70'
                           )}>{g.away.abbr}</span>
                           <span className={cx('font-mono tabular-nums shrink-0',
-                            winner === 'away' ? 'text-[#FF8A4C] font-semibold' : 'text-white/55'
+                            winner === 'away' ? 'text-[var(--team-accent)] font-semibold' : 'text-white/55'
                           )}>{g.away.score ?? ''}</span>
                           <span className="text-white/20 mx-1">@</span>
                           <span className={cx('font-mono tabular-nums shrink-0',
-                            winner === 'home' ? 'text-[#FF8A4C] font-semibold' : 'text-white/55'
+                            winner === 'home' ? 'text-[var(--team-accent)] font-semibold' : 'text-white/55'
                           )}>{g.home.score ?? ''}</span>
                           <span className={cx('truncate',
                             winner === 'home' ? 'text-white font-medium' : 'text-white/70'
@@ -158,7 +158,7 @@ export const SeriesModal = ({ letter, onClose }) => {
                           title={`G${g.number} · ${winnerAbbr} ${Math.max(g.home.score, g.away.score)}-${Math.min(g.home.score, g.away.score)}`}
                           className={cx(
                             'w-6 h-6 rounded-sm flex items-center justify-center text-[9px] font-bold font-mono',
-                            isTop ? 'bg-[#F74902]/20 text-[#FF8A4C] border border-[#F74902]/40' : 'bg-white/[0.08] text-white/75 border border-white/[0.1]',
+                            isTop ? 'bg-[var(--team-primary)]/20 text-[var(--team-accent)] border border-[var(--team-primary)]/40' : 'bg-white/[0.08] text-white/75 border border-white/[0.1]',
                           )}
                         >
                           {winnerAbbr}

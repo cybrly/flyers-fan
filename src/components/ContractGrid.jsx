@@ -40,7 +40,7 @@ const Cell = ({ cell, isFirst }) => {
   if (cell.kind === 'paid') {
     return (
       <span className={cx('text-[12px] font-mono tabular-nums',
-        isFirst ? 'text-[#FF8A4C] font-semibold' : 'text-white/85',
+        isFirst ? 'text-[var(--team-accent)] font-semibold' : 'text-white/85',
       )}>{fmtMillions(cell.amount)}</span>
     );
   }
@@ -165,7 +165,7 @@ export const ContractGrid = ({ roster }) => {
       <div className="overflow-x-auto">
         <Group
           title="Forwards"
-          color="bg-[#FF8A4C]"
+          color="bg-[var(--team-accent)]"
           players={groups.fwd}
           seasons={seasons}
           totals={seasons.map((y) => totalsForSeason(groups.fwd, y))}

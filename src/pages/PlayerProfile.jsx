@@ -51,7 +51,7 @@ const SocialLinks = ({ playerId, fullName }) => {
       className={cx(
         'inline-flex items-center gap-1.5 h-7 px-2.5 rounded-md border text-[11px] font-mono transition-colors',
         direct
-          ? 'border-[#F74902]/30 bg-[#F74902]/[0.06] text-[#FF8A4C] hover:bg-[#F74902]/[0.12]'
+          ? 'border-[var(--team-primary)]/30 bg-[var(--team-primary)]/[0.06] text-[var(--team-accent)] hover:bg-[var(--team-primary)]/[0.12]'
           : 'border-white/[0.08] bg-white/[0.02] text-white/55 hover:text-white hover:border-white/20'
       )}
     >
@@ -72,9 +72,9 @@ const SocialLinks = ({ playerId, fullName }) => {
 const HEIGHT = (inches) => inches ? `${Math.floor(inches / 12)}'${inches % 12}"` : '—';
 
 const StatCell = ({ label, value, sub, accent = false }) => (
-  <div className="flex flex-col gap-0.5 px-3 py-2.5 border border-[#F74902]/[0.18] rounded-md bg-white/[0.02]">
+  <div className="flex flex-col gap-0.5 px-3 py-2.5 border border-[var(--team-primary)]/[0.18] rounded-md bg-white/[0.02]">
     <span className="text-[10px] font-mono text-white/40 uppercase tracking-wider">{label}</span>
-    <span className={cx('text-[18px] font-semibold tabular-nums', accent && 'text-[#FF8A4C]')}>
+    <span className={cx('text-[18px] font-semibold tabular-nums', accent && 'text-[var(--team-accent)]')}>
       {value ?? '—'}
     </span>
     {sub && <span className="text-[10px] font-mono text-white/35">{sub}</span>}
@@ -128,7 +128,7 @@ export const PlayerProfile = ({ playerId }) => {
   if (error && !data) {
     return (
       <div className="p-4 md:p-6">
-        <div className="border border-[#F74902]/[0.18] bg-[#0C0C0C]/60 rounded-md p-10 text-center">
+        <div className="border border-[var(--team-primary)]/[0.18] bg-[#0C0C0C]/60 rounded-md p-10 text-center">
           <AlertCircle size={20} className="text-red-400 mx-auto mb-2" />
           <div className="text-[13px] text-white/70">Couldn't load player.</div>
           <div className="text-[11px] font-mono text-white/40 mt-1">{error}</div>
@@ -170,7 +170,7 @@ export const PlayerProfile = ({ playerId }) => {
       </div>
 
       {/* Hero — headshot, name, bio, draft */}
-      <div className="border border-[#F74902]/[0.20] bg-gradient-to-br from-[#141414] via-[#101010] to-[#0A0A0A] rounded-md p-5 sm:p-6 relative overflow-hidden">
+      <div className="border border-[var(--team-primary)]/[0.20] bg-gradient-to-br from-[#141414] via-[#101010] to-[#0A0A0A] rounded-md p-5 sm:p-6 relative overflow-hidden">
         <div className="absolute -top-16 -right-16 w-72 h-72 rounded-full pointer-events-none opacity-50"
           style={{ background: 'radial-gradient(circle, rgba(255,255,255,0.03), transparent 65%)' }} />
         <TeamLogoBg abbr={data.currentTeamAbbrev} size={260} opacity={0.06} position="top-right" />
@@ -369,7 +369,7 @@ export const PlayerProfile = ({ playerId }) => {
                           <>
                             <td className="px-2 text-right text-[11px] font-mono tabular-nums text-white/85">{s.goals ?? '—'}</td>
                             <td className="px-2 text-right text-[11px] font-mono tabular-nums text-white/85">{s.assists ?? '—'}</td>
-                            <td className="px-2 text-right text-[12px] font-mono tabular-nums font-medium text-[#FF8A4C]">{s.points ?? '—'}</td>
+                            <td className="px-2 text-right text-[12px] font-mono tabular-nums font-medium text-[var(--team-accent)]">{s.points ?? '—'}</td>
                             <td className={cx('px-2 text-right text-[11px] font-mono tabular-nums',
                               s.plusMinus > 0 ? 'text-emerald-400' : s.plusMinus < 0 ? 'text-red-400' : 'text-white/55'
                             )}>{s.plusMinus != null ? (s.plusMinus > 0 ? `+${s.plusMinus}` : s.plusMinus) : '—'}</td>
@@ -382,7 +382,7 @@ export const PlayerProfile = ({ playerId }) => {
                             <td className="px-2 text-right text-[11px] font-mono tabular-nums text-white/85">{s.wins ?? '—'}</td>
                             <td className="px-2 text-right text-[11px] font-mono tabular-nums text-white/55">{s.losses ?? '—'}</td>
                             <td className="px-2 text-right text-[11px] font-mono tabular-nums text-white/55">{s.otLosses ?? s.overtimeLosses ?? '—'}</td>
-                            <td className="px-2 text-right text-[12px] font-mono tabular-nums font-medium text-[#FF8A4C]">{s.savePctg != null ? (s.savePctg * 100).toFixed(1) : '—'}</td>
+                            <td className="px-2 text-right text-[12px] font-mono tabular-nums font-medium text-[var(--team-accent)]">{s.savePctg != null ? (s.savePctg * 100).toFixed(1) : '—'}</td>
                             <td className="px-2 text-right text-[11px] font-mono tabular-nums text-white/85">{s.goalsAgainstAvg != null ? s.goalsAgainstAvg.toFixed(2) : '—'}</td>
                             <td className="px-2 text-right text-[11px] font-mono tabular-nums text-white/55">{s.shutouts ?? '—'}</td>
                             <td className="px-4 text-right text-[11px] font-mono tabular-nums text-white/55">{s.shotsAgainst ?? '—'}</td>
@@ -400,7 +400,7 @@ export const PlayerProfile = ({ playerId }) => {
                           <>
                             <td className="px-2 text-right text-[11px] font-mono tabular-nums text-white/85">{career.goals}</td>
                             <td className="px-2 text-right text-[11px] font-mono tabular-nums text-white/85">{career.assists}</td>
-                            <td className="px-2 text-right text-[12px] font-mono tabular-nums font-semibold text-[#FF8A4C]">{career.points}</td>
+                            <td className="px-2 text-right text-[12px] font-mono tabular-nums font-semibold text-[var(--team-accent)]">{career.points}</td>
                             <td className="px-2 text-right text-[11px] font-mono tabular-nums text-white/55">—</td>
                             <td className="px-2 text-right text-[11px] font-mono tabular-nums text-white/55">{career.pim ?? '—'}</td>
                             <td className="px-2 text-right text-[11px] font-mono tabular-nums text-white/55">{career.shots ?? '—'}</td>
@@ -411,7 +411,7 @@ export const PlayerProfile = ({ playerId }) => {
                             <td className="px-2 text-right text-[11px] font-mono tabular-nums text-white/85">{career.wins}</td>
                             <td className="px-2 text-right text-[11px] font-mono tabular-nums text-white/55">{career.losses}</td>
                             <td className="px-2 text-right text-[11px] font-mono tabular-nums text-white/55">{career.otLosses ?? '—'}</td>
-                            <td className="px-2 text-right text-[12px] font-mono tabular-nums font-semibold text-[#FF8A4C]">{career.savePercentage != null ? (career.savePercentage * 100).toFixed(1) : '—'}</td>
+                            <td className="px-2 text-right text-[12px] font-mono tabular-nums font-semibold text-[var(--team-accent)]">{career.savePercentage != null ? (career.savePercentage * 100).toFixed(1) : '—'}</td>
                             <td className="px-2 text-right text-[11px] font-mono tabular-nums text-white/85">{career.goalsAgainstAverage != null ? career.goalsAgainstAverage.toFixed(2) : '—'}</td>
                             <td className="px-2 text-right text-[11px] font-mono tabular-nums text-white/55">{career.shutouts ?? '—'}</td>
                             <td className="px-4 text-right text-[11px] font-mono tabular-nums text-white/55">{career.shotsAgainst ?? '—'}</td>
@@ -448,18 +448,18 @@ export const PlayerProfile = ({ playerId }) => {
                     <>
                       <div className="text-center">
                         <div className="text-[10px] font-mono text-white/40 uppercase tracking-wider">G</div>
-                        <div className="text-[20px] font-semibold tabular-nums mt-1 text-[#FF8A4C]">{career.goals}</div>
+                        <div className="text-[20px] font-semibold tabular-nums mt-1 text-[var(--team-accent)]">{career.goals}</div>
                       </div>
                       <div className="text-center">
                         <div className="text-[10px] font-mono text-white/40 uppercase tracking-wider">P</div>
-                        <div className="text-[20px] font-semibold tabular-nums mt-1 text-[#FF8A4C]">{career.points}</div>
+                        <div className="text-[20px] font-semibold tabular-nums mt-1 text-[var(--team-accent)]">{career.points}</div>
                       </div>
                     </>
                   ) : (
                     <>
                       <div className="text-center">
                         <div className="text-[10px] font-mono text-white/40 uppercase tracking-wider">W</div>
-                        <div className="text-[20px] font-semibold tabular-nums mt-1 text-[#FF8A4C]">{career.wins}</div>
+                        <div className="text-[20px] font-semibold tabular-nums mt-1 text-[var(--team-accent)]">{career.wins}</div>
                       </div>
                       <div className="text-center">
                         <div className="text-[10px] font-mono text-white/40 uppercase tracking-wider">SO</div>
@@ -641,7 +641,7 @@ const CareerArc = ({ seasons, isSkater }) => {
           {/* Reference line for goalies at .910 */}
           {!isSkater && (
             <line x1={PAD.left} x2={PAD.left + PW} y1={y(0.910)} y2={y(0.910)}
-              stroke="rgba(247,73,2,0.35)" strokeWidth="1" strokeDasharray="3 3" />
+              stroke="color-mix(in srgb, var(--team-primary) 35%, transparent)" strokeWidth="1" strokeDasharray="3 3" />
           )}
 
           {isSkater ? (
@@ -678,10 +678,10 @@ const CareerArc = ({ seasons, isSkater }) => {
                 );
               })}
               {/* Points line on top */}
-              <path d={linePath('p')} fill="none" stroke="#F74902" strokeWidth="2.4" strokeLinejoin="round" />
+              <path d={linePath('p')} fill="none" stroke="var(--team-primary)" strokeWidth="2.4" strokeLinejoin="round" />
               {rows.map((r, i) => (
                 <g key={`pt-${r.season}`}>
-                  <circle cx={x(i)} cy={y(r.p)} r="3.2" fill="#F74902" stroke="#0A0A0A" strokeWidth="1.5">
+                  <circle cx={x(i)} cy={y(r.p)} r="3.2" fill="var(--team-primary)" stroke="#0A0A0A" strokeWidth="1.5">
                     <title>{seasonLabel(r.season)} · {r.p} pts in {r.gp} GP</title>
                   </circle>
                 </g>
@@ -689,9 +689,9 @@ const CareerArc = ({ seasons, isSkater }) => {
             </>
           ) : (
             <>
-              <path d={linePath('savePctg')} fill="none" stroke="#F74902" strokeWidth="2.4" strokeLinejoin="round" />
+              <path d={linePath('savePctg')} fill="none" stroke="var(--team-primary)" strokeWidth="2.4" strokeLinejoin="round" />
               {rows.map((r, i) => r.savePctg != null && (
-                <circle key={`sv-${r.season}`} cx={x(i)} cy={y(r.savePctg)} r="3.2" fill="#F74902" stroke="#0A0A0A" strokeWidth="1.5">
+                <circle key={`sv-${r.season}`} cx={x(i)} cy={y(r.savePctg)} r="3.2" fill="var(--team-primary)" stroke="#0A0A0A" strokeWidth="1.5">
                   <title>{seasonLabel(r.season)} · SV% {(r.savePctg * 100).toFixed(1)}</title>
                 </circle>
               ))}
@@ -723,7 +723,7 @@ const CareerArc = ({ seasons, isSkater }) => {
                 {isActive && (
                   <line
                     x1={x(i)} x2={x(i)} y1={PAD.top} y2={PAD.top + PH}
-                    stroke="rgba(247,73,2,0.4)" strokeWidth="1" strokeDasharray="3 3"
+                    stroke="color-mix(in srgb, var(--team-primary) 40%, transparent)" strokeWidth="1" strokeDasharray="3 3"
                   />
                 )}
                 <rect
@@ -770,7 +770,7 @@ const CareerArc = ({ seasons, isSkater }) => {
                   <>
                     <CareerArcRow label="Goals" value={r.g} dotClass="bg-emerald-400/80" />
                     <CareerArcRow label="Assists" value={r.a} dotClass="bg-sky-400/70" />
-                    <CareerArcRow label="Points" value={r.p} dotClass="bg-[#F74902]" highlight />
+                    <CareerArcRow label="Points" value={r.p} dotClass="bg-[var(--team-primary)]" highlight />
                     {r.gp > 0 && (
                       <div className="text-[10px] font-mono text-white/45 pt-1.5 mt-1.5 border-t border-white/[0.05] tabular-nums">
                         {(r.p / r.gp).toFixed(2)} PPG
@@ -779,7 +779,7 @@ const CareerArc = ({ seasons, isSkater }) => {
                   </>
                 ) : (
                   <>
-                    <CareerArcRow label="Save %" value={r.savePctg != null ? `${(r.savePctg * 100).toFixed(2)}%` : '—'} dotClass="bg-[#F74902]" highlight />
+                    <CareerArcRow label="Save %" value={r.savePctg != null ? `${(r.savePctg * 100).toFixed(2)}%` : '—'} dotClass="bg-[var(--team-primary)]" highlight />
                     <CareerArcRow label="Saves" value={r.sv} />
                     <CareerArcRow label="Shots Ag" value={r.sa} />
                   </>
@@ -797,7 +797,7 @@ const CareerArc = ({ seasons, isSkater }) => {
           <div className="flex items-center gap-4 px-2 mt-1 text-[10px] font-mono text-white/45">
             <span className="flex items-center gap-1.5"><span className="w-2 h-2 bg-emerald-400/70 rounded-sm" /> goals</span>
             <span className="flex items-center gap-1.5"><span className="w-2 h-2 bg-sky-400/70 rounded-sm" /> assists</span>
-            <span className="flex items-center gap-1.5"><span className="w-2 h-2 bg-[#F74902] rounded-sm" /> points</span>
+            <span className="flex items-center gap-1.5"><span className="w-2 h-2 bg-[var(--team-primary)] rounded-sm" /> points</span>
             <span className="text-white/30 ml-2">hover or click a year</span>
           </div>
         )}
@@ -814,7 +814,7 @@ const CareerArcRow = ({ label, value, dotClass, highlight }) => (
       {dotClass && <span className={`w-1.5 h-1.5 rounded-full ${dotClass}`} />}
       {label}
     </span>
-    <span className={cx('tabular-nums', highlight ? 'text-[#FF8A4C]' : 'text-white/85')}>
+    <span className={cx('tabular-nums', highlight ? 'text-[var(--team-accent)]' : 'text-white/85')}>
       {value}
     </span>
   </div>
@@ -889,7 +889,7 @@ const PlayerGameLog = ({ playerId, isSkater }) => {
                 onClick={() => setGameType(2)}
                 className={cx(
                   'px-2 h-6 text-[10px] font-mono transition-colors',
-                  gameType === 2 ? 'bg-[#F74902]/15 text-[#FF8A4C]' : 'text-white/45 hover:text-white/75',
+                  gameType === 2 ? 'bg-[var(--team-primary)]/15 text-[var(--team-accent)]' : 'text-white/45 hover:text-white/75',
                 )}
               >REG</button>
               <button
@@ -924,12 +924,12 @@ const PlayerGameLog = ({ playerId, isSkater }) => {
               <div>
                 <div className="text-[10px] font-mono text-white/40 uppercase tracking-wider">TOI / Game</div>
                 <div className="text-[14px] font-mono tabular-nums mt-0.5">
-                  <span className="text-[#FF8A4C]">{secToToi(Math.round(totals.toi / totals.gp))}</span>
+                  <span className="text-[var(--team-accent)]">{secToToi(Math.round(totals.toi / totals.gp))}</span>
                   <span className="text-white/30 mx-1.5">avg</span>
                 </div>
               </div>
               <div className="flex-1">
-                <Sparkline data={toiTrend} h={28} stroke="#F74902" />
+                <Sparkline data={toiTrend} h={28} stroke="var(--team-primary)" />
               </div>
               <div className="text-right">
                 <div className="text-[10px] font-mono text-white/40 uppercase tracking-wider">Range</div>
@@ -1009,7 +1009,7 @@ const PlayerGameLog = ({ playerId, isSkater }) => {
                             g.assists > 0 ? 'text-sky-300' : 'text-white/45'
                           )}>{g.assists || '—'}</td>
                           <td className={cx('px-2 text-right text-[12px] font-mono tabular-nums font-medium',
-                            g.points > 0 ? 'text-[#FF8A4C]' : 'text-white/45'
+                            g.points > 0 ? 'text-[var(--team-accent)]' : 'text-white/45'
                           )}>{g.points || '—'}</td>
                           <td className={cx('px-2 text-right text-[11px] font-mono tabular-nums',
                             g.plusMinus > 0 ? 'text-emerald-400' : g.plusMinus < 0 ? 'text-red-400' : 'text-white/55'
@@ -1052,7 +1052,7 @@ const PlayerGameLog = ({ playerId, isSkater }) => {
                       <>
                         <td className="px-2 text-right text-[11px] font-mono tabular-nums text-emerald-400">{totals.g}</td>
                         <td className="px-2 text-right text-[11px] font-mono tabular-nums text-sky-300">{totals.a}</td>
-                        <td className="px-2 text-right text-[12px] font-mono tabular-nums font-semibold text-[#FF8A4C]">{totals.p}</td>
+                        <td className="px-2 text-right text-[12px] font-mono tabular-nums font-semibold text-[var(--team-accent)]">{totals.p}</td>
                         <td className={cx('px-2 text-right text-[11px] font-mono tabular-nums',
                           totals.plus > 0 ? 'text-emerald-400' : totals.plus < 0 ? 'text-red-400' : 'text-white/55'
                         )}>{totals.plus > 0 ? '+' : ''}{totals.plus}</td>
@@ -1067,7 +1067,7 @@ const PlayerGameLog = ({ playerId, isSkater }) => {
                     ) : (
                       <>
                         <td />
-                        <td className="px-2 text-right text-[11px] font-mono tabular-nums text-[#FF8A4C]">
+                        <td className="px-2 text-right text-[11px] font-mono tabular-nums text-[var(--team-accent)]">
                           {totals.sa ? ((totals.sv / totals.sa) * 100).toFixed(1) : '—'}
                         </td>
                         <td className="px-2 text-right text-[11px] font-mono tabular-nums text-white/85">{totals.sa}</td>

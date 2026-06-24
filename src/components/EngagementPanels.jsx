@@ -21,7 +21,7 @@ export const ThreeStarsPanel = ({ lastGame }) => {
   const tone = (n) =>
     n === 1 ? { ring: 'ring-amber-400/40', text: 'text-amber-300', bg: 'bg-amber-500/[0.08]' } :
     n === 2 ? { ring: 'ring-white/15',     text: 'text-white/85',  bg: 'bg-white/[0.03]' } :
-    { ring: 'ring-orange-400/30', text: 'text-orange-300/80', bg: 'bg-[#F74902]/[0.04]' };
+    { ring: 'ring-orange-400/30', text: 'text-orange-300/80', bg: 'bg-[var(--team-primary)]/[0.04]' };
 
   return (
     <Section
@@ -42,7 +42,7 @@ export const ThreeStarsPanel = ({ lastGame }) => {
               </div>
               <div className="min-w-0 flex-1">
                 <div className="flex items-baseline gap-1.5 flex-wrap">
-                  <span className={cx('text-[14px] font-semibold tracking-tight', isUs && 'text-[#FF8A4C]')}>
+                  <span className={cx('text-[14px] font-semibold tracking-tight', isUs && 'text-[var(--team-accent)]')}>
                     {s.id ? <PlayerLink playerId={s.id}>{s.name}</PlayerLink> : s.name}
                   </span>
                   {s.position && <span className="text-[10px] font-mono text-white/35">{s.position}</span>}
@@ -119,7 +119,7 @@ const AWARDS = [
   {
     name: 'Selke Trophy',
     subtitle: 'Best Defensive Forward',
-    color: '#FF8A4C',
+    color: 'var(--team-accent)',
     contenders: [
       { name: 'Aleksander Barkov', team: 'FLA' },
       { name: 'Auston Matthews', team: 'TOR' },
@@ -164,7 +164,7 @@ export const AwardWatchPanel = () => {
                     <span className={cx('font-mono tabular-nums w-3 shrink-0',
                       i === 0 ? 'text-amber-300 font-semibold' : 'text-white/30'
                     )}>{i + 1}</span>
-                    <span className={cx('truncate flex-1', isUs ? 'text-[#FF8A4C] font-medium' : 'text-white/75')}>
+                    <span className={cx('truncate flex-1', isUs ? 'text-[var(--team-accent)] font-medium' : 'text-white/75')}>
                       {c.name}
                     </span>
                     <span className="text-[9px] font-mono text-white/40 shrink-0">{c.team}</span>
@@ -255,14 +255,14 @@ export const RecordsTrackerPanel = ({ clubStats }) => {
               </div>
               <div className="mt-1.5 grid grid-cols-[auto_1fr_auto] items-center gap-2">
                 <span className={cx('text-[14px] font-mono tabular-nums font-semibold',
-                  onPace ? 'text-emerald-400' : 'text-[#FF8A4C]'
+                  onPace ? 'text-emerald-400' : 'text-[var(--team-accent)]'
                 )}>
                   {r.fmt(r.current)}
                 </span>
                 <div className="relative h-1.5 bg-white/[0.05] rounded-full overflow-hidden">
                   <div
                     className={cx('absolute inset-y-0 left-0 rounded-full',
-                      onPace ? 'bg-emerald-500' : 'bg-[#F74902]'
+                      onPace ? 'bg-emerald-500' : 'bg-[var(--team-primary)]'
                     )}
                     style={{ width: `${pct}%` }}
                   />

@@ -91,13 +91,13 @@ export const OfficialMilestones = () => {
             <button
               onClick={() => setTab('skaters')}
               className={`px-2 h-6 text-[10px] font-mono transition-colors ${
-                tab === 'skaters' ? 'bg-[#F74902]/15 text-[#FF8A4C]' : 'text-white/45 hover:text-white/75'
+                tab === 'skaters' ? 'bg-[var(--team-primary)]/15 text-[var(--team-accent)]' : 'text-white/45 hover:text-white/75'
               }`}
             >Skaters</button>
             <button
               onClick={() => setTab('goalies')}
               className={`px-2 h-6 text-[10px] font-mono border-l border-white/[0.08] transition-colors ${
-                tab === 'goalies' ? 'bg-[#F74902]/15 text-[#FF8A4C]' : 'text-white/45 hover:text-white/75'
+                tab === 'goalies' ? 'bg-[var(--team-primary)]/15 text-[var(--team-accent)]' : 'text-white/45 hover:text-white/75'
               }`}
             >Goalies</button>
           </div>
@@ -121,13 +121,13 @@ export const OfficialMilestones = () => {
               <div
                 key={`${m.id}-${m.stat}-${m.target}`}
                 className={`grid grid-cols-[1fr_auto] items-center gap-2 px-3 h-9 ${
-                  isPhi ? 'bg-[#F74902]/[0.04]' : ''
+                  isPhi ? 'bg-[var(--team-primary)]/[0.04]' : ''
                 }`}
               >
                 <span className="flex items-center gap-2 min-w-0">
                   <Headshot src={m.headshot} num={m.num} size={20} />
                   <PlayerLink playerId={m.id}>
-                    <span className={`text-[13px] truncate ${isPhi ? 'text-[#FF8A4C]' : ''}`}>{m.name}</span>
+                    <span className={`text-[13px] truncate ${isPhi ? 'text-[var(--team-accent)]' : ''}`}>{m.name}</span>
                   </PlayerLink>
                   {isPhi && <Chip tone="orange">PHI</Chip>}
                   {!isPhi && m.team && (

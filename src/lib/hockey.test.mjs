@@ -1,6 +1,20 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { formatRecord, selectCurrentPlayoffGames, summarizeGames, streakFromGames, hoursSince, isStaleAsOf, scheduleLooksOffseason } from './hockey.js';
+import { formatRecord, selectCurrentPlayoffGames, summarizeGames, streakFromGames, hoursSince, isStaleAsOf, scheduleLooksOffseason, cumulativePoints } from './hockey.js';
+
+test('cumulativePoints folds wins/OTL chronologically, ignoring playoffs', () => {
+  // newest-first input (as adaptSchedule returns)
+  const games = [
+    { gameType: 3, w: false, lastPeriodType: 'REG' },          // playoff loss — ignored
+    { gameType: 2, w: false, lastPeriodType: 'OT' },           // OTL → +1 (chronologically last)
+    { gameType: 2, w: false, lastPeriodType: 'REG' },          // reg loss → +0
+    { gameType: 2, w: true,  lastPeriodType: 'REG' },          // win → +2 (chronologically first)
+  ];
+  // chronological: win(+2)=2, regloss(+0)=2, OTL(+1)=3
+  assert.deepEqual(cumulativePoints(games), [2, 2, 3]);
+  assert.deepEqual(cumulativePoints([]), []);
+  assert.deepEqual(cumulativePoints(null), []);
+});
 
 test('summarizeGames counts overtime losses as one standings point', () => {
   const summary = summarizeGames([

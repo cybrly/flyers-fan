@@ -173,7 +173,7 @@ export const ScoreReadout = ({ us, them, reverse = false }) => {
   const usEl = (
     <span className={cx(
       'text-[44px] font-semibold tabular-nums tracking-tight inline-block',
-      usWinning ? 'text-[#FF8A4C]' : 'text-white/70',
+      usWinning ? 'text-[var(--team-accent)]' : 'text-white/70',
       usFlash,
     )}>{us}</span>
   );

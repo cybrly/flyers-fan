@@ -57,7 +57,7 @@ export const Standings = ({ standings, offseason }) => {
 
       {us && view === 'metro' && (
         <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
-          <div className="md:col-span-1 border border-[#F74902]/30 bg-[#F74902]/[0.05] rounded-md p-4 relative overflow-hidden">
+          <div className="md:col-span-1 border border-[var(--team-primary)]/30 bg-[var(--team-primary)]/[0.05] rounded-md p-4 relative overflow-hidden">
             <div className="absolute -top-12 -right-12 w-32 h-32 rounded-full pointer-events-none"
               style={{ background: 'radial-gradient(circle, rgba(255,255,255,0.04), transparent 70%)' }} />
             <TeamLogoBg abbr={TEAM_ABBR} size={180} opacity={0.07} position="bottom-right" />
@@ -67,7 +67,7 @@ export const Standings = ({ standings, offseason }) => {
               <Chip tone="orange">YOU</Chip>
             </div>
             <div className="relative flex items-baseline gap-2">
-              <span className="text-[38px] font-semibold tabular-nums tracking-tight text-[#FF8A4C]">#{us.divRank}</span>
+              <span className="text-[38px] font-semibold tabular-nums tracking-tight text-[var(--team-accent)]">#{us.divRank}</span>
               <span className="text-[11px] font-mono text-white/50">of {standings.metro.length}</span>
             </div>
             <div className="relative mt-2 text-[11px] font-mono text-white/55">{us.w}–{us.l} · {us.pts} pts</div>
@@ -87,10 +87,10 @@ export const Standings = ({ standings, offseason }) => {
                 const inside = i < 3;
                 return (
                   <div key={t.abbr} className={cx('flex-1 flex flex-col items-center gap-1 py-2 rounded-sm transition-colors',
-                    t.us ? 'bg-[#F74902]/[0.1]' : 'hover:bg-white/[0.02]',
+                    t.us ? 'bg-[var(--team-primary)]/[0.1]' : 'hover:bg-white/[0.02]',
                   )}>
                     <span className={cx('text-[10px] font-mono tabular-nums',
-                      t.us ? 'text-[#FF8A4C]' : inside ? 'text-white/60' : 'text-white/25'
+                      t.us ? 'text-[var(--team-accent)]' : inside ? 'text-white/60' : 'text-white/25'
                     )}>{i + 1}</span>
                     <TeamLogo abbr={t.abbr} size={24} className={cx(!inside && !t.us && 'opacity-50')} />
                     <div className="text-[10px] font-mono tabular-nums text-white/40">{t.pts}</div>
@@ -133,10 +133,10 @@ export const Standings = ({ standings, offseason }) => {
                 const maxPts = Math.max(1, ...data.map((x) => x.pts));
                 return (
                   <tr key={t.abbr} className={cx('transition-colors',
-                    isUs ? 'bg-[#F74902]/[0.06] hover:bg-[#F74902]/[0.1]' : 'hover:bg-white/[0.02]',
+                    isUs ? 'bg-[var(--team-primary)]/[0.06] hover:bg-[var(--team-primary)]/[0.1]' : 'hover:bg-white/[0.02]',
                   )}>
                     <td className={cx('px-4 h-11 text-[12px] font-mono tabular-nums',
-                      isUs ? 'text-[#FF8A4C] font-semibold' : inPlayoffs ? 'text-white/70' : 'text-white/30'
+                      isUs ? 'text-[var(--team-accent)] font-semibold' : inPlayoffs ? 'text-white/70' : 'text-white/30'
                     )}>{i + 1}</td>
                     <td className="px-2">
                       <div className="flex items-center gap-2.5">
@@ -164,7 +164,7 @@ export const Standings = ({ standings, offseason }) => {
                     )}>{t.diff > 0 ? '+' : ''}{t.diff}</td>
                     <td className="px-2">
                       <div className="flex items-center gap-2">
-                        <MiniBar value={t.pts} max={maxPts} color={isUs ? '#F74902' : inPlayoffs ? '#B0B0B0' : '#3F3F3F'} h={4} />
+                        <MiniBar value={t.pts} max={maxPts} color={isUs ? 'var(--team-primary)' : inPlayoffs ? '#B0B0B0' : '#3F3F3F'} h={4} />
                       </div>
                     </td>
                     <td className="px-4 text-right">{clinchChip(t.clinched)}</td>
@@ -187,18 +187,18 @@ export const Standings = ({ standings, offseason }) => {
             return (
               <div key={t.abbr} className={cx(
                 'flex flex-col gap-1 px-4 py-3 transition-colors',
-                isUs ? 'bg-[#F74902]/[0.06]' : 'hover:bg-white/[0.02]',
+                isUs ? 'bg-[var(--team-primary)]/[0.06]' : 'hover:bg-white/[0.02]',
               )}>
                 <div className="flex items-center gap-2.5">
                   <span className={cx('w-6 text-[12px] font-mono tabular-nums shrink-0',
-                    isUs ? 'text-[#FF8A4C] font-semibold' : inPlayoffs ? 'text-white/70' : 'text-white/30'
+                    isUs ? 'text-[var(--team-accent)] font-semibold' : inPlayoffs ? 'text-white/70' : 'text-white/30'
                   )}>{i + 1}</span>
                   <TeamLogo abbr={t.abbr} size={20} />
                   <span className={cx('text-[14px] truncate flex-1',
                     isUs ? 'text-white font-medium' : 'text-white/85'
                   )}>{t.team}</span>
                   <span className={cx('text-[18px] font-mono font-semibold tabular-nums shrink-0',
-                    isUs ? 'text-[#FF8A4C]' : 'text-white/85'
+                    isUs ? 'text-[var(--team-accent)]' : 'text-white/85'
                   )}>{t.pts}</span>
                 </div>
                 <div className="flex items-center gap-3 pl-[34px] text-[11px] font-mono text-white/55 tabular-nums">

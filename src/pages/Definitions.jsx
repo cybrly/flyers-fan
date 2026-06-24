@@ -214,7 +214,7 @@ export const Definitions = () => {
       <div className="flex items-end justify-between flex-wrap gap-3">
         <div>
           <div className="flex items-center gap-2">
-            <BookOpen size={18} className="text-[#FF8A4C]" />
+            <BookOpen size={18} className="text-[var(--team-accent)]" />
             <h1 className="text-[20px] font-semibold tracking-tight">Definitions</h1>
           </div>
           <p className="text-[12px] text-white/45 mt-1 font-mono">
@@ -222,7 +222,7 @@ export const Definitions = () => {
             <span className="hidden sm:inline"> {ALL_ITEMS.length} entries · search any column.</span>
           </p>
         </div>
-        <div className="flex items-center gap-2 px-2.5 h-8 border border-white/[0.08] focus-within:border-[#FF8A4C]/50 bg-white/[0.02] rounded-md">
+        <div className="flex items-center gap-2 px-2.5 h-8 border border-white/[0.08] focus-within:border-[var(--team-accent)]/50 bg-white/[0.02] rounded-md">
           <Search size={12} className="text-white/40" />
           <input
             type="text"
@@ -284,12 +284,12 @@ const CategoryChip = ({ id, label, count, active, onClick }) => (
     className={cx(
       'px-2.5 h-7 inline-flex items-center gap-1.5 text-[11px] font-mono uppercase tracking-wider rounded-md border transition-colors',
       active
-        ? 'border-[#F74902]/55 bg-[#F74902]/[0.10] text-[#FF8A4C]'
+        ? 'border-[var(--team-primary)]/55 bg-[var(--team-primary)]/[0.10] text-[var(--team-accent)]'
         : 'border-white/[0.08] bg-white/[0.02] text-white/55 hover:text-white hover:border-white/20',
     )}
   >
     <span>{label}</span>
-    <span className={cx('text-[9px] tabular-nums', active ? 'text-[#FF8A4C]/70' : 'text-white/30')}>
+    <span className={cx('text-[9px] tabular-nums', active ? 'text-[var(--team-accent)]/70' : 'text-white/30')}>
       {count}
     </span>
   </button>
@@ -304,7 +304,7 @@ const DefinitionRow = ({ item, highlight }) => {
           <Highlighted text={item.term} q={hl} />
         </span>
         {item.abbr && item.abbr !== '—' && (
-          <span className="text-[10px] font-mono text-[#FF8A4C] uppercase tracking-wider px-1.5 py-0.5 rounded border border-[#F74902]/30 bg-[#F74902]/[0.06]">
+          <span className="text-[10px] font-mono text-[var(--team-accent)] uppercase tracking-wider px-1.5 py-0.5 rounded border border-[var(--team-primary)]/30 bg-[var(--team-primary)]/[0.06]">
             <Highlighted text={item.abbr} q={hl} />
           </span>
         )}
@@ -343,7 +343,7 @@ const Highlighted = ({ text, q }) => {
     if (idx === -1) { out.push(text.slice(i)); break; }
     if (idx > i) out.push(text.slice(i, idx));
     out.push(
-      <span key={idx} className="bg-[#F74902]/20 text-[#FF8A4C] rounded-sm">
+      <span key={idx} className="bg-[var(--team-primary)]/20 text-[var(--team-accent)] rounded-sm">
         {text.slice(idx, idx + needle.length)}
       </span>
     );

@@ -509,7 +509,7 @@ export const Dashboard = ({ schedule, standings, scoreboard, clubStats, roster, 
                   </span>
                   {g.highlightUrl ? (
                     <a
-                      href={`https://www.${g.highlightUrl.replace(/^https?:\/\/(www\.)?/, '')}`}
+                      href={g.highlightUrl.startsWith('http') ? g.highlightUrl : `https://${g.highlightUrl}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       title="Watch highlight"
@@ -1426,7 +1426,7 @@ const LatestNhlGameBanner = ({ game, onOpen }) => {
     return (
       <div className="relative overflow-hidden rounded-lg border border-white/[0.08] bg-gradient-to-br from-[#101010] via-[#0B0B0B] to-[#070707] px-6 sm:px-8 py-8 sm:py-10">
         <div className="flex items-center gap-2 text-[10px] font-mono uppercase tracking-[0.2em] text-white/45 mb-3">
-          <span className="w-1.5 h-1.5 rounded-full bg-[var(--team-primary,#F74902)]" />
+          <span className="w-1.5 h-1.5 rounded-full bg-[var(--team-primary,var(--team-primary))]" />
           NHL · league-wide
         </div>
         <h2 className="text-[22px] sm:text-[28px] font-semibold tracking-tight">No NHL games on the slate.</h2>
@@ -1479,7 +1479,7 @@ const LatestNhlGameCard = ({ game, onOpen }) => {
     >
       <div className="flex items-center justify-between gap-4 flex-wrap mb-5">
         <div className="flex items-center gap-2 text-[10px] sm:text-[11px] font-mono uppercase tracking-[0.22em] text-white/55">
-          <span className="w-1.5 h-1.5 rounded-full bg-[var(--team-primary,#F74902)]" />
+          <span className="w-1.5 h-1.5 rounded-full bg-[var(--team-primary,var(--team-primary))]" />
           {isLiveState ? 'Live NHL Game' : isFinalState ? 'Most Recent NHL Game' : 'Next NHL Game'}
         </div>
         <span className={cx(

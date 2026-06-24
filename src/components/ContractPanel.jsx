@@ -19,7 +19,7 @@ const Stat = ({ label, value, tone }) => (
   <div className="border border-white/[0.05] rounded bg-white/[0.02] px-2.5 py-2">
     <div className="text-[9px] font-mono text-white/40 uppercase tracking-wider">{label}</div>
     <div className={cx('text-[14px] font-mono tabular-nums mt-0.5 font-medium',
-      tone === 'orange' ? 'text-[#FF8A4C]'
+      tone === 'orange' ? 'text-[var(--team-accent)]'
       : tone === 'amber' ? 'text-amber-300'
       : tone === 'sky' ? 'text-sky-300'
       : 'text-white/85',
@@ -61,7 +61,7 @@ export const ContractPanel = ({ playerId, fullName }) => {
         <div className="space-y-2.5">
           {/* Headline AAV + cap-hit % */}
           <div className="flex items-baseline gap-3">
-            <span className="text-[28px] font-semibold tabular-nums tracking-tight text-[#FF8A4C] leading-none">
+            <span className="text-[28px] font-semibold tabular-nums tracking-tight text-[var(--team-accent)] leading-none">
               {fmtMillions(c.aav ?? c.capHit)}
             </span>
             <span className="text-[11px] font-mono text-white/45">AAV</span>

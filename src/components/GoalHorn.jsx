@@ -137,7 +137,7 @@ export const GoalHornToggle = () => {
 
   const next = () => setMode((m) => cycleMode(m));
   const label = mode === 'horn' ? 'horn' : mode === 'voice' ? 'voice' : 'off';
-  const tone = mode === 'off' ? '' : 'text-[#FF8A4C]';
+  const tone = mode === 'off' ? '' : 'text-[var(--team-accent)]';
   const Icon = mode === 'voice' ? Mic : mode === 'horn' ? Volume2 : VolumeX;
   return (
     <button

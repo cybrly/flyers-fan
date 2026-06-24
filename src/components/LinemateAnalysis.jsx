@@ -145,11 +145,11 @@ export const LinemateAnalysis = ({ gameId, focusPlayerId = null }) => {
               )}
               <div className="relative h-1.5 bg-white/[0.04] rounded-full overflow-hidden">
                 <div
-                  className="absolute inset-y-0 left-0 bg-[#F74902]/70 rounded-full"
+                  className="absolute inset-y-0 left-0 bg-[var(--team-primary)]/70 rounded-full"
                   style={{ width: `${widthPct}%` }}
                 />
               </div>
-              <span className="text-[11px] font-mono tabular-nums text-right text-[#FF8A4C]">
+              <span className="text-[11px] font-mono tabular-nums text-right text-[var(--team-accent)]">
                 {fmtMSS(p.seconds)}
               </span>
             </div>

@@ -156,7 +156,7 @@ export const WatchabilityPanel = ({ scoreboard, standings, leagueLeaders, ourTea
                   <span key={r} className={cx(
                     'text-[9px] font-mono px-1.5 py-0.5 rounded border uppercase tracking-wider',
                     r === 'LIVE' ? 'border-red-500/40 bg-red-500/[0.08] text-red-300'
-                    : r === 'Playoffs' ? 'border-[#F74902]/40 bg-[#F74902]/[0.08] text-[#FF8A4C]'
+                    : r === 'Playoffs' ? 'border-[var(--team-primary)]/40 bg-[var(--team-primary)]/[0.08] text-[var(--team-accent)]'
                     : r === 'Overtime' ? 'border-amber-500/40 bg-amber-500/[0.08] text-amber-300'
                     : 'border-white/[0.08] text-white/55'
                   )}>{r}</span>

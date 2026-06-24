@@ -33,7 +33,7 @@ const KIND_BADGE = {
 };
 
 const KIND_TONE = {
-  orange: 'border-[#F74902]/40 bg-[#F74902]/[0.10] text-[#FF8A4C]',
+  orange: 'border-[var(--team-primary)]/40 bg-[var(--team-primary)]/[0.10] text-[var(--team-accent)]',
   sky:    'border-sky-500/30 bg-sky-500/[0.06] text-sky-300',
   muted:  'border-white/[0.06] bg-white/[0.02] text-white/45',
 };
@@ -133,7 +133,7 @@ export const LiveShotTicker = ({ pbpRaw, isLive, oppAbbr }) => {
               <span className="text-[10px] font-mono text-white/35 tabular-nums shrink-0 w-12">
                 P{s.period}{s.periodType === 'OT' ? ' OT' : ''} {s.time}
               </span>
-              <span className={cx('text-[12px] font-medium truncate flex-1', s.isUs ? 'text-[#FF8A4C]' : 'text-white/85')}>
+              <span className={cx('text-[12px] font-medium truncate flex-1', s.isUs ? 'text-[var(--team-accent)]' : 'text-white/85')}>
                 {s.shooter || '—'}
                 <span className="text-white/30 ml-1.5 text-[10px] font-mono">{teamLabel}</span>
               </span>
@@ -143,7 +143,7 @@ export const LiveShotTicker = ({ pbpRaw, isLive, oppAbbr }) => {
               </span>
               <span className={cx(
                 'text-[10px] font-mono tabular-nums shrink-0 w-12 text-right',
-                s.xG >= 0.20 ? 'text-[#FF8A4C]' : s.xG >= 0.10 ? 'text-amber-300' : 'text-white/45',
+                s.xG >= 0.20 ? 'text-[var(--team-accent)]' : s.xG >= 0.10 ? 'text-amber-300' : 'text-white/45',
               )}>
                 {s.xG.toFixed(2)} xG
               </span>

@@ -115,7 +115,7 @@ export const PlayerLink = ({ playerId, children, className = '' }) => {
         onMouseLeave={onLeave}
         onFocus={onEnter}
         onBlur={onLeave}
-        className={cx('text-left hover:text-[#FF8A4C] transition-colors cursor-pointer', className)}
+        className={cx('text-left hover:text-[var(--team-accent)] transition-colors cursor-pointer', className)}
       >
         {children}
       </button>

@@ -62,7 +62,7 @@ export function WinProbChart({ events, gameInfo, oppAbbr = 'OPP' }) {
       action={
         <span className={cx(
           'text-[11px] font-mono font-medium',
-          finalWP >= 0.5 ? 'text-[#FF8A4C]' : 'text-red-400',
+          finalWP >= 0.5 ? 'text-[var(--team-accent)]' : 'text-red-400',
         )}>
           Final: {(finalWP * 100).toFixed(0)}%
         </span>
@@ -80,8 +80,8 @@ export function WinProbChart({ events, gameInfo, oppAbbr = 'OPP' }) {
         <svg width="100%" viewBox={`0 0 ${W} ${H}`} className="block">
           <defs>
             <linearGradient id={`${gradientId}-wp`} x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="#F74902" stopOpacity="0.20" />
-              <stop offset="100%" stopColor="#F74902" stopOpacity="0" />
+              <stop offset="0%" stopColor="var(--team-primary)" stopOpacity="0.20" />
+              <stop offset="100%" stopColor="var(--team-primary)" stopOpacity="0" />
             </linearGradient>
             <clipPath id={`${gradientId}-clipAbove`}>
               <rect x={PAD.left} y={PAD.top} width={plotW} height={midY - PAD.top} />
@@ -113,7 +113,7 @@ export function WinProbChart({ events, gameInfo, oppAbbr = 'OPP' }) {
           </g>
 
           {/* Main probability line */}
-          <path d={linePath} fill="none" stroke="#F74902" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+          <path d={linePath} fill="none" stroke="var(--team-primary)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
 
           {/* Goal markers */}
           {goals.map((g, i) => (
@@ -122,8 +122,8 @@ export function WinProbChart({ events, gameInfo, oppAbbr = 'OPP' }) {
                 cx={x(g.gameSeconds)}
                 cy={y(g.wp)}
                 r={4.5}
-                fill={g.us ? '#F74902' : 'rgba(255,255,255,0.5)'}
-                stroke={g.us ? '#FF8A4C' : 'rgba(255,255,255,0.3)'}
+                fill={g.us ? 'var(--team-primary)' : 'rgba(255,255,255,0.5)'}
+                stroke={g.us ? 'var(--team-accent)' : 'rgba(255,255,255,0.3)'}
                 strokeWidth="1.5"
               />
               <text

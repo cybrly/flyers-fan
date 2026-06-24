@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import { cx } from '../config.js';
 
 let sparkSeq = 0;
-export const Sparkline = ({ data, w = 120, h = 28, stroke = '#F74902' }) => {
+export const Sparkline = ({ data, w = 120, h = 28, stroke = 'var(--team-primary)' }) => {
   // Stable id per instance — generated once. Must run before any early return
   // to keep the hook order consistent across renders.
   const id = useMemo(() => `sg${++sparkSeq}`, []);
@@ -45,7 +45,7 @@ export const GoalDiffBars = ({ games, h = 56 }) => {
             key={i}
             x={i * bw + 0.3} y={y}
             width={bw - 0.6} height={Math.max(barH, 1)}
-            fill={d > 0 ? '#F74902' : d < 0 ? 'rgba(255,255,255,0.28)' : 'rgba(255,255,255,0.1)'}
+            fill={d > 0 ? 'var(--team-primary)' : d < 0 ? 'rgba(255,255,255,0.28)' : 'rgba(255,255,255,0.1)'}
           />
         );
       })}
@@ -59,14 +59,14 @@ export const FormDots = ({ games, size = 8 }) => (
       <div
         key={i}
         title={`${g.label} · ${g.w ? 'W' : 'L'} ${g.home ? 'vs' : '@'} ${g.opp} ${g.us}-${g.them}`}
-        className={cx('shrink-0', g.w ? 'bg-[#F74902]' : 'bg-white/15')}
+        className={cx('shrink-0', g.w ? 'bg-[var(--team-primary)]' : 'bg-white/15')}
         style={{ width: size, height: size, borderRadius: 1 }}
       />
     ))}
   </div>
 );
 
-export const MiniBar = ({ value, max, color = '#F74902', h = 4 }) => (
+export const MiniBar = ({ value, max, color = 'var(--team-primary)', h = 4 }) => (
   <div className="relative bg-white/[0.04] w-full" style={{ height: h }}>
     <div
       className="absolute inset-y-0 left-0 transition-all duration-500"

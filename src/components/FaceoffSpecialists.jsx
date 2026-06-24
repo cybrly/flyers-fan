@@ -17,7 +17,7 @@ import { PlayerLink } from './PlayerLink.jsx';
 const FO_TONE = (pct) => {
   if (pct == null) return 'text-white/35';
   if (pct >= 55) return 'text-emerald-400';
-  if (pct >= 50) return 'text-[#FF8A4C]';
+  if (pct >= 50) return 'text-[var(--team-accent)]';
   if (pct >= 47) return 'text-white/70';
   return 'text-red-400';
 };
@@ -64,7 +64,7 @@ export const FaceoffSpecialists = ({ clubStats }) => {
                 <div
                   className={cx('h-full rounded-full',
                     p.faceoffPct >= 55 ? 'bg-emerald-500/70'
-                    : p.faceoffPct >= 50 ? 'bg-[#F74902]/70'
+                    : p.faceoffPct >= 50 ? 'bg-[var(--team-primary)]/70'
                     : p.faceoffPct >= 47 ? 'bg-white/30'
                     : 'bg-red-500/70',
                   )}

@@ -61,7 +61,7 @@ export const ShareGameButton = ({ game }) => {
       onClick={onClick}
       disabled={state === 'working'}
       title={state === 'shared' ? 'Saved' : 'Share this game'}
-      className="flex items-center gap-1.5 px-2.5 h-7 border border-white/[0.08] hover:border-[#F74902]/40 bg-white/[0.02] rounded-md text-[11px] font-mono text-white/65 hover:text-white transition-colors disabled:opacity-50"
+      className="flex items-center gap-1.5 px-2.5 h-7 border border-white/[0.08] hover:border-[var(--team-primary)]/40 bg-white/[0.02] rounded-md text-[11px] font-mono text-white/65 hover:text-white transition-colors disabled:opacity-50"
     >
       <Icon size={12} />
       <span>{state === 'working' ? 'Generating…' : state === 'shared' ? 'Saved' : 'Share'}</span>

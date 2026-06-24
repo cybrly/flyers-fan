@@ -66,9 +66,9 @@ export function StreakAlerts({ playerStreaks, teamStreak, milestones }) {
   alerts.sort((a, b) => a.priority - b.priority);
 
   const TONE_MAP = {
-    warm: 'border-[#F74902]/30 bg-[#F74902]/[0.08] text-[#FF8A4C]',
+    warm: 'border-[var(--team-primary)]/30 bg-[var(--team-primary)]/[0.08] text-[var(--team-accent)]',
     bad: 'border-red-500/30 bg-red-500/[0.06] text-red-400',
-    orange: 'border-[#F74902]/40 bg-[#F74902]/15 text-[#FF8A4C]',
+    orange: 'border-[var(--team-primary)]/40 bg-[var(--team-primary)]/15 text-[var(--team-accent)]',
     default: 'border-white/[0.08] bg-white/[0.03] text-white/60',
   };
 

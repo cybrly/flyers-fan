@@ -58,13 +58,13 @@ export const WinProbability = ({ us, them, period, periodType, clock, isHome }) 
   const pct = Math.round(p * 100);
   const tone =
     pct >= 75 ? 'text-emerald-400' :
-    pct >= 55 ? 'text-[#FF8A4C]' :
+    pct >= 55 ? 'text-[var(--team-accent)]' :
     pct >= 45 ? 'text-amber-300' :
     pct >= 25 ? 'text-orange-300/80' :
     'text-red-400';
 
   return (
-    <div className="flex-1 min-w-[120px] px-3 py-2 border border-[#F74902]/[0.18] rounded-md bg-white/[0.015]">
+    <div className="flex-1 min-w-[120px] px-3 py-2 border border-[var(--team-primary)]/[0.18] rounded-md bg-white/[0.015]">
       <div className="text-[9px] font-mono text-white/40 uppercase tracking-wider">PHI win prob</div>
       <div className="flex items-baseline gap-1.5 mt-0.5">
         <span className={cx('text-[22px] font-semibold tabular-nums tracking-tight', tone)}>{pct}%</span>
@@ -74,7 +74,7 @@ export const WinProbability = ({ us, them, period, periodType, clock, isHome }) 
       <div className="mt-1.5 relative h-1 bg-white/[0.05] rounded-full overflow-hidden">
         <div
           className={cx('absolute left-0 top-0 h-full rounded-full transition-all duration-500',
-            pct >= 50 ? 'bg-[#F74902]' : 'bg-red-500/80'
+            pct >= 50 ? 'bg-[var(--team-primary)]' : 'bg-red-500/80'
           )}
           style={{ width: `${pct}%` }}
         />
@@ -94,7 +94,7 @@ function project(currentValue, { period, periodType, remainingSec }) {
   return Math.round(currentValue / progress);
 }
 
-export const PaceProjection = ({ label, current, period, periodType, clock, color = '#FF8A4C' }) => {
+export const PaceProjection = ({ label, current, period, periodType, clock, color = 'var(--team-accent)' }) => {
   const remainingSec = clockToRemaining(clock?.timeRemaining);
   const proj = useMemo(
     () => project(current, { period, periodType, remainingSec }),
@@ -102,7 +102,7 @@ export const PaceProjection = ({ label, current, period, periodType, clock, colo
   );
 
   return (
-    <div className="flex-1 min-w-[120px] px-3 py-2 border border-[#F74902]/[0.18] rounded-md bg-white/[0.015]">
+    <div className="flex-1 min-w-[120px] px-3 py-2 border border-[var(--team-primary)]/[0.18] rounded-md bg-white/[0.015]">
       <div className="text-[9px] font-mono text-white/40 uppercase tracking-wider">{label} · pace</div>
       <div className="flex items-baseline gap-1.5 mt-0.5">
         <span className="text-[22px] font-semibold tabular-nums tracking-tight" style={{ color }}>
@@ -132,16 +132,16 @@ export const GoalCelebration = () => (
       <div
         className="absolute inset-0 rounded-full"
         style={{
-          background: 'radial-gradient(circle, rgba(247,73,2,0.55), rgba(247,73,2,0) 65%)',
+          background: 'radial-gradient(circle, color-mix(in srgb, var(--team-primary) 55%, transparent), color-mix(in srgb, var(--team-primary) 0%, transparent) 65%)',
           filter: 'blur(20px)',
           animation: 'goalPulse 0.9s ease-out',
           width: 320, height: 320, left: -160, top: -160,
         }}
       />
       <div
-        className="text-[64px] sm:text-[88px] font-black tracking-tighter text-[#FF8A4C]"
+        className="text-[64px] sm:text-[88px] font-black tracking-tighter text-[var(--team-accent)]"
         style={{
-          textShadow: '0 0 32px rgba(247,73,2,0.8), 0 4px 20px rgba(0,0,0,0.7)',
+          textShadow: '0 0 32px color-mix(in srgb, var(--team-primary) 80%, transparent), 0 4px 20px rgba(0,0,0,0.7)',
           animation: 'goalPop 1.6s cubic-bezier(0.18, 0.89, 0.32, 1.28)',
           letterSpacing: '-0.04em',
         }}

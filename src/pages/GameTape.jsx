@@ -733,7 +733,7 @@ export const GameTape = ({ game, loading, pbp, pbpRaw, liveSnap, liveConnected, 
                     </div>
                     {g.highlightUrl ? (
                       <a
-                        href={`https://www.${g.highlightUrl.replace(/^https?:\/\/(www\.)?/, '')}`}
+                        href={g.highlightUrl.startsWith('http') ? g.highlightUrl : `https://${g.highlightUrl}`}
                         target="_blank"
                         rel="noopener noreferrer"
                         title="Watch highlight on NHL.com"

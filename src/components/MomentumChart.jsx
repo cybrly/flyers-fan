@@ -127,8 +127,8 @@ export function MomentumChart({ events, isHome, mode: initialMode, periods = 3 }
         <svg width="100%" viewBox={`0 0 ${W} ${H}`} className="block">
           <defs>
             <linearGradient id={`${gradientId}-above`} x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="#F74902" stopOpacity="0.25" />
-              <stop offset="100%" stopColor="#F74902" stopOpacity="0" />
+              <stop offset="0%" stopColor="var(--team-primary)" stopOpacity="0.25" />
+              <stop offset="100%" stopColor="var(--team-primary)" stopOpacity="0" />
             </linearGradient>
             <linearGradient id={`${gradientId}-below`} x1="0" y1="0" x2="0" y2="1">
               <stop offset="0%" stopColor="white" stopOpacity="0" />
@@ -166,7 +166,7 @@ export function MomentumChart({ events, isHome, mode: initialMode, periods = 3 }
           </g>
 
           {/* Main line */}
-          <path d={linePath} fill="none" stroke="#F74902" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+          <path d={linePath} fill="none" stroke="var(--team-primary)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
 
           {/* Goal markers */}
           {goals.map((g, i) => (
@@ -175,8 +175,8 @@ export function MomentumChart({ events, isHome, mode: initialMode, periods = 3 }
               cx={x(g.gameSeconds)}
               cy={y(g.diff)}
               r={4}
-              fill={g.us ? '#F74902' : 'rgba(255,255,255,0.6)'}
-              stroke={g.us ? '#FF8A4C' : 'rgba(255,255,255,0.3)'}
+              fill={g.us ? 'var(--team-primary)' : 'rgba(255,255,255,0.6)'}
+              stroke={g.us ? 'var(--team-accent)' : 'rgba(255,255,255,0.3)'}
               strokeWidth="1.5"
             >
               <title>{g.summary}</title>
@@ -184,7 +184,7 @@ export function MomentumChart({ events, isHome, mode: initialMode, periods = 3 }
           ))}
 
           {/* Y-axis labels */}
-          <text x={PAD.left - 4} y={PAD.top + 4} textAnchor="end" className="fill-[#FF8A4C]/60 text-[9px] font-mono">
+          <text x={PAD.left - 4} y={PAD.top + 4} textAnchor="end" className="fill-[var(--team-accent)]/60 text-[9px] font-mono">
             +{mode === 'xg' ? maxAbsDiff.toFixed(1) : maxAbsDiff}
           </text>
           <text x={PAD.left - 4} y={PAD.top + plotH} textAnchor="end" className="fill-white/30 text-[9px] font-mono">
@@ -198,7 +198,7 @@ export function MomentumChart({ events, isHome, mode: initialMode, periods = 3 }
               y={y(data[data.length - 1].diff) + 3}
               className={cx(
                 'text-[10px] font-mono font-medium',
-                data[data.length - 1].diff >= 0 ? 'fill-[#FF8A4C]' : 'fill-red-400',
+                data[data.length - 1].diff >= 0 ? 'fill-[var(--team-accent)]' : 'fill-red-400',
               )}
             >
               {data[data.length - 1].diff >= 0 ? '+' : ''}{mode === 'xg' ? data[data.length - 1].diff.toFixed(1) : data[data.length - 1].diff}

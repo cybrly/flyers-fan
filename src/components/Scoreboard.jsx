@@ -26,7 +26,7 @@ export const Scoreboard = ({ data }) => {
   const tickerLabel = anyLive ? 'League · Live' : isStaleAsOf(newest) ? 'League · Recent' : 'League · Tonight';
 
   return (
-    <div className="border border-[#F74902]/[0.18] bg-[#0C0C0C]/40 rounded-md overflow-hidden">
+    <div className="border border-[var(--team-primary)]/[0.18] bg-[#0C0C0C]/40 rounded-md overflow-hidden">
       <div className="flex items-stretch">
         <div className="shrink-0 px-3 flex items-center gap-2 border-r border-white/[0.05] bg-white/[0.02]">
           <span className="text-[9px] font-mono uppercase tracking-[0.18em] text-white/45">
@@ -66,7 +66,7 @@ const TickerPill = ({ g }) => {
     <div
       className={cx(
         'shrink-0 px-3 h-10 flex items-center gap-2 transition-colors whitespace-nowrap',
-        hasUs ? 'bg-[#F74902]/[0.07] hover:bg-[#F74902]/[0.12]' : 'hover:bg-white/[0.025]',
+        hasUs ? 'bg-[var(--team-primary)]/[0.07] hover:bg-[var(--team-primary)]/[0.12]' : 'hover:bg-white/[0.025]',
       )}
     >
       <span
@@ -82,7 +82,7 @@ const TickerPill = ({ g }) => {
       <span className="text-[11px] font-mono text-white/25">·</span>
       <TeamCell t={g.home} dim={winner === 'away'} bold={winner === 'home'} />
       {g.series && (
-        <span className="text-[8px] font-mono text-[#FF8A4C]/60 ml-1 shrink-0">
+        <span className="text-[8px] font-mono text-[var(--team-accent)]/60 ml-1 shrink-0">
           G{g.series.gameNum}
         </span>
       )}
@@ -99,7 +99,7 @@ const TeamCell = ({ t, dim, bold }) => {
         className={cx(
           'text-[11px] font-mono tabular-nums tracking-tight',
           bold ? 'text-white font-medium' : dim ? 'text-white/40' : 'text-white/75',
-          isUs && (bold ? 'text-[#FF8A4C]' : 'text-[#FF8A4C]/85'),
+          isUs && (bold ? 'text-[var(--team-accent)]' : 'text-[var(--team-accent)]/85'),
         )}
       >
         {t.abbr}
@@ -108,7 +108,7 @@ const TeamCell = ({ t, dim, bold }) => {
         className={cx(
           'text-[12px] font-mono tabular-nums',
           bold || isUs ? 'text-white' : dim ? 'text-white/35' : 'text-white/55',
-          isUs && bold && 'text-[#FF8A4C]',
+          isUs && bold && 'text-[var(--team-accent)]',
         )}
       >
         {t.score != null ? t.score : '—'}

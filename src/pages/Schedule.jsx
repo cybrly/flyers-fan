@@ -83,7 +83,7 @@ export const Schedule = ({ schedule, monthSchedule, onOpenGame, scoreboard, stan
             ].map((v) => (
               <button key={v.id} onClick={() => setView(v.id)}
                 className={cx('px-2.5 h-6 text-[11px] font-medium rounded-[4px] transition-colors',
-                  view === v.id ? 'bg-[#F74902]/15 text-[#FF8A4C]' : 'text-white/50 hover:text-white'
+                  view === v.id ? 'bg-[var(--team-primary)]/15 text-[var(--team-accent)]' : 'text-white/50 hover:text-white'
                 )}>{v.l}</button>
             ))}
           </div>
@@ -125,7 +125,7 @@ export const Schedule = ({ schedule, monthSchedule, onOpenGame, scoreboard, stan
           <div key={s.l} className="border border-white/[0.06] bg-[#0C0C0C]/60 rounded-md p-3">
             <Label>{s.l}</Label>
             <div className={cx('text-[20px] font-semibold mt-1 tabular-nums',
-              s.tone === 'orange' ? 'text-[#FF8A4C]' : s.tone === 'up' ? 'text-[#FF8A4C]' : s.tone === 'down' ? 'text-red-400' : ''
+              s.tone === 'orange' ? 'text-[var(--team-accent)]' : s.tone === 'up' ? 'text-[var(--team-accent)]' : s.tone === 'down' ? 'text-red-400' : ''
             )}>{s.v}</div>
             {s.sub && <div className="text-[10px] font-mono text-white/40 mt-0.5">{s.sub}</div>}
           </div>
@@ -178,7 +178,7 @@ export const Schedule = ({ schedule, monthSchedule, onOpenGame, scoreboard, stan
                     <td className="px-4 h-11">
                       <span className={cx(
                         'inline-flex items-center justify-center w-[22px] h-[18px] text-[10px] font-mono font-semibold rounded-[3px]',
-                        g.w ? 'bg-[#F74902]/15 text-[#FF8A4C] border border-[#F74902]/30'
+                        g.w ? 'bg-[var(--team-primary)]/15 text-[var(--team-accent)] border border-[var(--team-primary)]/30'
                             : 'bg-white/[0.03] text-white/40 border border-white/10'
                       )}>{g.w ? 'W' : 'L'}</span>
                     </td>
@@ -192,7 +192,7 @@ export const Schedule = ({ schedule, monthSchedule, onOpenGame, scoreboard, stan
                     </td>
                     <td className="px-2 text-center text-[10px] font-mono text-white/45">{g.home ? 'HOME' : 'AWAY'}</td>
                     <td className="px-2 text-right font-mono tabular-nums text-[13px]">
-                      <span className={g.w ? 'text-[#FF8A4C] font-medium' : 'text-white/80'}>{g.us}</span>
+                      <span className={g.w ? 'text-[var(--team-accent)] font-medium' : 'text-white/80'}>{g.us}</span>
                       <span className="text-white/25 mx-1">–</span>
                       <span className={g.w ? 'text-white/50' : 'text-white/80 font-medium'}>{g.them}</span>
                     </td>
@@ -235,7 +235,7 @@ export const Schedule = ({ schedule, monthSchedule, onOpenGame, scoreboard, stan
                     <td className="px-2">
                       <div className="flex items-center justify-center gap-[2px]">
                         {Array.from({ length: max }).map((_, idx) => (
-                          <div key={`u${idx}`} className={cx('w-1 h-3', idx < g.us ? 'bg-[#F74902]' : 'bg-white/[0.06]')} />
+                          <div key={`u${idx}`} className={cx('w-1 h-3', idx < g.us ? 'bg-[var(--team-primary)]' : 'bg-white/[0.06]')} />
                         ))}
                         <div className="w-1.5" />
                         {Array.from({ length: max }).map((_, idx) => (
@@ -279,14 +279,14 @@ export const Schedule = ({ schedule, monthSchedule, onOpenGame, scoreboard, stan
                 <div className="relative flex items-center gap-2">
                   <span className={cx(
                     'inline-flex items-center justify-center w-[22px] h-[18px] text-[10px] font-mono font-semibold rounded-[3px] shrink-0',
-                    g.w ? 'bg-[#F74902]/15 text-[#FF8A4C] border border-[#F74902]/30'
+                    g.w ? 'bg-[var(--team-primary)]/15 text-[var(--team-accent)] border border-[var(--team-primary)]/30'
                         : 'bg-white/[0.03] text-white/40 border border-white/10'
                   )}>{g.w ? 'W' : 'L'}</span>
                   <TeamLogo abbr={g.opp} size={18} />
                   <span className="text-[10px] font-mono text-white/35 uppercase shrink-0">{g.home ? 'vs' : '@'}</span>
                   <span className="text-[14px] text-white/90 truncate flex-1">{OPP_FULL[g.opp] || g.oppName}</span>
                   <span className="font-mono tabular-nums text-[15px] shrink-0">
-                    <span className={g.w ? 'text-[#FF8A4C] font-medium' : 'text-white/80'}>{g.us}</span>
+                    <span className={g.w ? 'text-[var(--team-accent)] font-medium' : 'text-white/80'}>{g.us}</span>
                     <span className="text-white/30 mx-1">–</span>
                     <span className={g.w ? 'text-white/50' : 'text-white/80 font-medium'}>{g.them}</span>
                   </span>
@@ -315,10 +315,10 @@ export const Schedule = ({ schedule, monthSchedule, onOpenGame, scoreboard, stan
                       {g.threeInFour && ' 3in4'}
                     </span>
                   )}
-                  {g.gameType === 3 && <span className="text-[#FF8A4C]">PO</span>}
+                  {g.gameType === 3 && <span className="text-[var(--team-accent)]">PO</span>}
                   <span className="ml-auto flex items-center gap-[2px]">
                     {Array.from({ length: max }).map((_, idx) => (
-                      <span key={`u${idx}`} className={cx('w-1 h-3', idx < g.us ? 'bg-[#F74902]' : 'bg-white/[0.06]')} />
+                      <span key={`u${idx}`} className={cx('w-1 h-3', idx < g.us ? 'bg-[var(--team-primary)]' : 'bg-white/[0.06]')} />
                     ))}
                     <span className="w-1" />
                     {Array.from({ length: max }).map((_, idx) => (
@@ -400,11 +400,11 @@ const CalendarView = ({ monthSchedule, onOpenGame }) => {
           return (
             <div key={i} className={cx(
               'min-h-[88px] p-1.5',
-              isToday ? 'bg-[#F74902]/[0.08] ring-1 ring-[#F74902]/30 ring-inset' : 'bg-[#0A0A0A]',
+              isToday ? 'bg-[var(--team-primary)]/[0.08] ring-1 ring-[var(--team-primary)]/30 ring-inset' : 'bg-[#0A0A0A]',
             )}>
               <div className="flex items-center justify-between mb-1">
                 <span className={cx('text-[10px] font-mono tabular-nums',
-                  isToday ? 'text-[#FF8A4C] font-semibold' : 'text-white/45'
+                  isToday ? 'text-[var(--team-accent)] font-semibold' : 'text-white/45'
                 )}>{c.dayNum}</span>
               </div>
               {c.games.map((g) => <CalendarGame key={g.id} g={g} onOpen={onOpenGame} />)}

@@ -1,28 +1,29 @@
 // Constants, formatters, and tiny utilities. No React, no fetch — pure.
 
+import { makeSeasonId, seasonLabel, calendarStartYear } from './lib/season.js';
+
 // Active team — mutable at runtime. When the user picks a different team
 // from the sidebar dropdown, setActiveTeam() updates this and App re-renders,
 // causing all hooks/adapters to re-read the new value.
 export let TEAM_ABBR = 'PHI';
 export const setActiveTeam = (abbr) => { TEAM_ABBR = abbr; };
 
-// Auto-rollover season. NHL seasons span Oct → Apr/Jun (regular season +
-// playoffs); the new season's schedule lands in late summer. We flip on
-// Sep 1 so the new schedule is reachable before opening night, but
-// historic Aug/early-Sep traffic still sees the prior season as
-// authoritative.
-const _seasonStartYear = (() => {
-  const d = new Date();
-  // Months are 0-indexed: 8 = September. Sept onward → "new" season year.
-  return d.getMonth() >= 8 ? d.getFullYear() : d.getFullYear() - 1;
-})();
-export const SEASON = `${_seasonStartYear}${_seasonStartYear + 1}`;
-export const SEASON_LABEL = `${String(_seasonStartYear).slice(2)}–${String(_seasonStartYear + 1).slice(2)}`;
-export const SEASON_LABEL_FULL = `${_seasonStartYear}–${String(_seasonStartYear + 1).slice(2)}`;
-// The season after the current one — used by the season-end banner so the
-// "see you next season" copy rolls over automatically instead of being a
-// hardcoded year. Today (2025–26) this is "2026–27".
-export const NEXT_SEASON_LABEL_FULL = `${_seasonStartYear + 1}–${String(_seasonStartYear + 2).slice(2)}`;
+// Calendar-candidate season. NHL seasons span Oct → Apr/Jun (regular season +
+// playoffs); the new season's schedule lands in late summer. calendarStartYear
+// flips on Sep 1 so August traffic still sees the prior season until the new
+// one is reachable. This is the *candidate* — the runtime season engine
+// (lib/season.js + App) may roll forward to UPCOMING_SEASON_ID early, the
+// moment that schedule actually posts. SEASON remains the safe default used to
+// build the initial schedule fetch path.
+const _seasonStartYear = calendarStartYear();
+export const SEASON = makeSeasonId(_seasonStartYear);
+export const SEASON_LABEL = seasonLabel(SEASON);
+export const SEASON_LABEL_FULL = seasonLabel(SEASON, { full: true });
+// The season after the current one. Used as the roll-forward probe target and
+// by the season-end banner so the "see you next season" copy rolls over
+// automatically. Today (candidate 2025–26) this is "20262027" / "2026–27".
+export const UPCOMING_SEASON_ID = makeSeasonId(_seasonStartYear + 1);
+export const NEXT_SEASON_LABEL_FULL = seasonLabel(UPCOMING_SEASON_ID, { full: true });
 
 // Playoff year is the second calendar year of the season (e.g. 2025–26
 // season → 2026 playoffs). NHL Entry Draft happens in late June, so the
@@ -76,6 +77,22 @@ export const TEAM_ID = {
   LAK: 26, SJS: 28, CBJ: 29, MIN: 30, WPG: 52, VGK: 54, SEA: 55, UTA: 68,
 };
 export const teamIdFor = (abbr) => TEAM_ID[abbr] ?? null;
+
+// NHL Records-site franchise IDs keyed by abbreviation. These are DIFFERENT
+// from the numeric team IDs above — the records.nhl.com API (all-time franchise
+// records, season results, Stanley Cups) keys on franchiseId. Sourced from
+// records.nhl.com/site/api/franchise-team-totals (active franchises only).
+export const TEAM_FRANCHISE_ID = {
+  ANA: 32, BOS: 6,  BUF: 19, CAR: 26, CBJ: 36, CGY: 21, CHI: 11, COL: 27,
+  DAL: 15, DET: 12, EDM: 25, FLA: 33, LAK: 14, MIN: 37, MTL: 1,  NJD: 23,
+  NSH: 34, NYI: 22, NYR: 10, OTT: 30, PHI: 16, PIT: 17, SEA: 39, SJS: 29,
+  STL: 18, TBL: 31, TOR: 5,  UTA: 40, VAN: 20, VGK: 38, WPG: 35, WSH: 24,
+};
+export const franchiseIdFor = (abbr) => TEAM_FRANCHISE_ID[abbr] ?? null;
+
+// Proxy for the NHL Records API (records.nhl.com/site/api). Separate from the
+// api-web proxy because it's a different upstream host. See api/records.js.
+export const API_RECORDS = (path) => `/api/records?path=${encodeURIComponent(path)}`;
 
 // Great-circle distance between two lat/lng pairs in miles. Used for travel
 // distance calculations on the schedule. Same-arena returns 0.

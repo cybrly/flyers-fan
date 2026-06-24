@@ -49,8 +49,8 @@ export const InstallPrompt = () => {
 
   return (
     <div className="fixed bottom-4 right-4 z-40 max-w-[320px] rounded-lg border border-white/[0.08] bg-[#0E0E0E]/95 backdrop-blur shadow-[0_18px_42px_-18px_rgba(0,0,0,0.9)] p-3 flex items-start gap-3">
-      <div className="w-8 h-8 rounded-md bg-[#F74902]/[0.12] border border-[#F74902]/30 flex items-center justify-center flex-shrink-0">
-        <Download size={16} className="text-[#FF8A4C]" />
+      <div className="w-8 h-8 rounded-md bg-[var(--team-primary)]/[0.12] border border-[var(--team-primary)]/30 flex items-center justify-center flex-shrink-0">
+        <Download size={16} className="text-[var(--team-accent)]" />
       </div>
       <div className="min-w-0 flex-1">
         <div className="text-[12px] font-medium text-white/90">Install {getHostBrand().short}</div>
@@ -58,7 +58,7 @@ export const InstallPrompt = () => {
         <div className="flex items-center gap-2 mt-2">
           <button
             onClick={install}
-            className="px-2.5 py-1 rounded bg-[#F74902] hover:bg-[#FF5C1F] text-black text-[11px] font-medium transition-colors"
+            className="px-2.5 py-1 rounded bg-[var(--team-primary)] hover:bg-[#FF5C1F] text-black text-[11px] font-medium transition-colors"
           >
             Install
           </button>

@@ -124,7 +124,7 @@ export const GoalNotificationsToggle = () => {
       aria-label={on ? 'Disable goal notifications' : 'Enable goal notifications'}
       className={cx(
         'flex items-center gap-1.5 hover:text-white/85 transition-colors',
-        on ? 'text-[#FF8A4C]' : ''
+        on ? 'text-[var(--team-accent)]' : ''
       )}
     >
       {on ? <Bell size={10} /> : <BellOff size={10} />}

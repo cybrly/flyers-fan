@@ -150,7 +150,7 @@ export const ShiftChart = ({ gameId, isPlayoff = false }) => {
             return (
               <div key={teamAbbr} className="mb-4 last:mb-0">
                 <div className="flex items-center gap-2 mb-1.5">
-                  <span className={cx('text-[11px] font-medium', isUs ? 'text-[#FF8A4C]' : 'text-white/70')}>
+                  <span className={cx('text-[11px] font-medium', isUs ? 'text-[var(--team-accent)]' : 'text-white/70')}>
                     {teamAbbr}
                   </span>
                   <span className="text-[10px] font-mono text-white/35">{players.length} skaters</span>
@@ -182,7 +182,7 @@ export const ShiftChart = ({ gameId, isPlayoff = false }) => {
           </div>
         </div>
         <div className="mt-3 flex items-center gap-4 text-[10px] font-mono text-white/45">
-          <span className="flex items-center gap-1.5"><span className="w-3 h-2 bg-[#F74902]" /> {TEAM_ABBR} shift</span>
+          <span className="flex items-center gap-1.5"><span className="w-3 h-2 bg-[var(--team-primary)]" /> {TEAM_ABBR} shift</span>
           <span className="flex items-center gap-1.5"><span className="w-3 h-2 bg-white/40" /> opponent shift</span>
           <span className="text-white/30">· hover a shift for details</span>
         </div>
@@ -211,7 +211,7 @@ const ShiftRow = ({ player, totalSec, isUs }) => {
               y={2}
               width={Math.max(2, s.dur)}
               height={trackHeight - 4}
-              fill={isUs ? '#F74902' : 'rgba(255,255,255,0.55)'}
+              fill={isUs ? 'var(--team-primary)' : 'rgba(255,255,255,0.55)'}
               opacity={hover && hover !== i ? 0.4 : 0.92}
               onMouseEnter={() => setHover(i)}
               onMouseLeave={() => setHover(null)}
@@ -225,7 +225,7 @@ const ShiftRow = ({ player, totalSec, isUs }) => {
         </svg>
       </div>
       <span className={cx('text-[10px] font-mono tabular-nums text-right',
-        isUs ? 'text-[#FF8A4C]' : 'text-white/65'
+        isUs ? 'text-[var(--team-accent)]' : 'text-white/65'
       )}>{fmtMSS(player.total)}</span>
     </div>
   );

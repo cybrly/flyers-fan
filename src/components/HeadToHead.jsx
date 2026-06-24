@@ -42,7 +42,7 @@ export const HeadToHead = ({ schedule, onOpenGame }) => {
     <Section
       title={
         <span className="flex items-center gap-2">
-          <Swords size={11} className="text-[#FF8A4C]" />
+          <Swords size={11} className="text-[var(--team-accent)]" />
           <span>vs {oppAbbr} · Season Series</span>
         </span>
       }
@@ -62,7 +62,7 @@ export const HeadToHead = ({ schedule, onOpenGame }) => {
           <div className="text-right">
             <div className="flex items-baseline gap-1.5 justify-end font-mono tabular-nums">
               <span className={cx('text-[28px] font-semibold tracking-tight',
-                isLeading ? 'text-[#FF8A4C]' : isTied ? 'text-white/85' : 'text-white/55'
+                isLeading ? 'text-[var(--team-accent)]' : isTied ? 'text-white/85' : 'text-white/55'
               )}>{wins}</span>
               <span className="text-[14px] text-white/25">–</span>
               <span className={cx('text-[28px] font-semibold tracking-tight',
@@ -79,7 +79,7 @@ export const HeadToHead = ({ schedule, onOpenGame }) => {
         <div className="relative grid grid-cols-3 gap-2 pt-3 border-t border-white/[0.05] text-center">
           <div>
             <div className="text-[9px] font-mono text-white/40 uppercase tracking-wider">Goals For</div>
-            <div className="text-[16px] font-mono tabular-nums text-[#FF8A4C] mt-0.5">{gf}</div>
+            <div className="text-[16px] font-mono tabular-nums text-[var(--team-accent)] mt-0.5">{gf}</div>
           </div>
           <div>
             <div className="text-[9px] font-mono text-white/40 uppercase tracking-wider">Goals Ag.</div>
@@ -112,7 +112,7 @@ export const HeadToHead = ({ schedule, onOpenGame }) => {
             <span className="flex items-center gap-2 text-[12px] font-mono">
               <span className={cx(
                 'inline-flex items-center justify-center w-[20px] h-[16px] text-[9px] font-mono font-semibold rounded-[3px]',
-                last.w ? 'bg-[#F74902]/15 text-[#FF8A4C] border border-[#F74902]/30'
+                last.w ? 'bg-[var(--team-primary)]/15 text-[var(--team-accent)] border border-[var(--team-primary)]/30'
                        : 'bg-white/[0.03] text-white/40 border border-white/10'
               )}>{last.w ? 'W' : 'L'}</span>
               <span className="text-white/55">{fmtDate(last.date)}</span>
@@ -124,7 +124,7 @@ export const HeadToHead = ({ schedule, onOpenGame }) => {
               )}
             </span>
             <span className="text-[13px] font-mono tabular-nums text-white/85">
-              <span className={last.w ? 'text-[#FF8A4C] font-medium' : ''}>{last.us}</span>
+              <span className={last.w ? 'text-[var(--team-accent)] font-medium' : ''}>{last.us}</span>
               <span className="text-white/25 mx-1">–</span>
               <span className={!last.w ? 'text-white font-medium' : ''}>{last.them}</span>
             </span>
@@ -142,7 +142,7 @@ export const HeadToHead = ({ schedule, onOpenGame }) => {
                   title={`${fmtDate(g.date)} · ${g.us}–${g.them}${g.lastPeriodType !== 'REG' ? ` ${g.lastPeriodType}` : ''}`}
                   className={cx(
                     'inline-flex items-center justify-center w-[18px] h-[18px] text-[9px] font-mono font-medium rounded-sm',
-                    g.w ? 'bg-[#F74902]/20 text-[#FF8A4C] border border-[#F74902]/40'
+                    g.w ? 'bg-[var(--team-primary)]/20 text-[var(--team-accent)] border border-[var(--team-primary)]/40'
                         : 'bg-white/[0.05] text-white/45 border border-white/[0.1]'
                   )}
                 >{g.w ? 'W' : 'L'}</span>

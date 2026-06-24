@@ -111,14 +111,14 @@ export const TeamSwitcherPrank = () => {
                           className={cx(
                             'w-full flex items-center gap-2.5 px-3 py-1.5 text-left transition-colors',
                             isUs
-                              ? 'bg-[#F74902]/[0.06] text-[#FF8A4C]'
+                              ? 'bg-[var(--team-primary)]/[0.06] text-[var(--team-accent)]'
                               : 'text-white/80 hover:bg-white/[0.04] hover:text-white'
                           )}
                         >
                           {isUs ? <FlyersMark size={18} /> : <TeamLogo abbr={abbr} size={18} />}
                           <span className="text-[12px] truncate">{OPP_FULL[abbr] || abbr}</span>
                           {isUs && (
-                            <span className="ml-auto text-[9px] font-mono uppercase tracking-wider text-[#FF8A4C]/85">current</span>
+                            <span className="ml-auto text-[9px] font-mono uppercase tracking-wider text-[var(--team-accent)]/85">current</span>
                           )}
                         </button>
                       );
@@ -175,7 +175,7 @@ const PrankModal = ({ abbr, onClose }) => {
             <h2 className="text-[64px] sm:text-[112px] font-semibold tracking-tight leading-none"
               style={{ textShadow: '0 0 40px rgba(247,73,2,0.4), 0 6px 12px rgba(0,0,0,0.7)' }}>
               <span className="text-white/85">{abbr}</span>
-              <span className="text-[#FF8A4C]"> sucks</span>
+              <span className="text-[var(--team-accent)]"> sucks</span>
             </h2>
             <p className="text-[13px] sm:text-[14px] font-mono text-white/45 max-w-[520px] mx-auto pt-2">
               Confirmed by every Flyers fan. There is no further analysis to perform.
@@ -185,7 +185,7 @@ const PrankModal = ({ abbr, onClose }) => {
           <button
             onClick={onClose}
             autoFocus
-            className="mt-2 px-8 py-3 rounded-md bg-[#F74902] hover:bg-[#FF5C1F] text-black text-[14px] font-semibold uppercase tracking-wider transition-colors shadow-[0_0_24px_rgba(247,73,2,0.3)]"
+            className="mt-2 px-8 py-3 rounded-md bg-[var(--team-primary)] hover:bg-[#FF5C1F] text-black text-[14px] font-semibold uppercase tracking-wider transition-colors shadow-[0_0_24px_rgba(247,73,2,0.3)]"
           >
             I know
           </button>

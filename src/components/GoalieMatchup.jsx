@@ -68,7 +68,7 @@ const GoalieRow = ({ goalie }) => {
 const Stat = ({ label, value, highlight }) => (
   <div className="text-right">
     <div className="text-[9px] font-mono text-white/35 uppercase tracking-wider">{label}</div>
-    <div className={highlight ? 'text-[14px] font-semibold text-[#FF8A4C]' : 'text-[13px] font-medium text-white/85'}>
+    <div className={highlight ? 'text-[14px] font-semibold text-[var(--team-accent)]' : 'text-[13px] font-medium text-white/85'}>
       {value}
     </div>
   </div>

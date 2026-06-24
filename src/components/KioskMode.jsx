@@ -187,7 +187,7 @@ export const KioskMode = ({ liveGame, liveDetail, liveSnap, game, onClose }) => 
         />
 
         {/* Top accent bar — broadcast-style title rule. */}
-        <div className="absolute top-0 inset-x-0 h-1 bg-[#F74902]" />
+        <div className="absolute top-0 inset-x-0 h-1 bg-[var(--team-primary)]" />
       </div>
 
       {/* Top bar: status chip + period/clock + close */}
@@ -239,10 +239,10 @@ export const KioskMode = ({ liveGame, liveDetail, liveSnap, game, onClose }) => 
             <span
               className={cx(
                 'text-[140px] sm:text-[200px] font-bold tabular-nums tracking-tight leading-none',
-                isHome ? '' : 'text-[#FF8A4C]',
+                isHome ? '' : 'text-[var(--team-accent)]',
                 goalEvent && 'score-flash',
               )}
-              style={isHome ? undefined : { textShadow: '0 0 56px rgba(247,73,2,0.5), 0 4px 16px rgba(0,0,0,0.7)' }}
+              style={isHome ? undefined : { textShadow: '0 0 56px color-mix(in srgb, var(--team-primary) 50%, transparent), 0 4px 16px rgba(0,0,0,0.7)' }}
             >
               {isHome ? themScore : usScore}
             </span>
@@ -278,10 +278,10 @@ export const KioskMode = ({ liveGame, liveDetail, liveSnap, game, onClose }) => 
             <span
               className={cx(
                 'text-[140px] sm:text-[200px] font-bold tabular-nums tracking-tight leading-none',
-                isHome ? 'text-[#FF8A4C]' : '',
+                isHome ? 'text-[var(--team-accent)]' : '',
                 goalEvent && 'score-flash',
               )}
-              style={isHome ? { textShadow: '0 0 56px rgba(247,73,2,0.5), 0 4px 16px rgba(0,0,0,0.7)' } : undefined}
+              style={isHome ? { textShadow: '0 0 56px color-mix(in srgb, var(--team-primary) 50%, transparent), 0 4px 16px rgba(0,0,0,0.7)' } : undefined}
             >
               {isHome ? usScore : themScore}
             </span>
@@ -293,7 +293,7 @@ export const KioskMode = ({ liveGame, liveDetail, liveSnap, game, onClose }) => 
           <span className={cx(
             'px-4 h-9 inline-flex items-center text-[14px] sm:text-[16px] font-mono uppercase tracking-[0.2em] rounded-md',
             tied ? 'border border-white/15 bg-white/[0.05] text-white/75'
-              : phiWinning ? 'border border-[#F74902]/40 bg-[#F74902]/[0.10] text-[#FF8A4C]'
+              : phiWinning ? 'border border-[var(--team-primary)]/40 bg-[var(--team-primary)]/[0.10] text-[var(--team-accent)]'
               : 'border border-red-500/30 bg-red-500/[0.06] text-red-300',
           )}>
             {tied ? (isFinalState ? 'Tied' : 'Tied game')
@@ -326,7 +326,7 @@ export const KioskMode = ({ liveGame, liveDetail, liveSnap, game, onClose }) => 
             {sog?.us != null && (
               <div className="flex items-center gap-3">
                 <span className="text-white/45 uppercase tracking-[0.2em] text-[10px] sm:text-[12px]">Shots on Goal</span>
-                <span className="tabular-nums text-[#FF8A4C] font-semibold">{sog.us}</span>
+                <span className="tabular-nums text-[var(--team-accent)] font-semibold">{sog.us}</span>
                 <span className="text-white/25">–</span>
                 <span className="tabular-nums text-white/85 font-semibold">{sog.them}</span>
               </div>
@@ -334,7 +334,7 @@ export const KioskMode = ({ liveGame, liveDetail, liveSnap, game, onClose }) => 
             {pp?.us != null && !ppActive && (
               <div className="flex items-center gap-3">
                 <span className="text-white/45 uppercase tracking-[0.2em] text-[10px] sm:text-[12px]">Power Play</span>
-                <span className="tabular-nums text-[#FF8A4C]">{pp.us}</span>
+                <span className="tabular-nums text-[var(--team-accent)]">{pp.us}</span>
                 <span className="text-white/25">·</span>
                 <span className="tabular-nums text-white/65">{pp.them}</span>
               </div>
@@ -363,7 +363,7 @@ export const KioskMode = ({ liveGame, liveDetail, liveSnap, game, onClose }) => 
 const BroadcastGoalBlast = ({ goal, oppAbbr, oppFull, usFull }) => {
   const isUs = !!goal?.us;
   const palette = isUs
-    ? { color: '#F74902', glow: 'rgba(247,73,2,0.7)', soft: 'rgba(247,73,2,0.4)', text: 'text-[#FF8A4C]' }
+    ? { color: 'var(--team-primary)', glow: 'color-mix(in srgb, var(--team-primary) 70%, transparent)', soft: 'color-mix(in srgb, var(--team-primary) 40%, transparent)', text: 'text-[var(--team-accent)]' }
     : { color: '#F59E0B', glow: 'rgba(245,158,11,0.65)', soft: 'rgba(220,38,38,0.40)', text: 'text-amber-300' };
   const teamName = isUs ? (usFull || 'Goal') : (oppFull || oppAbbr || 'Goal');
   return (
@@ -469,9 +469,9 @@ const PPLogoFrame = ({ on, forUs, children }) => {
 // even on narrow viewports.
 const PPMicroChip = ({ forUs, strength, time }) => {
   const tone = forUs
-    ? 'border-[#F74902]/55 bg-[#F74902]/[0.12] text-[#FF8A4C]'
+    ? 'border-[var(--team-primary)]/55 bg-[var(--team-primary)]/[0.12] text-[var(--team-accent)]'
     : 'border-amber-500/45 bg-amber-500/[0.10] text-amber-300';
-  const dot = forUs ? 'bg-[#F74902]' : 'bg-amber-400';
+  const dot = forUs ? 'bg-[var(--team-primary)]' : 'bg-amber-400';
   return (
     <span className={cx(
       'inline-flex items-center gap-2 px-2.5 h-6 rounded-md border text-[10px] sm:text-[11px] font-mono uppercase tracking-[0.2em]',
@@ -492,7 +492,7 @@ const PPMicroChip = ({ forUs, strength, time }) => {
 // on PP reads warning amber/red so the PK is unmistakable as risk.
 const PPBanner = ({ phiOnPP, usShort, oppAbbr, oppFull, strength, time }) => {
   const palette = phiOnPP
-    ? { bg: 'bg-[#F74902]/[0.14]', border: 'border-[#F74902]/55', text: 'text-[#FF8A4C]', accent: 'bg-[#F74902]', stripe: 'from-transparent via-[#F74902]/40 to-transparent' }
+    ? { bg: 'bg-[var(--team-primary)]/[0.14]', border: 'border-[var(--team-primary)]/55', text: 'text-[var(--team-accent)]', accent: 'bg-[var(--team-primary)]', stripe: 'from-transparent via-[var(--team-primary)]/40 to-transparent' }
     : { bg: 'bg-red-500/[0.10]',   border: 'border-amber-500/45', text: 'text-amber-200',  accent: 'bg-amber-500', stripe: 'from-transparent via-amber-500/40 to-transparent' };
   const headline = phiOnPP ? `${usShort || 'Power'} Power Play` : `${oppFull || oppAbbr || 'Opponent'} Power Play`;
   const sub      = phiOnPP ? 'capitalize · cash in' : 'penalty kill · hold the line';
@@ -558,7 +558,7 @@ export const KioskTrigger = ({ onClick }) => (
     onClick={onClick}
     title="Broadcast view"
     aria-label="Open broadcast view"
-    className="flex items-center gap-1.5 px-2 h-6 border border-white/[0.08] hover:border-[#F74902]/40 bg-white/[0.02] rounded-md text-[10px] font-mono text-white/55 hover:text-white transition-colors"
+    className="flex items-center gap-1.5 px-2 h-6 border border-white/[0.08] hover:border-[var(--team-primary)]/40 bg-white/[0.02] rounded-md text-[10px] font-mono text-white/55 hover:text-white transition-colors"
   >
     <Maximize2 size={11} />
     <span className="hidden sm:inline">Broadcast view</span>

@@ -43,7 +43,7 @@ export const Coaches = () => {
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <div className="flex items-center gap-2 px-2.5 h-7 border border-white/[0.08] focus-within:border-[#FF8A4C]/50 bg-white/[0.02] rounded-md">
+          <div className="flex items-center gap-2 px-2.5 h-7 border border-white/[0.08] focus-within:border-[var(--team-accent)]/50 bg-white/[0.02] rounded-md">
             <Search size={11} className="text-white/40" />
             <input
               type="text"
@@ -94,16 +94,16 @@ export const Coaches = () => {
 const SummaryTile = ({ label, value, sub, tone }) => {
   const valueClass =
     tone === 'amber' ? 'text-amber-300' :
-    tone === 'warm' ? 'text-[#FF8A4C]' :
+    tone === 'warm' ? 'text-[var(--team-accent)]' :
     tone === 'cool' ? 'text-sky-300' :
     'text-white';
   const dot =
     tone === 'amber' ? 'bg-amber-400' :
-    tone === 'warm' ? 'bg-[#F74902]' :
+    tone === 'warm' ? 'bg-[var(--team-primary)]' :
     tone === 'cool' ? 'bg-sky-400' :
     'bg-white/40';
   return (
-    <div className="border border-[#F74902]/[0.18] bg-[#0C0C0C]/60 rounded-md px-3 py-2.5">
+    <div className="border border-[var(--team-primary)]/[0.18] bg-[#0C0C0C]/60 rounded-md px-3 py-2.5">
       <div className="flex items-center gap-1.5">
         <span className={cx('w-1.5 h-1.5 rounded-full', dot)} />
         <span className="text-[10px] font-mono text-white/40 uppercase tracking-wider">{label}</span>
@@ -150,14 +150,14 @@ const CoachCard = ({ c }) => {
   return (
     <div className={cx(
       'relative overflow-hidden p-4 transition-colors',
-      isUs ? 'bg-[#F74902]/[0.06]' : 'bg-[#0A0A0A] hover:bg-[#0E0E0E]',
+      isUs ? 'bg-[var(--team-primary)]/[0.06]' : 'bg-[#0A0A0A] hover:bg-[#0E0E0E]',
     )}>
       <TeamLogoBg abbr={c.abbr} size={180} opacity={isUs ? 0.10 : 0.08} position="bottom-right" />
       <div className="relative flex items-start gap-3">
         <TeamLogo abbr={c.abbr} size={28} className="mt-1" />
         <div className="flex-1 min-w-0">
           <div className="flex items-baseline gap-2 flex-wrap">
-            <span className={cx('text-[16px] font-semibold tracking-tight', isUs && 'text-[#FF8A4C]')}>
+            <span className={cx('text-[16px] font-semibold tracking-tight', isUs && 'text-[var(--team-accent)]')}>
               {c.name}
             </span>
             {isUs && <Chip tone="orange">PHI</Chip>}

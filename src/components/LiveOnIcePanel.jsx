@@ -137,7 +137,7 @@ const LineChemistry = ({ skaters, shifts }) => {
           return (
             <div key={t.key} className="grid grid-cols-[28px_1fr_72px] gap-3 items-center px-4 py-3">
               <span className={cx('text-[12px] font-mono tabular-nums',
-                i === 0 ? 'text-[#FF8A4C] font-semibold' : 'text-white/40'
+                i === 0 ? 'text-[var(--team-accent)] font-semibold' : 'text-white/40'
               )}>#{i + 1}</span>
               <div className="flex items-center gap-2 min-w-0">
                 {t.players.map((p) => (
@@ -157,7 +157,7 @@ const LineChemistry = ({ skaters, shifts }) => {
                   {fmtMSS(t.sec)}
                 </span>
                 <div className="w-16 h-1 bg-white/[0.05] rounded-full overflow-hidden">
-                  <div className="h-full bg-[#F74902]/70 rounded-full" style={{ width: `${pct * 100}%` }} />
+                  <div className="h-full bg-[var(--team-primary)]/70 rounded-full" style={{ width: `${pct * 100}%` }} />
                 </div>
               </div>
             </div>
@@ -178,7 +178,7 @@ const Stat = ({ label, value, highlight, tone, accent }) => (
       'text-[12px] font-mono tabular-nums leading-none mt-0.5',
       tone === 'good' ? 'text-emerald-400' :
       tone === 'bad' ? 'text-red-400' :
-      highlight && accent ? '' : highlight ? 'text-[#FF8A4C]' : 'text-white/85',
+      highlight && accent ? '' : highlight ? 'text-[var(--team-accent)]' : 'text-white/85',
     )}
     style={highlight && accent ? { color: accent } : undefined}>
       {value ?? 0}
@@ -311,7 +311,7 @@ const LiveMatchup = ({ phiOn, oppOn, oppAbbr, periodLabel, periodElapsed }) => {
       }
     >
       <div className="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-white/[0.05]">
-        <MatchupSide skaters={phiOn} label={TEAM_ABBR} logo={<FlyersMark size={20} />} accent="text-[#FF8A4C]" abbr={TEAM_ABBR} side="left" />
+        <MatchupSide skaters={phiOn} label={TEAM_ABBR} logo={<FlyersMark size={20} />} accent="text-[var(--team-accent)]" abbr={TEAM_ABBR} side="left" />
         <MatchupSide skaters={oppOn} label={oppAbbr || 'OPP'} logo={<TeamLogo abbr={oppAbbr} size={20} />} accent="text-white/85" abbr={oppAbbr} side="right" />
       </div>
     </Section>
@@ -330,7 +330,7 @@ const TrackerHeader = ({ periodLabel, periodElapsed, onIceCount, oppOnIceCount, 
     </div>
     {isLiveGame && (
       <span className="text-[11px] font-mono tabular-nums">
-        <span className="text-[#FF8A4C]">{onIceCount} PHI</span>
+        <span className="text-[var(--team-accent)]">{onIceCount} PHI</span>
         <span className="text-white/25 mx-2">vs</span>
         <span className="text-white/85">{oppOnIceCount} {oppAbbr || 'OPP'}</span>
       </span>
@@ -432,11 +432,11 @@ export const LiveOnIcePanel = ({ game, gameId, liveSnap }) => {
           <TeamTable
             skaters={skaters}
             liveShifts={phiLiveShifts}
-            accentColor="#FF8A4C"
+            accentColor="var(--team-accent)"
             header={
-              <div className="px-4 py-2.5 border-b border-white/[0.06] flex items-center gap-2 bg-[#F74902]/[0.04]">
+              <div className="px-4 py-2.5 border-b border-white/[0.06] flex items-center gap-2 bg-[var(--team-primary)]/[0.04]">
                 <FlyersMark size={18} />
-                <span className="text-[13px] font-semibold tracking-tight text-[#FF8A4C]">PHI</span>
+                <span className="text-[13px] font-semibold tracking-tight text-[var(--team-accent)]">PHI</span>
                 <span className="text-[10px] font-mono text-white/40 ml-auto tabular-nums">
                   {skaters.length} skaters
                 </span>

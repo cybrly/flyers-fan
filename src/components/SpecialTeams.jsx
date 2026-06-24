@@ -111,18 +111,18 @@ export const SpecialTeams = ({ clubStats, ranks }) => {
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-px bg-white/[0.05] rounded-md overflow-hidden">
           <div className="bg-[#0A0A0A] px-3 py-2.5">
             <div className="flex items-center gap-1.5">
-              <span className="w-1.5 h-1.5 rounded-full bg-[#FF8A4C]" />
+              <span className="w-1.5 h-1.5 rounded-full bg-[var(--team-accent)]" />
               <span className="text-[9px] font-mono text-white/40 uppercase tracking-wider">PP Goals</span>
             </div>
-            <div className="text-[18px] font-semibold tabular-nums tracking-tight text-[#FF8A4C] mt-1">{teamST.ppGoals}</div>
+            <div className="text-[18px] font-semibold tabular-nums tracking-tight text-[var(--team-accent)] mt-1">{teamST.ppGoals}</div>
             {teamST.ppPct && <div className="text-[9px] font-mono text-white/35 mt-0.5">{teamST.ppPct}% of all goals</div>}
           </div>
           <div className="bg-[#0A0A0A] px-3 py-2.5">
             <div className="flex items-center gap-1.5">
-              <span className="w-1.5 h-1.5 rounded-full bg-[#FF8A4C]" />
+              <span className="w-1.5 h-1.5 rounded-full bg-[var(--team-accent)]" />
               <span className="text-[9px] font-mono text-white/40 uppercase tracking-wider">PP Points</span>
             </div>
-            <div className="text-[18px] font-semibold tabular-nums tracking-tight text-[#FF8A4C] mt-1">{teamST.ppPts}</div>
+            <div className="text-[18px] font-semibold tabular-nums tracking-tight text-[var(--team-accent)] mt-1">{teamST.ppPts}</div>
             <div className="text-[9px] font-mono text-white/35 mt-0.5">total PP assists + goals</div>
           </div>
           <div className="bg-[#0A0A0A] px-3 py-2.5">
@@ -155,7 +155,7 @@ export const SpecialTeams = ({ clubStats, ranks }) => {
         <Unit
           title="Power Play Unit"
           sub="top PP TOI/g"
-          color="#FF8A4C"
+          color="var(--team-accent)"
           players={ppUnit}
           valueFor={(p) => p.avgPpToi}
           valueLabel="PP/g"

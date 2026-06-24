@@ -1,5 +1,25 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { API } from './config.js';
+import { API, API_RECORDS } from './config.js';
+
+// One-shot fetch for the NHL Records API (via /api/records). Franchise history
+// is static, so there's no polling — just fetch when the path changes. Returns
+// the same shape as useNHL for drop-in use. A null path clears state.
+export function useRecords(path) {
+  const [data, setData] = useState(null);
+  const [error, setError] = useState(null);
+  const [loading, setLoading] = useState(!!path);
+  useEffect(() => {
+    if (!path) { setData(null); setError(null); setLoading(false); return; }
+    let cancelled = false;
+    setLoading(true);
+    fetch(API_RECORDS(path), { headers: { Accept: 'application/json' } })
+      .then((r) => (r.ok ? r.json() : Promise.reject(new Error(`HTTP ${r.status}`))))
+      .then((d) => { if (!cancelled) { setData(d); setError(null); setLoading(false); } })
+      .catch((e) => { if (!cancelled) { setError(e.message || 'fetch failed'); setLoading(false); } });
+    return () => { cancelled = true; };
+  }, [path]);
+  return { data, error, loading };
+}
 
 // Polls an NHL endpoint. Auto-pauses when tab is hidden.
 // intervalFn can be a number or a function that returns the current interval

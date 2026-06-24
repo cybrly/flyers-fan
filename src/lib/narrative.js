@@ -53,7 +53,7 @@ export function dashboardNarrative({ standings, schedule, streak, series }) {
   } else if (liveGame) {
     const leading = liveGame.us > liveGame.them;
     const tied = liveGame.us === liveGame.them;
-    if (leading) parts.push(`The Flyers lead ${oppName(liveGame.opp)} ${liveGame.us}–${liveGame.them} right now.`);
+    if (leading) parts.push(`The ${teamShort()} lead ${oppName(liveGame.opp)} ${liveGame.us}–${liveGame.them} right now.`);
     else if (tied) parts.push(`Tied ${liveGame.us}–${liveGame.them} against ${oppName(liveGame.opp)}.`);
     else parts.push(`Trailing ${oppName(liveGame.opp)} ${liveGame.them}–${liveGame.us}.`);
   } else {
@@ -95,7 +95,7 @@ export function postGameRecap({ game, topScorer, xg }) {
   const opp = oppName(game.oppAbbr);
   const venue = game.home ? 'at home' : 'on the road';
 
-  parts.push(`The Flyers ${verb} the ${opp} ${game.score.us}–${game.score.them} ${venue}.`);
+  parts.push(`The ${teamShort()} ${verb} the ${opp} ${game.score.us}–${game.score.them} ${venue}.`);
 
   // Top performer
   if (topScorer && topScorer.points > 0) {
@@ -109,9 +109,9 @@ export function postGameRecap({ game, topScorer, xg }) {
   if (xg) {
     const xgDiff = xg.totalUs - xg.totalThem;
     if (won && xgDiff < -0.5) {
-      parts.push(`The xG model gave the edge to ${opp} (${xg.totalThem.toFixed(1)}–${xg.totalUs.toFixed(1)}) — the Flyers stole one.`);
+      parts.push(`The xG model gave the edge to ${opp} (${xg.totalThem.toFixed(1)}–${xg.totalUs.toFixed(1)}) — the ${teamShort()} stole one.`);
     } else if (!won && xgDiff > 0.5) {
-      parts.push(`Expected goals favored the Flyers ${xg.totalUs.toFixed(1)}–${xg.totalThem.toFixed(1)} — an unlucky result.`);
+      parts.push(`Expected goals favored the ${teamShort()} ${xg.totalUs.toFixed(1)}–${xg.totalThem.toFixed(1)} — an unlucky result.`);
     } else if (Math.abs(xgDiff) > 1.0) {
       const dominant = xgDiff > 0 ? teamShort() : opp;
       parts.push(`${dominant} dominated expected goals ${Math.max(xg.totalUs, xg.totalThem).toFixed(1)}–${Math.min(xg.totalUs, xg.totalThem).toFixed(1)}.`);
@@ -137,7 +137,7 @@ export function postGameRecap({ game, topScorer, xg }) {
 /**
  * Generate a playoff race summary sentence.
  *
- * @param {object} us - PHI standings entry
+ * @param {object} us - active team standings entry
  * @param {object[]} east - Eastern Conference standings
  * @returns {string}
  */
@@ -150,14 +150,14 @@ export function playoffRaceNarrative(us, east) {
 
   if (us.confRank <= 8) {
     const cushion = firstOut ? us.pts - firstOut.pts : 0;
-    if (cushion > 6) return `PHI has a comfortable ${plural(cushion, 'point')} cushion over the playoff cutline.`;
-    if (cushion > 0) return `PHI sits ${plural(cushion, 'point')} above the cutline — not safe yet.`;
-    return `PHI is on the bubble, level with the cutline team on points.`;
+    if (cushion > 6) return `${TEAM_ABBR} has a comfortable ${plural(cushion, 'point')} cushion over the playoff cutline.`;
+    if (cushion > 0) return `${TEAM_ABBR} sits ${plural(cushion, 'point')} above the cutline — not safe yet.`;
+    return `${TEAM_ABBR} is on the bubble, level with the cutline team on points.`;
   } else {
     const deficit = lastIn ? lastIn.pts - us.pts : 0;
-    if (deficit <= 3) return `PHI is ${plural(deficit, 'point')} out — still very much alive.`;
-    if (deficit <= 8) return `PHI trails by ${deficit} points — a tough climb, but not impossible with games in hand.`;
-    return `PHI is ${deficit} points out of a playoff spot. The math is getting grim.`;
+    if (deficit <= 3) return `${TEAM_ABBR} is ${plural(deficit, 'point')} out — still very much alive.`;
+    if (deficit <= 8) return `${TEAM_ABBR} trails by ${deficit} points — a tough climb, but not impossible with games in hand.`;
+    return `${TEAM_ABBR} is ${deficit} points out of a playoff spot. The math is getting grim.`;
   }
 }
 

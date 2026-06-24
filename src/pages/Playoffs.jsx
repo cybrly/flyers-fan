@@ -2,6 +2,7 @@ import { Trophy } from 'lucide-react';
 import { cx, TEAM_ABBR, PLAYOFF_YEAR } from '../config.js';
 import { Chip, Section, Skeleton } from '../components/primitives.jsx';
 import { TeamLogo } from '../components/Logo.jsx';
+import { useTeam } from '../teamContext.jsx';
 
 // Historical NHL best-of-7 series-win probability conditional on current
 // series score. Numbers come from publicly-cited NHL splits (3-0 leads have
@@ -206,6 +207,7 @@ const ScfCell = ({ s, onOpen }) => {
 };
 
 export const Playoffs = ({ bracket, onOpenSeries }) => {
+  const { teamAbbr } = useTeam();
   if (!bracket) {
     return (
       <div className="p-4 md:p-6 space-y-5">
@@ -242,7 +244,7 @@ export const Playoffs = ({ bracket, onOpenSeries }) => {
           </p>
         </div>
         <div className="flex items-center gap-3 text-[10px] font-mono text-white/40">
-          <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-sm bg-[#F74902]/40 border border-[#F74902]/60" /> Flyers</span>
+          <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-sm bg-[#F74902]/40 border border-[#F74902]/60" /> {teamAbbr}</span>
           <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-sm bg-white/10 border border-white/20" /> other</span>
         </div>
       </div>

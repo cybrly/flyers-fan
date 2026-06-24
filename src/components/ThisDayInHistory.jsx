@@ -1,13 +1,22 @@
 import { useMemo } from 'react';
 import { Section } from './primitives.jsx';
 import { todaysHistory } from '../data/flyersHistory.js';
+import { getHostScope } from '../host.js';
 
 // Dashboard panel surfacing curated "on this day" events from Flyers
 // history. Falls back gracefully on dates without any entries — the
 // section returns null so the layout doesn't reserve dead space.
+//
+// The curated entries are Philadelphia-only, so this panel is team
+// scope (flyers.fan) only. On league scope (scumbag.hockey) it would
+// surface Flyers history under whatever team is selected, which is
+// wrong — so we render nothing there rather than fabricate league-wide
+// history.
 
 export const ThisDayInHistory = () => {
+  const isLeague = getHostScope() === 'league';
   const entries = useMemo(() => todaysHistory(), []);
+  if (isLeague) return null;
   if (entries.length === 0) return null;
 
   const today = new Date();

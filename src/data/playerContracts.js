@@ -1,9 +1,20 @@
-// All NHL player contracts — auto-generated from PuckPedia data.
-// Do not edit manually. Re-run the converter script to update.
+// All NHL player contracts — generated from PuckPedia data for the 2025–26
+// season, with two manual corrections layered on top of the raw scrape:
+//   • John Carlson moved from the ANA bucket to WSH (scrape mis-bucket — he is
+//     a Washington player; under ANA he inflated Anaheim's cap by $8M).
+//   • Exact-duplicate rows (same ppId) are de-duped at read time in
+//     getTeamContracts() so a player is never counted twice.
+// Re-running the converter regenerates this file; reapply corrections after.
 //
-// Generated: 165 players across 32 teams
+// Snapshot: 165 players across 32 teams, 2025–26 season (static, not live).
 
 export const SALARY_CAP_CEILING = 95_500_000;
+
+// Human-readable marker for the snapshot's season. Surfaced in the UI so the
+// figures read as a point-in-time 2025–26 snapshot rather than live data.
+// Intentionally NOT the auto-rolling SEASON label — the data does not roll
+// over on its own, so the marker must stay pinned to what was actually captured.
+export const SNAPSHOT_LABEL = '2025–26 season';
 
 export const fmtMillions = (dollars) => {
   if (dollars == null) return '—';
@@ -24,7 +35,6 @@ export const fmtFullDollars = (dollars) => {
 // NHL player IDs differ — the app matches via roster name/number.
 const CONTRACTS_BY_TEAM = {
   ANA: [
-    { ppId: '3319', name: 'John Carlson', pos: 'D', num: '74', aav: 8000000, capHit: 8000000, capHitPct: 0.101, termYears: 8, endYear: 2026, totalValue: 64000000, expiryStatus: 'UFA', clauseType: 'M-NTC' },
     { ppId: '4783', name: 'Jacob Trouba', pos: 'D', num: '65', aav: 8000000, capHit: 8000000, capHitPct: 0.098, termYears: 7, endYear: 2026, totalValue: 56000000, expiryStatus: 'UFA', clauseType: 'M-NTC' },
     { ppId: '17408', name: 'Lukas Dostal', pos: 'G', num: '1', aav: 6500000, capHit: 6500000, capHitPct: 0.068, termYears: 5, yearsLeft: 4, endYear: 2030, totalValue: 32500000, expiryStatus: 'UFA' },
     { ppId: '4012', name: 'Petr Mrazek', pos: 'G', num: '34', aav: 4250000, capHit: 4250000, capHitPct: 0.048, termYears: 2, endYear: 2026, totalValue: 8500000, expiryStatus: 'UFA' },
@@ -251,11 +261,23 @@ const CONTRACTS_BY_TEAM = {
     { ppId: '1216', name: 'Alex Ovechkin', pos: 'L', num: '8', aav: 9500000, capHit: 9500000, capHitPct: 0.117, termYears: 5, endYear: 2026, totalValue: 47500000, expiryStatus: 'UFA', clauseType: 'M-NTC,NMC' },
     { ppId: '6734', name: 'Jakob Chychrun', pos: 'D', num: '6', aav: 9000000, capHit: 9000000, capHitPct: 0.094, termYears: 8, yearsLeft: 7, endYear: 2033, totalValue: 72000000, expiryStatus: 'UFA', clauseType: 'NMC' },
     { ppId: '6721', name: 'Pierre-Luc Dubois', pos: 'C', num: '80', aav: 8500000, capHit: 8500000, capHitPct: 0.102, termYears: 8, yearsLeft: 5, endYear: 2031, totalValue: 68000000, expiryStatus: 'UFA', clauseType: 'NMC' },
+    { ppId: '3319', name: 'John Carlson', pos: 'D', num: '74', aav: 8000000, capHit: 8000000, capHitPct: 0.101, termYears: 8, endYear: 2026, totalValue: 64000000, expiryStatus: 'UFA', clauseType: 'M-NTC' },
   ],
 };
 
-// Lookup by team abbreviation.
-export const getTeamContracts = (abbr) => CONTRACTS_BY_TEAM[abbr] || [];
+// Lookup by team abbreviation. De-dupes exact-duplicate rows (same ppId) that
+// occasionally appear in the raw scrape, so cap totals and roster counts never
+// double-count a player. Keeps the first occurrence.
+export const getTeamContracts = (abbr) => {
+  const list = CONTRACTS_BY_TEAM[abbr] || [];
+  const seen = new Set();
+  return list.filter((c) => {
+    if (c.ppId == null) return true;
+    if (seen.has(c.ppId)) return false;
+    seen.add(c.ppId);
+    return true;
+  });
+};
 
 // Legacy: lookup by NHL player ID (matches by name+number from roster).
 // For backward compat with the old PLAYER_CONTRACTS[playerId] pattern.

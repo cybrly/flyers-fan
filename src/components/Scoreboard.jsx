@@ -1,4 +1,5 @@
 import { cx, TEAM_ABBR, fmtTime, isLive, isFuture, isFinal } from '../config.js';
+import { isStaleAsOf } from '../lib/hockey.js';
 import { TeamLogo } from './Logo.jsx';
 
 // Around-the-league ticker — single thin horizontal row of compact game pills
@@ -17,12 +18,19 @@ export const Scoreboard = ({ data }) => {
     return phase(a) - phase(b) || (a.startUTC || '').localeCompare(b.startUTC || '');
   });
 
+  // Label the ticker honestly. In the offseason the NHL scoreboard pins to the
+  // last game played (e.g. a June Cup Final), so "Tonight" would be a lie — if
+  // nothing is live and the newest game is days old, call it "Recent".
+  const anyLive = games.some((g) => isLive(g.state));
+  const newest = games.reduce((m, g) => ((g.startUTC || '') > m ? g.startUTC : m), '');
+  const tickerLabel = anyLive ? 'League · Live' : isStaleAsOf(newest) ? 'League · Recent' : 'League · Tonight';
+
   return (
     <div className="border border-[#F74902]/[0.18] bg-[#0C0C0C]/40 rounded-md overflow-hidden">
       <div className="flex items-stretch">
         <div className="shrink-0 px-3 flex items-center gap-2 border-r border-white/[0.05] bg-white/[0.02]">
           <span className="text-[9px] font-mono uppercase tracking-[0.18em] text-white/45">
-            League · Tonight
+            {tickerLabel}
           </span>
           <span className="text-[10px] font-mono text-white/30 tabular-nums">{games.length}</span>
         </div>

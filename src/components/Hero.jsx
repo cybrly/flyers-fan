@@ -562,8 +562,10 @@ export const Hero = ({ liveGame, liveDetail, liveSnap, nextGame, lastResult, us,
   const opp = liveGame?.opp || nextGame?.opp || lastResult?.opp;
   const oppFull = opp ? OPP_FULL[opp] : null;
   // Find the opponent's full standings row so we can show their record next
-  // to their name. league has every team; us is just PHI so we skip it.
-  const oppRow = opp && standings?.league ? standings.league.find((t) => t.abbr === opp) : null;
+  // to their name. adaptStandings exposes the league-wide list as `all`
+  // (there is no `league` key) — reading the wrong key left this sub-line
+  // permanently blank.
+  const oppRow = opp && standings?.all ? standings.all.find((t) => t.abbr === opp) : null;
   const streak = computeStreak(recentGames);
 
   return (

@@ -3,10 +3,11 @@
 // Dashboard (team). Fetches Edge data on mount via useNHL.
 
 import { useMemo } from 'react';
-import { cx, SEASON } from '../config.js';
+import { cx, SEASON, teamIdFor } from '../config.js';
+import { useTeam } from '../teamContext.jsx';
 import { useNHL } from '../api.js';
 import { Section, Label, Skeleton, Chip } from './primitives.jsx';
-import { adaptSkaterEdge, adaptTeamEdge, adaptGoalieEdge, PHI_TEAM_ID } from '../adapters-edge.js';
+import { adaptSkaterEdge, adaptTeamEdge, adaptGoalieEdge } from '../adapters-edge.js';
 
 // Safe string coercion — prevents React #310 from objects/arrays leaking into JSX.
 const safe = (v) => (v != null && typeof v !== 'object') ? v : '—';
@@ -207,7 +208,13 @@ export const SkaterEdgePanel = ({ playerId, gameType = 2 }) => {
    ═══════════════════════════════════════════════════════════════ */
 
 export const TeamEdgePanel = () => {
-  const path = `v1/edge/team-comparison/${PHI_TEAM_ID}/${SEASON}/2`;
+  // Edge team endpoints take a numeric NHL team id (not the abbrev), so we
+  // map the active team through teamIdFor. Previously hardcoded to PHI's id
+  // (4), which pinned this panel to Philadelphia for every team on the league
+  // host. When the id is unknown we skip the fetch and render nothing.
+  const { teamAbbr } = useTeam();
+  const teamId = teamIdFor(teamAbbr);
+  const path = teamId ? `v1/edge/team-comparison/${teamId}/${SEASON}/2` : null;
   const { data: raw, loading } = useNHL(path, 0);
   const edge = useMemo(() => adaptTeamEdge(raw), [raw]);
 

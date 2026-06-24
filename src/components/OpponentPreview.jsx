@@ -4,13 +4,12 @@
 // a future dedicated "Game Night" page.
 
 import { useMemo } from 'react';
-import { cx, OPP_FULL, TEAM_ABBR, SEASON, fmtTime, fmtDateFull } from '../config.js';
+import { cx, OPP_FULL, TEAM_ABBR, fmtTime, fmtDateFull } from '../config.js';
 import { useNHL } from '../api.js';
 import { Section, Label, Chip, Skeleton } from './primitives.jsx';
 import { TeamLogo } from './Logo.jsx';
 import { Headshot } from './Headshot.jsx';
 import { PlayerLink } from './PlayerLink.jsx';
-import { adaptTeamEdge, PHI_TEAM_ID } from '../adapters-edge.js';
 
 const isFinalState = (s) => s === 'OFF' || s === 'FINAL';
 
@@ -21,11 +20,6 @@ export const OpponentPreview = ({ nextGame, standings }) => {
   const oppFull = OPP_FULL[opp] || opp;
   const oppRow = standings?.all?.find((t) => t.abbr === opp);
   const usRow = standings?.us;
-
-  // Opponent Edge data
-  const oppTeamId = oppRow ? null : null; // We'd need team ID mapping; use abbr-based lookup
-  const oppEdgePath = opp ? `v1/edge/team-detail/${opp === TEAM_ABBR ? 4 : 0}/${SEASON}/2` : null;
-  // Edge team endpoints use numeric IDs, not abbreviations. Skip if we don't have the mapping.
 
   // Opponent club stats for top scorers
   const { data: oppStatsRaw, loading: statsLoading } = useNHL(opp ? `v1/club-stats/${opp}/now` : null, 0);
@@ -84,7 +78,7 @@ export const OpponentPreview = ({ nextGame, standings }) => {
         <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-4">
           <div className="text-center">
             <TeamLogo abbr={TEAM_ABBR} size={48} />
-            <div className="text-[14px] font-semibold mt-2">PHI</div>
+            <div className="text-[14px] font-semibold mt-2">{TEAM_ABBR}</div>
             {usRow && (
               <div className="text-[11px] font-mono text-white/50 mt-0.5">
                 {usRow.w}–{usRow.l}–{usRow.ot || 0} · {usRow.pts} pts
@@ -123,7 +117,7 @@ export const OpponentPreview = ({ nextGame, standings }) => {
                 <Label>{s.label}</Label>
                 <div className="flex items-center justify-center gap-3 mt-1.5">
                   <span className={cx('text-[16px] font-semibold tabular-nums',
-                    s.higher ? (Number(s.us) >= Number(s.them) ? 'text-[#FF8A4C]' : 'text-white/55') : 'text-white/70'
+                    s.higher ? (Number(s.us) >= Number(s.them) ? 'text-[var(--team-accent)]' : 'text-white/55') : 'text-white/70'
                   )}>{s.us}</span>
                   <span className="text-white/20">·</span>
                   <span className={cx('text-[16px] font-semibold tabular-nums',
@@ -147,7 +141,7 @@ export const OpponentPreview = ({ nextGame, standings }) => {
                     {p.id ? <PlayerLink playerId={p.id}>{p.name}</PlayerLink> : p.name}
                   </span>
                   <span className="text-[10px] font-mono text-white/35">{p.pos}</span>
-                  <span className="text-[11px] font-mono tabular-nums text-[#FF8A4C]">{p.pts}P</span>
+                  <span className="text-[11px] font-mono tabular-nums text-[var(--team-accent)]">{p.pts}P</span>
                   <span className="text-[10px] font-mono tabular-nums text-white/40">{p.g}G {p.a}A</span>
                 </div>
               ))}
@@ -170,7 +164,7 @@ export const OpponentPreview = ({ nextGame, standings }) => {
                     </div>
                   </div>
                   <div className="text-right">
-                    <div className="text-[13px] font-mono tabular-nums text-[#FF8A4C]">
+                    <div className="text-[13px] font-mono tabular-nums text-[var(--team-accent)]">
                       {g.svPct != null ? `.${Math.round(g.svPct * 1000).toString().padStart(3, '0')}` : '—'}
                     </div>
                     <div className="text-[10px] font-mono text-white/35 mt-0.5">

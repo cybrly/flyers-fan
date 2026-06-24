@@ -19,6 +19,10 @@ const _seasonStartYear = (() => {
 export const SEASON = `${_seasonStartYear}${_seasonStartYear + 1}`;
 export const SEASON_LABEL = `${String(_seasonStartYear).slice(2)}–${String(_seasonStartYear + 1).slice(2)}`;
 export const SEASON_LABEL_FULL = `${_seasonStartYear}–${String(_seasonStartYear + 1).slice(2)}`;
+// The season after the current one — used by the season-end banner so the
+// "see you next season" copy rolls over automatically instead of being a
+// hardcoded year. Today (2025–26) this is "2026–27".
+export const NEXT_SEASON_LABEL_FULL = `${_seasonStartYear + 1}–${String(_seasonStartYear + 2).slice(2)}`;
 
 // Playoff year is the second calendar year of the season (e.g. 2025–26
 // season → 2026 playoffs). NHL Entry Draft happens in late June, so the
@@ -57,6 +61,21 @@ export const TEAM_ARENAS = {
   UTA: [40.7683, -111.9011], VAN: [49.2778, -123.1089], VGK: [36.1028, -115.1782],
   WPG: [49.8929, -97.1437],  WSH: [38.898, -77.0209],
 };
+
+// Numeric NHL team IDs keyed by abbreviation. These differ from the 3-letter
+// abbrevs and are required by the Edge endpoints (/v1/edge/team-comparison/
+// {teamId}/...), which take the numeric id, not the abbrev. Verified against
+// api.nhle.com/stats/rest/en/team. Note UTA = 68 (Utah Mammoth, 2025–26);
+// the franchise's first-season id 59 (Utah Hockey Club) is intentionally not
+// used. Keep this in lockstep with TEAM_ARENAS / OPP_FULL when the league
+// changes.
+export const TEAM_ID = {
+  NJD: 1,  NYI: 2,  NYR: 3,  PHI: 4,  PIT: 5,  BOS: 6,  BUF: 7,  MTL: 8,
+  OTT: 9,  TOR: 10, CAR: 12, FLA: 13, TBL: 14, WSH: 15, CHI: 16, DET: 17,
+  NSH: 18, STL: 19, CGY: 20, COL: 21, EDM: 22, VAN: 23, ANA: 24, DAL: 25,
+  LAK: 26, SJS: 28, CBJ: 29, MIN: 30, WPG: 52, VGK: 54, SEA: 55, UTA: 68,
+};
+export const teamIdFor = (abbr) => TEAM_ID[abbr] ?? null;
 
 // Great-circle distance between two lat/lng pairs in miles. Used for travel
 // distance calculations on the schedule. Same-arena returns 0.
@@ -185,7 +204,10 @@ export const connStatus = (lastFetch, error) => {
   if (error) return { tone: 'red', label: 'disconnected' };
   if (!lastFetch) return { tone: 'amber', label: 'connecting' };
   const age = (Date.now() - lastFetch) / 1000;
-  if (age < 90) return { tone: 'green', label: 'live' };
+  // "online" describes the data connection (a recent successful fetch), not
+  // whether a game is live — surfaces that mean "a game is in progress" gate
+  // on an actual LIVE/CRIT gameState, never on this label.
+  if (age < 90) return { tone: 'green', label: 'online' };
   if (age < 300) return { tone: 'amber', label: 'stale' };
   return { tone: 'red', label: 'stale' };
 };

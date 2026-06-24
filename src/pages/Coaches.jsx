@@ -39,7 +39,7 @@ export const Coaches = () => {
         <div>
           <h1 className="text-[20px] font-semibold tracking-tight">Head Coaches</h1>
           <p className="text-[12px] text-white/45 mt-1 font-mono">
-            All 32 NHL head coaches · {COACHES.length} bench bosses · {cupWinners.length} Stanley Cup winners
+            All 32 NHL head coaches · {COACHES.length} bench bosses · {cupWinners.length} Stanley Cup winners · 2025–26 snapshot
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -76,7 +76,7 @@ export const Coaches = () => {
         <SummaryTile label="Cup Winners" value={cupWinners.length} sub="active head coaches" tone="amber" />
         <SummaryTile label="Longest Tenure" value={longest?.name?.split(' ').slice(-1)[0] || '—'} sub={`${longest?.team} · since ${longest?.hired}`} tone="warm" />
         <SummaryTile label="First-time HCs" value={COACHES.filter((c) => !c.priorTeams?.length).length} sub="no prior NHL stint" tone="cool" />
-        <SummaryTile label="Mid-Season Hires" value={COACHES.filter((c) => /\d{4}-\d{2}/.test(c.hired)).length} sub="this 25–26 season" tone="default" />
+        <SummaryTile label="Mid-Season Hires" value={COACHES.filter((c) => /\d{4}-\d{2}/.test(c.hired)).length} sub="2025–26 season" tone="default" />
       </div>
 
       <Section title="Coaches Directory" action={<span className="text-[10px] font-mono text-white/40">{filtered.length} of {COACHES.length}</span>}>

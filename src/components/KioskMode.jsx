@@ -5,6 +5,12 @@ import { OPP_FULL, cx } from '../config.js';
 import { FlyersMark, TeamLogo } from './Logo.jsx';
 import { TeamLogoBg } from './Watermark.jsx';
 import { useGoalBurst } from '../api.js';
+import { useTeam } from '../teamContext.jsx';
+
+// Short rooting nickname for the active team — the last word of the
+// full name ("Philadelphia Flyers" → "Flyers", "Colorado Avalanche" →
+// "Avalanche"). Used in status copy like "<short> win" / "<short> lead".
+const teamShort = (fullName) => (fullName || '').trim().split(/\s+/).pop() || 'Us';
 
 // Full-viewport "broadcast" overlay. Two modes:
 //   • Live mode (Hero on Dashboard during a live PHI game): score and
@@ -17,6 +23,12 @@ import { useGoalBurst } from '../api.js';
 // scroll, and traps Esc to close.
 
 export const KioskMode = ({ liveGame, liveDetail, liveSnap, game, onClose }) => {
+  // Active team identity — drives all "us" branding so a COL@DAL kiosk on
+  // scumbag.hockey shows the right names/logo instead of Philadelphia.
+  const { teamAbbr, teamName } = useTeam();
+  const usFull = teamName;            // e.g. "Colorado Avalanche"
+  const usShort = teamShort(teamName); // e.g. "Avalanche" (PHI → "Flyers")
+
   // Two source-of-truth shapes — Hero passes liveGame/liveDetail; GameTape
   // passes the adapted `game` object. Normalize into one set of locals.
   const isLiveMode = !!liveGame;
@@ -119,10 +131,10 @@ export const KioskMode = ({ liveGame, liveDetail, liveSnap, game, onClose }) => 
 
         {/* Away half — huge logo bleeding off the left edge. The center
             stage uses away-on-left / home-on-right so the backdrop tracks
-            the same convention: when PHI is home, the opp logo sits behind
-            the away column on the left and the PHI logo sits on the right. */}
+            the same convention: when our team is home, the opp logo sits
+            behind the away column on the left and our logo sits on the right. */}
         <img
-          src={`https://assets.nhle.com/logos/nhl/svg/${isHome ? oppAbbr : 'PHI'}_dark.svg`}
+          src={`https://assets.nhle.com/logos/nhl/svg/${isHome ? oppAbbr : teamAbbr}_dark.svg`}
           alt=""
           className="absolute select-none"
           style={{
@@ -136,10 +148,10 @@ export const KioskMode = ({ liveGame, liveDetail, liveSnap, game, onClose }) => 
           onError={(e) => { e.currentTarget.style.display = 'none'; }}
         />
 
-        {/* Home half — same treatment, mirrored. PHI when PHI is home,
+        {/* Home half — same treatment, mirrored. Our team when we're home,
             otherwise the opp. */}
         <img
-          src={`https://assets.nhle.com/logos/nhl/svg/${isHome ? 'PHI' : oppAbbr}_dark.svg`}
+          src={`https://assets.nhle.com/logos/nhl/svg/${isHome ? teamAbbr : oppAbbr}_dark.svg`}
           alt=""
           className="absolute select-none"
           style={{
@@ -208,7 +220,7 @@ export const KioskMode = ({ liveGame, liveDetail, liveSnap, game, onClose }) => 
 
       {/* Center stage — score readout */}
       <div className="relative h-full flex flex-col items-center justify-center px-6">
-        {goalEvent && <BroadcastGoalBlast goal={goalEvent} oppAbbr={oppAbbr} oppFull={oppFull} />}
+        {goalEvent && <BroadcastGoalBlast goal={goalEvent} oppAbbr={oppAbbr} oppFull={oppFull} usFull={usFull} />}
 
         {/* Both team identity rows */}
         <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-6 sm:gap-12 w-full max-w-6xl">
@@ -221,7 +233,7 @@ export const KioskMode = ({ liveGame, liveDetail, liveSnap, game, onClose }) => 
                 : <FlyersMark size={120} className="sm:!w-[160px] sm:!h-[160px]" />}
             </PPLogoFrame>
             <div className="text-[18px] sm:text-[24px] font-semibold tracking-tight text-center">
-              {isHome ? oppFull : 'Philadelphia Flyers'}
+              {isHome ? oppFull : usFull}
             </div>
             {awayOnPP && <PPMicroChip forUs={!isHome} strength={ppStrength} time={ppTimeRemaining} />}
             <span
@@ -260,7 +272,7 @@ export const KioskMode = ({ liveGame, liveDetail, liveSnap, game, onClose }) => 
                 : <TeamLogo abbr={oppAbbr} size={120} className="sm:!w-[160px] sm:!h-[160px]" />}
             </PPLogoFrame>
             <div className="text-[18px] sm:text-[24px] font-semibold tracking-tight text-center">
-              {isHome ? 'Philadelphia Flyers' : oppFull}
+              {isHome ? usFull : oppFull}
             </div>
             {homeOnPP && <PPMicroChip forUs={isHome} strength={ppStrength} time={ppTimeRemaining} />}
             <span
@@ -285,7 +297,7 @@ export const KioskMode = ({ liveGame, liveDetail, liveSnap, game, onClose }) => 
               : 'border border-red-500/30 bg-red-500/[0.06] text-red-300',
           )}>
             {tied ? (isFinalState ? 'Tied' : 'Tied game')
-              : phiWinning ? (isFinalState ? 'Flyers win' : 'Flyers lead')
+              : phiWinning ? `${usShort} ${isFinalState ? 'win' : 'lead'}`
               : `${oppAbbr} ${isFinalState ? 'wins' : 'leads'}`}
           </span>
         </div>
@@ -297,6 +309,7 @@ export const KioskMode = ({ liveGame, liveDetail, liveSnap, game, onClose }) => 
       {ppActive && (
         <PPBanner
           phiOnPP={phiOnPP}
+          usShort={usShort}
           oppAbbr={oppAbbr}
           oppFull={oppFull}
           strength={ppStrength}
@@ -347,12 +360,12 @@ export const KioskMode = ({ liveGame, liveDetail, liveSnap, game, onClose }) => 
 //
 // Opp goals get an amber/red treatment so the celebration registers as
 // a "they scored" alert rather than a "we won" moment.
-const BroadcastGoalBlast = ({ goal, oppAbbr, oppFull }) => {
+const BroadcastGoalBlast = ({ goal, oppAbbr, oppFull, usFull }) => {
   const isUs = !!goal?.us;
   const palette = isUs
     ? { color: '#F74902', glow: 'rgba(247,73,2,0.7)', soft: 'rgba(247,73,2,0.4)', text: 'text-[#FF8A4C]' }
     : { color: '#F59E0B', glow: 'rgba(245,158,11,0.65)', soft: 'rgba(220,38,38,0.40)', text: 'text-amber-300' };
-  const teamName = isUs ? 'Philadelphia Flyers' : (oppFull || oppAbbr || 'Goal');
+  const teamName = isUs ? (usFull || 'Goal') : (oppFull || oppAbbr || 'Goal');
   return (
     <>
       {/* Viewport-edge ring + inset glow. Sits above everything so the
@@ -477,11 +490,11 @@ const PPMicroChip = ({ forUs, strength, time }) => {
 //
 // Treatment shifts by side: PHI on PP reads triumphant orange, the opp
 // on PP reads warning amber/red so the PK is unmistakable as risk.
-const PPBanner = ({ phiOnPP, oppAbbr, oppFull, strength, time }) => {
+const PPBanner = ({ phiOnPP, usShort, oppAbbr, oppFull, strength, time }) => {
   const palette = phiOnPP
     ? { bg: 'bg-[#F74902]/[0.14]', border: 'border-[#F74902]/55', text: 'text-[#FF8A4C]', accent: 'bg-[#F74902]', stripe: 'from-transparent via-[#F74902]/40 to-transparent' }
     : { bg: 'bg-red-500/[0.10]',   border: 'border-amber-500/45', text: 'text-amber-200',  accent: 'bg-amber-500', stripe: 'from-transparent via-amber-500/40 to-transparent' };
-  const headline = phiOnPP ? 'Flyers Power Play' : `${oppFull || oppAbbr || 'Opponent'} Power Play`;
+  const headline = phiOnPP ? `${usShort || 'Power'} Power Play` : `${oppFull || oppAbbr || 'Opponent'} Power Play`;
   const sub      = phiOnPP ? 'capitalize · cash in' : 'penalty kill · hold the line';
   return (
     <div

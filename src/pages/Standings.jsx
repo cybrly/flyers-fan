@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { cx, TEAM_ABBR, OPP_FULL } from '../config.js';
+import { cx, TEAM_ABBR, OPP_FULL, SEASON_LABEL_FULL } from '../config.js';
 import { Chip, Label, Section, Skeleton } from '../components/primitives.jsx';
 import { MiniBar } from '../components/charts.jsx';
 import { FlyersMark, TeamLogo } from '../components/Logo.jsx';
@@ -16,7 +16,7 @@ const clinchChip = (c) => {
   return null;
 };
 
-export const Standings = ({ standings }) => {
+export const Standings = ({ standings, offseason }) => {
   const [view, setView] = useState('metro');
   const rows = view === 'metro'
     ? standings?.metro
@@ -35,7 +35,11 @@ export const Standings = ({ standings }) => {
             <h1 className="text-[20px] font-semibold tracking-tight">Standings</h1>
             <ShareButton type="standings" label="Share" />
           </div>
-          <p className="text-[12px] text-white/45 mt-1 font-mono">Live standings · refreshed from NHL every 5 min</p>
+          <p className="text-[12px] text-white/45 mt-1 font-mono">
+            {offseason
+              ? `Final ${SEASON_LABEL_FULL} regular-season standings`
+              : 'Live standings · refreshed from NHL every 5 min'}
+          </p>
         </div>
         <div className="flex items-center gap-0.5 p-0.5 border border-white/[0.08] rounded-md bg-white/[0.02]">
           {[

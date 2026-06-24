@@ -1,12 +1,14 @@
 import { ArrowRight } from 'lucide-react';
 import { cx, isLive } from '../config.js';
 import { FlyersMark, TeamLogo } from './Logo.jsx';
+import { useTeam } from '../teamContext.jsx';
 
 // Slim sticky strip below the Topbar that shows live Flyers game state on
 // every page. Only renders when there's an active game; otherwise returns
 // null and the layout reclaims the space. Pulls from the same boxscore
 // that the Game Tape uses, so period/clock match exactly.
 export const LiveRibbon = ({ liveGame, liveDetail, onOpenGame, currentPage }) => {
+  const { teamAbbr } = useTeam();
   if (!liveGame) return null;
   if (currentPage === 'game') return null; // already on Game Tape — no ribbon
 
@@ -23,7 +25,7 @@ export const LiveRibbon = ({ liveGame, liveDetail, onOpenGame, currentPage }) =>
   const last = liveDetail?.timeline?.[liveDetail.timeline.length - 1];
 
   return (
-    <div className="sticky top-12 z-20 h-9 border-b border-[#F74902]/[0.22] bg-[#0A0A0A]/95 backdrop-blur-md">
+    <div className="sticky top-12 z-20 h-9 border-b border-[var(--team-primary)]/[0.22] bg-[#0A0A0A]/95 backdrop-blur-md">
       <button
         onClick={() => onOpenGame?.(liveGame.id)}
         className="w-full h-full px-4 md:px-6 flex items-center gap-3 sm:gap-4 hover:bg-white/[0.02] transition-colors group"
@@ -46,17 +48,17 @@ export const LiveRibbon = ({ liveGame, liveDetail, onOpenGame, currentPage }) =>
               <span className="text-[13px] font-mono tabular-nums font-semibold text-white/85">{liveGame.them}</span>
               <span className="text-white/25 text-[12px]">–</span>
               <span className={cx('text-[13px] font-mono tabular-nums font-semibold',
-                liveGame.us >= liveGame.them ? 'text-[#FF8A4C]' : 'text-white/85'
+                liveGame.us >= liveGame.them ? 'text-[var(--team-accent)]' : 'text-white/85'
               )}>{liveGame.us}</span>
-              <span className="text-[11px] font-mono text-[#FF8A4C] hidden sm:inline">PHI</span>
+              <span className="text-[11px] font-mono text-[var(--team-accent)] hidden sm:inline">{teamAbbr}</span>
               <FlyersMark size={14} />
             </>
           ) : (
             <>
               <FlyersMark size={14} />
-              <span className="text-[11px] font-mono text-[#FF8A4C] hidden sm:inline">PHI</span>
+              <span className="text-[11px] font-mono text-[var(--team-accent)] hidden sm:inline">{teamAbbr}</span>
               <span className={cx('text-[13px] font-mono tabular-nums font-semibold',
-                liveGame.us >= liveGame.them ? 'text-[#FF8A4C]' : 'text-white/85'
+                liveGame.us >= liveGame.them ? 'text-[var(--team-accent)]' : 'text-white/85'
               )}>{liveGame.us}</span>
               <span className="text-white/25 text-[12px]">–</span>
               <span className="text-[13px] font-mono tabular-nums font-semibold text-white/85">{liveGame.them}</span>
@@ -70,7 +72,7 @@ export const LiveRibbon = ({ liveGame, liveDetail, onOpenGame, currentPage }) =>
 
         {/* Period · Clock */}
         <div className="flex items-center gap-1.5 shrink-0">
-          <span className="text-[10px] font-mono text-[#FF8A4C] uppercase tracking-wider font-medium">{periodLabel}</span>
+          <span className="text-[10px] font-mono text-[var(--team-accent)] uppercase tracking-wider font-medium">{periodLabel}</span>
           <span className="text-[12px] font-mono tabular-nums text-white/85">{clockText}</span>
         </div>
 
@@ -78,7 +80,7 @@ export const LiveRibbon = ({ liveGame, liveDetail, onOpenGame, currentPage }) =>
         {last && (
           <div className="hidden md:flex items-center gap-2 min-w-0 flex-1 text-[11px] font-mono">
             <span className="text-white/35 uppercase tracking-wider text-[9px]">Last goal</span>
-            <span className={cx('truncate', last.us ? 'text-[#FF8A4C]' : 'text-white/75')}>
+            <span className={cx('truncate', last.us ? 'text-[var(--team-accent)]' : 'text-white/75')}>
               {last.scorer}
             </span>
             <span className="text-white/35 shrink-0">P{last.period} · {last.time}</span>
@@ -86,7 +88,7 @@ export const LiveRibbon = ({ liveGame, liveDetail, onOpenGame, currentPage }) =>
         )}
 
         {/* CTA */}
-        <span className="ml-auto md:ml-0 flex items-center gap-1 text-[10px] font-mono text-white/45 group-hover:text-[#FF8A4C] transition-colors shrink-0">
+        <span className="ml-auto md:ml-0 flex items-center gap-1 text-[10px] font-mono text-white/45 group-hover:text-[var(--team-accent)] transition-colors shrink-0">
           <span className="hidden sm:inline">Open Game Tape</span>
           <ArrowRight size={10} />
         </span>

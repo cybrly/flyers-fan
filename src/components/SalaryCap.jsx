@@ -3,7 +3,7 @@ import { cx } from '../config.js';
 import { Section } from './primitives.jsx';
 import { TeamLogoBg } from './Watermark.jsx';
 import {
-  getTeamContracts, SALARY_CAP_CEILING, fmtMillions, fmtCapPct,
+  getTeamContracts, SALARY_CAP_CEILING, SNAPSHOT_LABEL, fmtMillions, fmtCapPct,
 } from '../data/playerContracts.js';
 import { useTeam } from '../teamContext.jsx';
 
@@ -123,7 +123,7 @@ export const SalaryCap = ({ roster }) => {
 
         {/* Footer attribution */}
         <div className="relative pt-3 border-t border-white/[0.05] text-[10px] font-mono text-white/35">
-          Cap snapshot hand-maintained from <a href="https://puckpedia.com/team/philadelphia-flyers" target="_blank" rel="noopener noreferrer" className="text-white/55 hover:text-white">PuckPedia</a> — refresh after major signings or trades.
+          {SNAPSHOT_LABEL} snapshot, hand-maintained from <a href="https://puckpedia.com/" target="_blank" rel="noopener noreferrer" className="text-white/55 hover:text-white">PuckPedia</a> — static, not live; refresh after major signings or trades.
         </div>
       </div>
     </Section>

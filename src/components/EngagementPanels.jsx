@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import { Star, Trophy, ChevronRight } from 'lucide-react';
 import { cx, TEAM_ABBR, SEASON_LABEL } from '../config.js';
+import { getHostScope } from '../host.js';
 import { Section } from './primitives.jsx';
 import { Headshot } from './Headshot.jsx';
 import { PlayerLink } from './PlayerLink.jsx';
@@ -222,6 +223,11 @@ export const RecordsTrackerPanel = ({ clubStats }) => {
       { ...SINGLE_SEASON_RECORDS[5], current: topSO?.so ?? 0, leader: topSO, fmt: (v) => v },
     ];
   }, [clubStats]);
+
+  // Franchise records are hardcoded Philadelphia marks — only meaningful on the
+  // team-scoped host (flyers.fan). On the league host, benchmarking another
+  // team's leaders against PHI records is nonsense, so render nothing.
+  if (getHostScope() === 'league') return null;
 
   if (!rows.length) return null;
 

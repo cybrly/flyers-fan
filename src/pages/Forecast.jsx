@@ -4,6 +4,7 @@ import { cx, SEASON, TEAM_ABBR, API } from '../config.js';
 import { Section, Skeleton, Chip } from '../components/primitives.jsx';
 import { TeamLogo, FlyersMark } from '../components/Logo.jsx';
 import { TeamLogoBg } from '../components/Watermark.jsx';
+import { navigate } from '../router.js';
 import { startForecast } from '../lib/forecast.js';
 
 // Forecast — Monte Carlo playoff-odds page.
@@ -316,7 +317,7 @@ const SeasonOverBanner = () => (
     <div className="text-[13px] text-white/85 font-medium">Regular season complete</div>
     <div className="text-[11px] font-mono text-white/55 mt-1 leading-relaxed">
       Standings are locked — there are no remaining regular-season games to simulate.
-      For in-progress playoff series, see the <a href="/playoffs" className="text-[#FF8A4C] hover:underline">Playoffs</a> page.
+      For in-progress playoff series, see the <a href="/playoffs" onClick={(e) => { e.preventDefault(); navigate('/playoffs'); }} className="text-[#FF8A4C] hover:underline">Playoffs</a> page.
     </div>
   </div>
 );

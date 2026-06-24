@@ -1,13 +1,14 @@
 import { useEffect, useRef, useState } from 'react';
 import { Bell, BellOff } from 'lucide-react';
-import { cx, TEAM_ABBR } from '../config.js';
+import { cx, TEAM_ABBR, OPP_FULL } from '../config.js';
+import { useTeam } from '../teamContext.jsx';
 
 const KEY = 'flyersfan.goalNotifications';
 
-// Browser desktop notifications for PHI goals. Independent of the Goal Horn
-// (audio) toggle so a user can have one without the other. We watch the
-// timeline and fire one notification per new PHI goal — never opposing-team
-// goals, since the user is a Flyers fan first.
+// Browser desktop notifications for the active team's goals. Independent of
+// the Goal Horn (audio) toggle so a user can have one without the other. We
+// watch the timeline and fire one notification per new "us" goal — never
+// opposing-team goals, since the user is a fan of the selected team first.
 //
 // Delivery path:
 //   • If a service worker is active, route through registration.showNotification.
@@ -17,13 +18,14 @@ const KEY = 'flyersfan.goalNotifications';
 //   • Otherwise fall back to the plain Notification constructor for desktop
 //     browser tabs that don't have an SW registered yet.
 
-const showGoalNotification = async (goal) => {
-  const title = '🚨 GOAL · Philadelphia Flyers';
+const showGoalNotification = async (goal, teamAbbr, teamName) => {
+  const fullName = teamName || OPP_FULL[teamAbbr] || teamAbbr;
+  const title = `🚨 GOAL · ${fullName}`;
   const opts = {
     body: `${goal.scorer} scores · ${goal.awayScore}–${goal.homeScore}`,
     icon: '/icon-512.svg',
     badge: '/favicon.svg',
-    tag: 'phi-goal',
+    tag: `${teamAbbr.toLowerCase()}-goal`,
     renotify: true,
     silent: false,
     vibrate: [200, 80, 200, 80, 400],
@@ -45,6 +47,7 @@ const showGoalNotification = async (goal) => {
 };
 
 export const useGoalNotifications = (timeline, enabled) => {
+  const { teamAbbr, teamName } = useTeam();
   const lastUsCountRef = useRef(0);
   const lastTimelineLen = useRef(0);
 
@@ -64,10 +67,10 @@ export const useGoalNotifications = (timeline, enabled) => {
     const usGoals = (timeline || []).filter((g) => g.us);
     const prevUsCount = lastUsCountRef.current;
     if (usGoals.length > prevUsCount) {
-      showGoalNotification(usGoals[usGoals.length - 1]);
+      showGoalNotification(usGoals[usGoals.length - 1], teamAbbr || TEAM_ABBR, teamName);
     }
     lastUsCountRef.current = usGoals.length;
-  }, [timeline, enabled]);
+  }, [timeline, enabled, teamAbbr, teamName]);
 };
 
 export const useGoalNotificationsEnabled = () => {

@@ -7,12 +7,22 @@ import { TeamLogo } from '../components/Logo.jsx';
 import { navigate, playerHref } from '../router.js';
 
 // Side-by-side compare for up to 4 NHL players. Two slots default to the
-// captains of PHI and tonight's opponent; the third and fourth slots are
-// opt-in (lets fans stack a forward line or D-pair side-by-side without
-// cluttering the default 2-way matchup view). All slots support the same
-// search + URL state behaviour.
+// current top scorer of the active team and tonight's opponent (resolved from
+// live club stats); the third and fourth slots are opt-in (lets fans stack a
+// forward line or D-pair side-by-side without cluttering the default 2-way
+// matchup view). All slots support the same search + URL state behaviour.
 
 const SLOTS = ['a', 'b', 'c', 'd'];
+
+// Most-points skater from a club-stats payload — used to seed the default
+// compare slots from live data so they self-heal when a captain is traded
+// (instead of relying on hardcoded captain IDs that drift out of date).
+const topScorerId = (clubStatsRaw) => {
+  const skaters = clubStatsRaw?.skaters || [];
+  if (!skaters.length) return null;
+  const top = [...skaters].sort((a, b) => (b.points || 0) - (a.points || 0))[0];
+  return top?.playerId != null ? String(top.playerId) : null;
+};
 
 const HEIGHT = (inches) => inches ? `${Math.floor(inches / 12)}'${inches % 12}"` : '—';
 
@@ -264,18 +274,32 @@ export const PlayerCompare = ({ schedule }) => {
     schedule?.games?.[0]?.opp ||
     null;
 
-  // Default a/b to captains of PHI vs upcoming opponent.
+  // Live club stats for the active team and the upcoming opponent — used to
+  // seed the default compare slots with each side's current top scorer.
+  const usStatsRaw = useNHL(`v1/club-stats/${TEAM_ABBR}/now`, 0);
+  const oppStatsRaw = useNHL(oppAbbr ? `v1/club-stats/${oppAbbr}/now` : null, 0);
+
+  // Default a/b to the CURRENT top scorer of the active team vs the upcoming
+  // opponent, resolved from live club stats so the defaults self-heal when a
+  // player is traded — instead of the hardcoded TEAM_CAPTAINS map, which goes
+  // stale (captains change teams, IDs drift). The captain map remains only as
+  // a last-resort fallback if club stats can't load.
   useEffect(() => {
-    if (didDefault) return;
-    if (!schedule) return;
+    if (didDefault || !schedule) return;
     const params = new URLSearchParams(window.location.search);
+    const urlA = params.get('a');
+    const urlB = params.get('b');
+    // Wait for the active team's stats to load (or fail) before locking in
+    // defaults, so we don't prematurely fall back to the stale captain map.
+    const usReady = usStatsRaw.data || usStatsRaw.error;
+    if (!urlA && !urlB && !usReady) return;
     setIds((prev) => ({
       ...prev,
-      a: params.get('a') || prev.a || TEAM_CAPTAINS[TEAM_ABBR] || null,
-      b: params.get('b') || prev.b || (oppAbbr ? TEAM_CAPTAINS[oppAbbr] : null) || null,
+      a: urlA || prev.a || topScorerId(usStatsRaw.data) || TEAM_CAPTAINS[TEAM_ABBR] || null,
+      b: urlB || prev.b || (oppAbbr ? (topScorerId(oppStatsRaw.data) || TEAM_CAPTAINS[oppAbbr]) : null) || null,
     }));
     setDidDefault(true);
-  }, [schedule, oppAbbr, didDefault]);
+  }, [schedule, oppAbbr, didDefault, usStatsRaw.data, usStatsRaw.error, oppStatsRaw.data]);
 
   // Reflect selections to URL.
   useEffect(() => {
@@ -322,7 +346,7 @@ export const PlayerCompare = ({ schedule }) => {
           <h1 className="text-[20px] font-semibold tracking-tight">Compare Players</h1>
           <p className="text-[12px] text-white/45 mt-1 font-mono">
             {oppAbbr
-              ? <>Defaulting to PHI captain vs <span className="text-[#FF8A4C]">{oppAbbr}</span> captain · stack up to 4 players</>
+              ? <>Defaulting to {TEAM_ABBR} vs <span className="text-[#FF8A4C]">{oppAbbr}</span> top scorers · stack up to 4 players</>
               : 'Stack up to 4 NHL players · stat-by-stat comparison'}
           </p>
         </div>

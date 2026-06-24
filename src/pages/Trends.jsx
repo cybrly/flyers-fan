@@ -1,11 +1,13 @@
 import { useMemo, useState, useRef } from 'react';
-import { cx, SEASON } from '../config.js';
+import { cx, SEASON, teamIdFor } from '../config.js';
+import { useTeam } from '../teamContext.jsx';
+import { getHostScope } from '../host.js';
 import { Section, Chip, Label } from '../components/primitives.jsx';
 import { useNHL } from '../api.js';
 import { navigate, gameHref } from '../router.js';
 import { rollingWindow, rollingAvg } from '../lib/stats.js';
 import { HISTORICAL_SEASONS } from '../data/historicalSeasons.js';
-import { adaptTeamEdge, PHI_TEAM_ID } from '../adapters-edge.js';
+import { adaptTeamEdge } from '../adapters-edge.js';
 import { HistoricalStandings } from '../components/HistoricalStandings.jsx';
 
 // Season trajectory chart — multi-line plot of GF / GA / Diff (cumulative),
@@ -136,6 +138,12 @@ export const Trends = ({ schedule, standings, roster, clubStats }) => {
     if (!s) return null;
     return { ...s, pts: s.points.slice(0, N) };
   }, [histOverlay, N]);
+
+  // Historical season overlays are Flyers seasons (Philadelphia-only data), so
+  // the overlay control only makes sense on the team host. On the league host
+  // we hide it rather than letting a fan overlay famous Flyers seasons onto
+  // another team's trajectory.
+  const teamScope = getHostScope() === 'team';
 
   // Projected pace — extend cumulative points to game 82 using the current
   // points-per-game rate. Drawn as a faint dashed extension of the pts line.
@@ -426,24 +434,28 @@ export const Trends = ({ schedule, standings, roster, clubStats }) => {
             </button>
           ))}
         </div>
-        <span className="text-[10px] font-mono text-white/40 uppercase tracking-wider ml-2">Historical overlay</span>
-        <select
-          value={histOverlay || ''}
-          onChange={(e) => setHistOverlay(e.target.value || null)}
-          className="h-7 px-2 bg-white/[0.03] border border-white/[0.08] hover:border-white/20 text-[11px] font-mono text-white/85 rounded-md outline-none focus:border-[#FF8A4C]/50"
-        >
-          <option value="">— none —</option>
-          {HISTORICAL_SEASONS.map((s) => (
-            <option key={s.id} value={s.id}>{s.label}</option>
-          ))}
-        </select>
-        {histOverlay && (
-          <button
-            onClick={() => setHistOverlay(null)}
-            className="text-[11px] font-mono text-white/45 hover:text-white/85"
-          >
-            clear
-          </button>
+        {teamScope && (
+          <>
+            <span className="text-[10px] font-mono text-white/40 uppercase tracking-wider ml-2">Historical overlay</span>
+            <select
+              value={histOverlay || ''}
+              onChange={(e) => setHistOverlay(e.target.value || null)}
+              className="h-7 px-2 bg-white/[0.03] border border-white/[0.08] hover:border-white/20 text-[11px] font-mono text-white/85 rounded-md outline-none focus:border-[#FF8A4C]/50"
+            >
+              <option value="">— none —</option>
+              {HISTORICAL_SEASONS.map((s) => (
+                <option key={s.id} value={s.id}>{s.label}</option>
+              ))}
+            </select>
+            {histOverlay && (
+              <button
+                onClick={() => setHistOverlay(null)}
+                className="text-[11px] font-mono text-white/45 hover:text-white/85"
+              >
+                clear
+              </button>
+            )}
+          </>
         )}
       </div>
 
@@ -1039,7 +1051,11 @@ const SituationalSplits = ({ splits, clubStats }) => {
 // compared to league average. Standalone component so the fetch doesn't
 // block the rest of Trends from rendering.
 const TeamEdgeZoneTime = () => {
-  const { data: raw } = useNHL(`v1/edge/team-comparison/${PHI_TEAM_ID}/${SEASON}/2`, 0);
+  // Edge endpoints take a numeric team id; map the active team (was hardcoded
+  // to PHI's id 4, which pinned this panel to Philadelphia for every team).
+  const { teamAbbr } = useTeam();
+  const teamId = teamIdFor(teamAbbr);
+  const { data: raw } = useNHL(teamId ? `v1/edge/team-comparison/${teamId}/${SEASON}/2` : null, 0);
   const edge = useMemo(() => adaptTeamEdge(raw), [raw]);
 
   if (!edge?.zoneTime) return null;
@@ -1068,7 +1084,7 @@ const TeamEdgeZoneTime = () => {
         </div>
         {edge.zoneTime.leagueAvgOffensive != null && (
           <div className="text-[10px] font-mono text-white/35">
-            League average OZ time: {edge.zoneTime.leagueAvgOffensive}% · PHI is {edge.zoneTime.offensive > edge.zoneTime.leagueAvgOffensive ? 'above' : 'below'} average
+            League average OZ time: {edge.zoneTime.leagueAvgOffensive}% · {teamAbbr} is {edge.zoneTime.offensive > edge.zoneTime.leagueAvgOffensive ? 'above' : 'below'} average
           </div>
         )}
       </div>

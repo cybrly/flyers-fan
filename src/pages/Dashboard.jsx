@@ -53,7 +53,7 @@ const l10Tone = (w, l) => w >= 7 ? 'good' : w >= 5 ? 'warm' : l >= 7 ? 'bad' : '
 const divTone = (rank) => !rank ? 'default' : rank <= 3 ? 'good' : rank >= 6 ? 'bad' : 'amber';
 const ptsPctTone = (pct) => pct >= 0.6 ? 'good' : pct >= 0.5 ? 'warm' : pct <= 0.45 ? 'bad' : 'amber';
 
-export const Dashboard = ({ schedule, standings, scoreboard, clubStats, roster, liveDetail, liveSnap, lastGame, leagueLeaders, loading, onOpenGame }) => {
+export const Dashboard = ({ schedule, standings, scoreboard, clubStats, roster, liveDetail, liveSnap, lastGame, leagueLeaders, loading, offseason, onOpenGame }) => {
   // The Recent Form band intentionally shows the most recent 20 games
   // regardless of type so fans see playoff results during the postseason.
   // Anything that frames numbers as regular-season ('Last 10' KPI, season
@@ -101,7 +101,7 @@ export const Dashboard = ({ schedule, standings, scoreboard, clubStats, roster, 
   let narrative = '';
   let raceNarrative = '';
   try {
-    ranks = standings?.all ? teamRanks(standings.all) : null;
+    ranks = standings?.all ? teamRanks(standings.all, us?.abbr || TEAM_ABBR) : null;
     narrative = dashboardNarrative({ standings: us, schedule, streak }) || '';
     raceNarrative = us && standings?.east ? playoffRaceNarrative(us, standings.east) : '';
   } catch { /* defensive — don't let analytics crash the dashboard */ }
@@ -197,12 +197,15 @@ export const Dashboard = ({ schedule, standings, scoreboard, clubStats, roster, 
 
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div className="flex items-center gap-2 flex-wrap">
-          {us?.clinched === 'x' && <Chip tone="orange">● Clinched Playoff Spot</Chip>}
-          {us?.clinched === 'y' && <Chip tone="amber">● Clinched Division</Chip>}
-          {us?.clinched === 'z' && <Chip tone="amber">● Clinched Conference</Chip>}
-          {us?.clinched === 'p' && <Chip tone="orange">● Playoff Bound</Chip>}
-          {us?.clinched === 'e' && <Chip tone="red">● Eliminated</Chip>}
-          {us && <span className="text-[13px] text-white/45 font-mono">{us.gp} of 82 games · {SEASON_LABEL}</span>}
+          {/* Clinch chips read present-tense during the season; once the
+              season is over (offseason) the same indicators describe the
+              final outcome, so the wording shifts to past tense. */}
+          {us?.clinched === 'x' && <Chip tone="orange">● {offseason ? 'Made the Playoffs' : 'Clinched Playoff Spot'}</Chip>}
+          {us?.clinched === 'y' && <Chip tone="amber">● {offseason ? 'Won the Division' : 'Clinched Division'}</Chip>}
+          {us?.clinched === 'z' && <Chip tone="amber">● {offseason ? 'Won the Conference' : 'Clinched Conference'}</Chip>}
+          {us?.clinched === 'p' && <Chip tone="orange">● {offseason ? 'Made the Playoffs' : 'Playoff Bound'}</Chip>}
+          {us?.clinched === 'e' && <Chip tone="red">● {offseason ? 'Missed the Playoffs' : 'Eliminated'}</Chip>}
+          {us && <span className="text-[13px] text-white/45 font-mono">{offseason ? `Final · ${SEASON_LABEL}` : `${us.gp} of 82 games · ${SEASON_LABEL}`}</span>}
         </div>
         <div className="flex items-center gap-2 text-[12px] font-mono text-white/40">
           <span>good</span><span className="w-2 h-2 bg-emerald-400 rounded-full" />
@@ -432,7 +435,7 @@ export const Dashboard = ({ schedule, standings, scoreboard, clubStats, roster, 
           </div>
         </Section>
 
-        <SplitsPanel games={games} us={us} />
+        <SplitsPanel games={games} us={us} streak={streak ? `${streak.type}${streak.count}` : null} />
       </div>
 
       </CollapsibleBand>
@@ -950,7 +953,7 @@ const LatestResultCard = ({ lastResult, lastGame, onOpenGame }) => {
 
 // ─── Auxiliary panels ──────────────────────────────────────────────────────
 
-const SplitsPanel = ({ games, us }) => {
+const SplitsPanel = ({ games, us, streak }) => {
   const home = games.filter((g) => g.home);
   const away = games.filter((g) => !g.home);
   const otGames = games.filter((g) => g.lastPeriodType === 'OT' || g.lastPeriodType === 'SO');
@@ -964,7 +967,7 @@ const SplitsPanel = ({ games, us }) => {
     { l: 'Last 10',       v: us ? `${us.l10W ?? '—'}–${us.l10L ?? '—'}` : '—', pct: us?.l10W != null && us?.l10L != null ? us.l10W / Math.max(1, us.l10W + us.l10L) : null, sub: 'recent' },
     { l: 'OT / SO',       v: wl(otGames), pct: winPct(otGames), sub: `${otGames.length} games` },
     { l: '1-goal games',  v: wl(oneGoal), pct: winPct(oneGoal), sub: `${oneGoal.length} games` },
-    { l: 'Streak',        v: us?.streak || '—', pct: null, sub: 'current', highlight: us?.streak?.[0] === 'W' ? 'good' : us?.streak?.[0] === 'L' ? 'bad' : null },
+    { l: 'Streak',        v: streak || '—', pct: null, sub: 'current', highlight: streak?.[0] === 'W' ? 'good' : streak?.[0] === 'L' ? 'bad' : null },
   ];
   return (
     <Section title="Splits" action={<span className="text-[10px] font-mono text-white/40">{games.length} GP</span>}>

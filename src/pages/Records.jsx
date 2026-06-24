@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { cx } from '../config.js';
 import { Section, SectionBand } from '../components/primitives.jsx';
+import { getHostScope } from '../host.js';
 
 // All-time franchise records — curated, hand-maintained list. The NHL
 // public API doesn't expose franchise leaderboards, so this page is a
@@ -61,6 +62,33 @@ const TABS = [
 export const Records = () => {
   const [tab, setTab] = useState('season');
   const active = TABS.find((t) => t.id === tab) || TABS[0];
+
+  // The franchise record book below is Philadelphia Flyers data only — it
+  // has no league-wide equivalent (the NHL public API doesn't expose
+  // per-franchise leaderboards). On the league host (scumbag.hockey) the
+  // page would otherwise show Flyers marks for all 32 teams, so we render
+  // an empty state instead and keep this a flyers.fan-only feature.
+  if (getHostScope() === 'league') {
+    return (
+      <div className="space-y-6">
+        <SectionBand
+          label="All-Time Franchise Records"
+          color="orange"
+          sub="flyers.fan only"
+        />
+        <Section title="Not available league-wide">
+          <div className="px-4 py-8 text-center">
+            <p className="text-[13px] text-white/70">
+              Franchise records are a <span className="text-[#FF8A4C]">flyers.fan</span> feature.
+            </p>
+            <p className="mt-2 text-[11px] font-mono text-white/40">
+              All-time leaderboards are curated for a single club and aren't available across the league.
+            </p>
+          </div>
+        </Section>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">

@@ -1,19 +1,31 @@
-// Season-end announcement banner. Displays once per session (dismissed
-// state stored in sessionStorage). Shows a heartfelt thank-you to the
-// Flyers and fans with a promise to return next season.
+// Season-end announcement banner. Shows a heartfelt thank-you to the Flyers
+// and fans with a promise to return next season.
+//
+// Gated three ways so it never appears out of context:
+//   1. Team host only — this is Flyers-specific messaging, so it must never
+//      render on scumbag.hockey (the league-wide host), which would mis-brand
+//      the entire NHL site as flyers.fan.
+//   2. Offseason only — driven by the `offseason` flag App derives from the
+//      schedule, so it appears once the season is actually over instead of on
+//      every first load year-round.
+//   3. Once per session — dismissed state stored in sessionStorage.
 
 import { useState } from 'react';
 import { X } from 'lucide-react';
-import { cx } from '../config.js';
+import { NEXT_SEASON_LABEL_FULL } from '../config.js';
+import { getHostScope } from '../host.js';
 import { FlyersMark } from './Logo.jsx';
 
 const DISMISSED_KEY = 'flyersfan.season-end-dismissed';
 
-export const SeasonEndBanner = () => {
+export const SeasonEndBanner = ({ offseason }) => {
   const [dismissed, setDismissed] = useState(() => {
     try { return sessionStorage.getItem(DISMISSED_KEY) === '1'; } catch { return false; }
   });
 
+  // Never on the league host, never mid-season, never twice in a session.
+  if (getHostScope() !== 'team') return null;
+  if (!offseason) return null;
   if (dismissed) return null;
 
   const dismiss = () => {
@@ -64,7 +76,7 @@ export const SeasonEndBanner = () => {
             See you next season
           </p>
           <p className="mt-2 text-[11px] font-mono text-white/35">
-            flyers.fan will return for the 2026–27 season. All historical data remains available below.
+            flyers.fan will return for the {NEXT_SEASON_LABEL_FULL} season. All historical data remains available below.
           </p>
 
           {/* Dismiss button */}

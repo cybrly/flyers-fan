@@ -5,6 +5,7 @@ import { Analytics } from '@vercel/analytics/react';
 import { SEASON, POLL, PLAYOFF_YEAR, UPCOMING_DRAFT_YEAR, PRIOR_DRAFT_YEAR, isLive, isFuture, setActiveTeam } from './config.js';
 import { useTeam } from './teamContext.jsx';
 import { useNHL, useClockTick, useLiveStream } from './api.js';
+import { scheduleLooksOffseason, streakFromGames } from './lib/hockey.js';
 import { PlayerCtx } from './context.js';
 import { useRoute, navigate, setOverlay, pageHref, gameHref } from './router.js';
 import { getHostBrand, getHostMeta, getHostScope } from './host.js';
@@ -360,17 +361,10 @@ export default function App() {
   // honest year-round.
   const teamCombined = useMemo(() => {
     if (!standings.us) return null;
-    let streak = standings.us.streak;
-    const games = schedule.games || [];
-    if (games.length > 0) {
-      const type = games[0].w;
-      let n = 0;
-      for (const g of games) {
-        if (g.w === type) n++;
-        else break;
-      }
-      streak = `${type ? 'W' : 'L'}${n}`;
-    }
+    // Streak comes from the schedule via the shared streakFromGames helper —
+    // the single source of truth across App + Dashboard. Falls back to the
+    // standings streakCode only before the schedule has loaded.
+    const streak = streakFromGames(schedule.games) ?? standings.us.streak;
     return {
       w: standings.us.w, l: standings.us.l, ot: standings.us.ot,
       gp: standings.us.gp, pts: standings.us.pts, pct: standings.us.pct,
@@ -379,6 +373,16 @@ export default function App() {
       streak,
     };
   }, [standings.us, schedule.games]);
+
+  // Offseason / stale-data guard. The NHL API never returns an "empty"
+  // scoreboard or standings between seasons — it pins to the last game played
+  // (e.g. the Stanley Cup Final in June). So "is there data" is not a freshness
+  // signal; the date is. scheduleLooksOffseason decides the season is over from
+  // the selected team's schedule against the wall clock, and is playoff-aware
+  // so a team between rounds (won its last playoff game, next series not yet
+  // scheduled) is NOT mislabeled as finished. Drives the "Final / Most Recent"
+  // relabeling on the Dashboard/Standings and gates the season-end banner.
+  const offseason = useMemo(() => scheduleLooksOffseason(schedule), [schedule]);
 
   // Most recent refresh timestamp across all feeds.
   const lastFetch = Math.max(
@@ -424,16 +428,18 @@ export default function App() {
         '--team-accent': teamColors.accent,
       }}
     >
-      {/* Page-top Flyers watermark — only on the dashboard. Other pages
+      {/* Page-top active-team watermark — only on the dashboard. Other pages
           stay on a flat charcoal surface with no logo wash so dense data
-          panels (Game Tape, Trends, Roster, etc.) read cleaner. */}
+          panels (Game Tape, Trends, Roster, etc.) read cleaner. Uses the
+          selected team's mark so scumbag.hockey doesn't wash every team's
+          dashboard with the Flyers logo. */}
       {page === 'dashboard' && (
         <div
           aria-hidden
           className="pointer-events-none absolute inset-x-0 top-0 h-[420px] overflow-hidden select-none z-0"
         >
           <img
-            src="https://assets.nhle.com/logos/nhl/svg/PHI_dark.svg"
+            src={`https://assets.nhle.com/logos/nhl/svg/${TEAM_ABBR}_dark.svg`}
             alt=""
             className="absolute left-1/2 -translate-x-1/2 -top-[100px] w-[1100px] max-w-[140vw] h-[640px] object-contain"
             style={{
@@ -529,9 +535,9 @@ export default function App() {
               <Suspense fallback={
                 <div className="p-6 text-[12px] font-mono text-white/35">loading…</div>
               }>
-                {page === 'dashboard' && <Dashboard schedule={schedule} standings={standings} scoreboard={scoreboard} clubStats={clubStats} roster={roster} liveDetail={isLive(boxscore.data?.gameState) ? game : null} liveSnap={liveSnap} lastGame={game} leagueLeaders={leagueLeaders} loading={scheduleRaw.loading || standingsRaw.loading} onOpenGame={openGame} />}
+                {page === 'dashboard' && <Dashboard schedule={schedule} standings={standings} scoreboard={scoreboard} clubStats={clubStats} roster={roster} liveDetail={isLive(boxscore.data?.gameState) ? game : null} liveSnap={liveSnap} lastGame={game} leagueLeaders={leagueLeaders} loading={scheduleRaw.loading || standingsRaw.loading} offseason={offseason} onOpenGame={openGame} />}
                 {page === 'schedule'  && <Schedule schedule={schedule} monthSchedule={monthSchedule} onOpenGame={openGame} scoreboard={scoreboard} standings={standings} leagueLeaders={leagueLeaders} />}
-                {page === 'standings' && <Standings standings={standings} />}
+                {page === 'standings' && <Standings standings={standings} offseason={offseason} />}
                 {page === 'game'      && <GameTape game={game} loading={boxscore.loading} pbp={pbp} pbpRaw={pbpRaw.data} liveSnap={liveSnap} liveConnected={liveConnected} boxscoreLastFetch={boxscore.lastFetch} schedule={schedule} standings={standings} customGameId={routeGameId} onClearCustom={clearSelectedGame} />}
                 {page === 'playoffs'  && <Playoffs bracket={bracket} onOpenSeries={onOpenSeries} />}
                 {page === 'roster'    && <Roster roster={roster} clubStats={clubStats} prospects={prospects} draftPicks={draftPicks} />}
@@ -584,7 +590,7 @@ export default function App() {
       <SpeedInsights />
       <Analytics />
       <InstallPrompt />
-      <SeasonEndBanner />
+      <SeasonEndBanner offseason={offseason} />
     </div>
     </PlayerCtx.Provider>
   );

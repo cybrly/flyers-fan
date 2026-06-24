@@ -25,13 +25,32 @@ const matches = (host, list) => {
   return list.some((h) => host === h || host.endsWith(`.${h}`));
 };
 
+// On unknown hosts (localhost, Vercel previews) only, allow forcing a scope so
+// the league/multi-team experience can be reviewed off the real domains.
+// `?scope=league` (or team) sets it and persists to localStorage; real
+// flyers.fan / scumbag.hockey domains ignore this entirely.
+const PREVIEW_SCOPE_KEY = 'flyersfan.preview-scope';
+const previewScopeOverride = () => {
+  if (typeof window === 'undefined') return null;
+  try {
+    const q = new URLSearchParams(window.location.search).get('scope');
+    if (q === 'league' || q === 'team') {
+      localStorage.setItem(PREVIEW_SCOPE_KEY, q);
+      return q;
+    }
+    const saved = localStorage.getItem(PREVIEW_SCOPE_KEY);
+    return saved === 'league' || saved === 'team' ? saved : null;
+  } catch { return null; }
+};
+
 // 'team' (Flyers-centric) or 'league' (NHL-wide). Unknown hosts —
-// localhost, vercel previews — default to 'team' so dev mirrors prod.
+// localhost, vercel previews — default to 'team' so dev mirrors prod, but
+// honor an explicit ?scope= override there for previewing the league build.
 export const getHostScope = () => {
   const host = getHostname();
   if (matches(host, LEAGUE_HOSTS)) return 'league';
   if (matches(host, TEAM_HOSTS))   return 'team';
-  return 'team';
+  return previewScopeOverride() || 'team';
 };
 
 // Branding strings used in page titles, install prompts, and any UI
